@@ -1,49 +1,42 @@
-// 오디오 재생 훅 - expo-av 기반
-
 import { useState, useRef, useCallback } from 'react';
 import { Audio } from 'expo-av';
+import { getApiBase } from '../api/client';
 
 export function useAudioPlayer() {
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
   const soundRef = useRef<Audio.Sound | null>(null);
 
-  const play = useCallback(async (uri: string) => {
+  const play = useCallback(async (url: string) => {
+    if (playing) { await stop(); return; }
     try {
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
-        soundRef.current = null;
-      }
-
       setLoading(true);
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        playsInSilentModeIOS: true,
-      });
-
-      const { sound } = await Audio.Sound.createAsync(
-        { uri },
-        { shouldPlay: true },
-        (status) => {
-          if (status.isLoaded && status.didJustFinish) {
-            setPlaying(false);
-          }
-        },
-      );
-
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true });
+      const fullUrl = url.startsWith('http') ? url : `${getApiBase()}${url}`;
+      const { sound } = await Audio.Sound.createAsync({ uri: fullUrl });
       soundRef.current = sound;
       setPlaying(true);
       setLoading(false);
-    } catch (e: any) {
+      await sound.playAsync();
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          setPlaying(false);
+          sound.unloadAsync();
+          soundRef.current = null;
+        }
+      });
+    } catch (e) {
+      console.error('[useAudioPlayer] play failed:', e);
       setLoading(false);
-      throw new Error(`재생 실패: ${e.message}`);
+      setPlaying(false);
     }
-  }, []);
+  }, [playing]);
 
   const stop = useCallback(async () => {
-    if (soundRef.current) {
-      await soundRef.current.stopAsync();
-      await soundRef.current.unloadAsync();
+    const sound = soundRef.current;
+    if (sound) {
+      await sound.stopAsync();
+      await sound.unloadAsync();
       soundRef.current = null;
     }
     setPlaying(false);

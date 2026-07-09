@@ -1,67 +1,61 @@
-// 오디오 녹음 훅 - expo-av 기반
-
 import { useState, useRef, useCallback } from 'react';
 import { Audio } from 'expo-av';
-import { Platform } from 'react-native';
 
-export type RecorderState = 'idle' | 'recording' | 'stopped';
+export interface RecordingResult {
+  uri: string;
+  durationSecs: number;
+}
 
 export function useAudioRecorder() {
-  const [state, setState] = useState<RecorderState>('idle');
+  const [recording, setRecording] = useState(false);
+  const [durationSecs, setDurationSecs] = useState(0);
   const [uri, setUri] = useState<string | null>(null);
-  const [duration, setDuration] = useState(0);
-  const recordingRef = useRef<Audio.Recording | null>(null);
+  const recRef = useRef<Audio.Recording | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const requestPermission = async () => {
-    const { status } = await Audio.requestPermissionsAsync();
-    return status === 'granted';
-  };
-
-  const startRecording = useCallback(async () => {
+  const start = useCallback(async () => {
     try {
-      const granted = await requestPermission();
-      if (!granted) {
-        throw new Error('마이크 권한이 필요합니다');
-      }
-
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY,
-      );
-
-      recordingRef.current = recording;
-      setState('recording');
+      const perm = await Audio.requestPermissionsAsync();
+      if (!perm.granted) return null;
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+      const rec = new Audio.Recording();
+      await rec.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      await rec.startAsync();
+      recRef.current = rec;
+      setRecording(true);
+      setDurationSecs(0);
       setUri(null);
-      setDuration(0);
-    } catch (e: any) {
-      throw new Error(`녹음 시작 실패: ${e.message}`);
+      timerRef.current = setInterval(() => setDurationSecs((s) => s + 1), 1000);
+      return rec;
+    } catch (e) {
+      console.error('[useAudioRecorder] start failed:', e);
+      return null;
     }
   }, []);
 
-  const stopRecording = useCallback(async () => {
-    if (!recordingRef.current) return null;
+  const stop = useCallback(async (): Promise<RecordingResult | null> => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    const rec = recRef.current;
+    if (!rec) return null;
     try {
-      await recordingRef.current.stopAndUnloadAsync();
-      const uri = recordingRef.current.getURI();
-      const status = recordingRef.current.getStatusAsync();
+      await rec.stopAndUnloadAsync();
+      const uri = rec.getURI();
+      recRef.current = null;
+      setRecording(false);
       setUri(uri);
-      setState('stopped');
-      recordingRef.current = null;
-      return uri;
-    } catch (e: any) {
-      throw new Error(`녹음 중지 실패: ${e.message}`);
+      return { uri: uri ?? '', durationSecs: durationSecs };
+    } catch (e) {
+      console.error('[useAudioRecorder] stop failed:', e);
+      setRecording(false);
+      return null;
     }
-  }, []);
+  }, [durationSecs]);
 
   const reset = useCallback(() => {
-    setState('idle');
+    setRecording(false);
+    setDurationSecs(0);
     setUri(null);
-    setDuration(0);
   }, []);
 
-  return { state, uri, duration, startRecording, stopRecording, reset };
+  return { recording, durationSecs, uri, start, stop, reset };
 }
