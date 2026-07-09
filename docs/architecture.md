@@ -90,6 +90,30 @@
 | image_url | String | 페이지 이미지 (nullable) |
 | layout | String | 페이지 레이아웃 타입 |
 
+### CalendarEntry (캘린더 항목)
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | UUID | 항목 ID |
+| family_id | UUID | 가족 ID |
+| date | Date | 캘린더 날짜 |
+| title | String | 제목 (예: "손자 첫돌") |
+| image_url | String | 사진 파일 경로 |
+| created_by | UUID | 작성자 ID |
+| created_at | DateTime | 생성 일시 |
+
+### CalendarComment (캘린더 댓글)
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | UUID | 댓글 ID |
+| entry_id | UUID | 캘린더 항목 ID |
+| member_id | UUID | 작성자 ID |
+| content | Text | 댓글 내용 (텍스트) |
+| input_method | Enum | stt / text |
+| audio_file_path | String | 원본 음성 파일 경로 (nullable) |
+| created_at | DateTime | 생성 일시 |
+
 ## API 엔드포인트 (제안)
 
 ### 질문
@@ -125,3 +149,15 @@
 | GET | `/api/families/{id}` | 가족 정보 조회 |
 | POST | `/api/members` | 구성원 추가 |
 | GET | `/api/members?family_id={id}` | 가족 구성원 목록 |
+
+### 캘린더
+
+| Method | Path | 설명 |
+|--------|------|------|
+| GET | `/api/calendar?family_id={id}&month=YYYY-MM` | 월별 캘린더 항목 조회 |
+| POST | `/api/calendar` | 캘린더 항목 생성 (사진 업로드) |
+| GET | `/api/calendar/{id}` | 캘린더 항목 상세 조회 |
+| DELETE | `/api/calendar/{id}` | 캘린더 항목 삭제 |
+| POST | `/api/calendar/{id}/comments` | 댓글 추가 (STT 텍스트 또는 직접 입력) |
+| GET | `/api/calendar/{id}/comments` | 항목별 댓글 목록 조회 |
+| POST | `/api/calendar/comments/{id}/audio` | 음성 원본 파일 업로드 |
