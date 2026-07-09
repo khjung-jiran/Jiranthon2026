@@ -230,3 +230,16 @@ class MemberSettings(Base):
     auto_translate = Column(Boolean, default=False)
 
     member = relationship("Member", back_populates="settings")
+
+
+class Story(Base):
+    __tablename__ = "stories"
+
+    id = Column(String, primary_key=True, default=_uuid)
+    family_id = Column(String, ForeignKey("families.id"), nullable=False)
+    category = Column(String, nullable=False)  # childhood / youth / twilight
+    title = Column(String, nullable=False)
+    body = Column(Text, nullable=False)
+    response_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

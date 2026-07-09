@@ -109,9 +109,9 @@ interface StoreState {
 
   // ── 질문/응답 ──
   setTarget: (name: string) => void;
-  answerQuestion: (id: number, patch: { dur: string; transcript: string; era?: string }) => void;
+  answerQuestion: (id: number, patch: { dur: string; transcript: string; audioFilePath?: string }) => void;
   /** AI 추천 홈 질문(id=99)을 목록에 추가하고 그 id를 반환 */
-  ensureAiQuestion: () => number;
+  ensureAiQuestion: () => Promise<number>;
   toggleTranslate: (id: number) => void;
 
   // ── 투표 ──
@@ -138,9 +138,27 @@ interface StoreState {
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null;
 
+// 새로고침 후에도 로그인 유지 — localStorage에서 세션 복원
+function restoreSession(): { role: Role; user: User } | null {
+  const sess = api.getSession();
+  if (!sess) return null;
+  return {
+    role: sess.role,
+    user: {
+      id: sess.memberId,
+      name: sess.memberName,
+      role: sess.role,
+      familyId: sess.familyId,
+      color: sess.role === 'parent' ? '#7C8A55' : '#5B7086',
+    },
+  };
+}
+
+const restored = restoreSession();
+
 export const useStore = create<StoreState>((set, get) => ({
-  role: null,
-  currentUser: null,
+  role: restored?.role ?? null,
+  currentUser: restored?.user ?? null,
   tab: 'home',
   serverOnline: false,
 
@@ -246,21 +264,28 @@ export const useStore = create<StoreState>((set, get) => ({
 
   setTarget: (name) => set({ target: name }),
   answerQuestion: (id, patch) => {
+    const q = get().questions.find((qq) => qq.id === id);
     set((s) => ({
-      questions: s.questions.map((q) =>
-        q.id === id
-          ? { ...q, status: 'answered' as const, dur: patch.dur, transcript: patch.transcript, era: patch.era ?? '청년 시절' }
-          : q
+      questions: s.questions.map((qq) =>
+        qq.id === id
+          ? { ...qq, status: 'answered' as const, dur: patch.dur, transcript: patch.transcript, audioUrl: patch.audioFilePath }
+          : qq
       ),
     }));
-    api.pushAnswer(id, { dur: patch.dur, transcript: patch.transcript, era: patch.era ?? '청년 시절' }).catch(syncWarn('답변'));
+    api.pushAnswer(id, { dur: patch.dur, transcript: patch.transcript, text: q?.text, from: q?.from, audioFilePath: patch.audioFilePath })
+      .catch(syncWarn('답변'));
   },
-  ensureAiQuestion: () => {
+  ensureAiQuestion: async () => {
     const exists = get().questions.some((q) => q.id === 99);
-    if (!exists) {
-      const q: Question = { id: 99, ai: true, text: '요즘 하루 중 가장 마음이 편안해지는 순간은 언제인가요?', from: '이음', rel: 'AI 질문', ago: '지금', status: 'pending' };
-      set((s) => ({ questions: [q, ...s.questions] }));
-    }
+    if (exists) return 99;
+    let text = '요즘 하루 중 가장 마음이 편안해지는 순간은 언제인가요?';
+    try {
+      const r = await api.getAiSuggestions({ count: 1 });
+      const q = r.questions[0];
+      if (q) text = typeof q === 'string' ? q : q.content;
+    } catch {}
+    const q: Question = { id: 99, ai: true, text, from: '이음', rel: 'AI 질문', ago: '지금', status: 'pending' };
+    set((s) => ({ questions: [q, ...s.questions] }));
     return 99;
   },
   toggleTranslate: (id) =>

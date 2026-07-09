@@ -26,7 +26,7 @@ python-jose==3.3.0             # JWT 인증
 passlib==1.7.4                 # 비밀번호 해싱
 
 # --- Question Engine (질문 생성) ---
-# (Phase 2에서 LLM 라이브러리 추가 예정: openai, anthropic 등)
+ollama==0.6.2                   # 로컬 LLM (Ollama 연동)
 
 # --- Storybook (스토리북 생성) ---
 jinja2==3.1.5                  # HTML 템플릿 엔진

@@ -279,3 +279,17 @@ class APIResult(BaseModel):
     success: bool = True
     message: str = ""
     data: Optional[dict] = None
+
+
+# --- Story ---
+class StoryOut(BaseModel):
+    id: str
+    family_id: str
+    category: str
+    title: str
+    body: str
+    response_count: int
+    created_at: datetime
+    updated_at: datetime
+    class Config:
+        from_attributes = True

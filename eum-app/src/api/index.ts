@@ -10,6 +10,7 @@
  * 레지스트리(makeIdRegistry)가 서버 id ↔ 앱 number id를 세션 동안 안정적으로
  * 양방향 매핑한다 (하이드레이트로 받은 항목에 대해 쓰기 액션 동기화 가능).
  */
+import { Platform } from 'react-native';
 import { ApiError, apiGet, apiPost, apiPut, request, getApiBase } from './client';
 import type {
   Capsule,
@@ -209,8 +210,8 @@ export function getAiSuggestions(params?: {
   count?: number;
   from_member_id?: string;
   to_member_id?: string;
-}): Promise<{ questions: string[] }> {
-  return apiGet<{ questions: string[] }>('/api/questions/ai-suggestions', params);
+}): Promise<{ questions: Array<string | { content: string; [k: string]: unknown }> }> {
+  return apiGet<{ questions: Array<string | { content: string; [k: string]: unknown }> }>('/api/questions/ai-suggestions', params);
 }
 
 export function createResponse(payload: {
@@ -238,6 +239,24 @@ export function responseStats(familyId: string): Promise<{ pending: number; answ
   return apiGet<{ pending: number; answered: number }>('/api/responses/stats', {
     family_id: familyId,
   });
+}
+
+// -- 스토리북 (routers/question.py) --
+export interface StoryChapter {
+  category: string;
+  label: string;
+  title: string;
+  body: string;
+  count: number;
+  has_new: boolean;
+}
+
+export function getStorybook(familyId: string): Promise<{ chapters: StoryChapter[] }> {
+  return apiGet<{ chapters: StoryChapter[] }>('/api/storybook', { family_id: familyId });
+}
+
+export function generateStorybook(familyId: string): Promise<{ chapters: StoryChapter[] }> {
+  return request<{ chapters: StoryChapter[] }>('/api/storybook', { method: 'POST', body: { family_id: familyId }, timeoutMs: 120000 });
 }
 
 // -- 타임캡슐 (routers/capsule.py) --
@@ -382,7 +401,7 @@ export function listPhotos(familyId: string, who?: string): Promise<ServerPhoto[
 
 // -- STT/TTS (routers/voice.py) --
 export function transcribeAudio(filePath: string, engine?: string): Promise<{ text: string; audio_file_path: string }> {
-  return apiPost<{ text: string; audio_file_path: string }>('/api/stt/transcribe', { file_path: filePath, engine: engine ?? 'whisper', language: 'ko' });
+  return request<{ text: string; audio_file_path: string }>('/api/stt/transcribe', { method: 'POST', body: { file_path: filePath, engine: engine ?? 'whisper', language: 'ko' }, timeoutMs: 120000 });
 }
 
 export function synthesizeTTS(text: string): Promise<{ audio_url: string }> {
@@ -391,11 +410,19 @@ export function synthesizeTTS(text: string): Promise<{ audio_url: string }> {
 
 export async function uploadAudioFile(uri: string): Promise<{ file_path: string; filename: string; url: string }> {
   const formData = new FormData();
-  formData.append('file', {
-    uri,
-    name: 'audio.wav',
-    type: 'audio/wav',
-  } as any);
+  if (Platform.OS === 'web') {
+    // 웹: blob URI → Blob 객체를 직접 FormData에 append
+    const resp = await fetch(uri);
+    const blob = await resp.blob();
+    formData.append('file', blob, 'audio.webm');
+  } else {
+    // 네이티브: RN FormData가 {uri, name, type} 객체를 지원
+    formData.append('file', {
+      uri,
+      name: 'audio.wav',
+      type: 'audio/wav',
+    } as any);
+  }
   const res = await fetch(`${getApiBase()}/api/uploads/audio`, {
     method: 'POST',
     body: formData,
@@ -536,9 +563,10 @@ export function mapQuestion(sq: ServerQuestion, resp?: ServerResponse): Question
     ago: relTime(sq.created_at),
     status: sq.status === 'answered' ? 'answered' : 'pending',
     ...(isAi ? { ai: true } : {}),
+    category: sq.category ?? undefined,
     dur: resp?.duration ?? undefined,
-    era: resp?.era ?? undefined,
     transcript: resp?.content ?? resp?.transcript ?? undefined,
+    audioUrl: resp?.audio_file_path ?? undefined,
   };
 }
 
@@ -602,15 +630,32 @@ export interface ServerSession {
   role: Role;
 }
 
+const SESSION_KEY = 'eum_session';
+
 let session: ServerSession | null = null;
 
 export function getSession(): ServerSession | null {
-  return session;
+  if (session) return session;
+  // 새로고침 후 메모리 세션이 비어있으면 localStorage에서 복원
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (raw) {
+      session = JSON.parse(raw) as ServerSession;
+      return session;
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
+function saveSession(s: ServerSession): void {
+  session = s;
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch { /* ignore */ }
 }
 
 /** 로그아웃 시 모듈 세션 초기화 (다음 로그인 시 새 세션 확보) */
 export function clearSession(): void {
   session = null;
+  try { localStorage.removeItem(SESSION_KEY); } catch { /* ignore */ }
 }
 
 const DEMO_PASSWORD = 'eum-demo';
@@ -646,13 +691,13 @@ async function doBootstrap(role: Role): Promise<ServerSession> {
   try {
     const res = await loginMember(username, DEMO_PASSWORD);
     registerMembers(await listMembers(res.family.id));
-    session = {
+    saveSession({
       familyId: res.family.id,
       memberId: res.member.id,
       memberName: res.member.name,
       role,
-    };
-    return session;
+    });
+    return session!;
   } catch (e) {
     // 401/404(계정 없음)일 때만 최초 생성 플로우로 진행, 그 외(네트워크 등)는 전파
     if (!(e instanceof ApiError) || (e.status !== 401 && e.status !== 404)) throw e;
@@ -675,9 +720,9 @@ async function doBootstrap(role: Role): Promise<ServerSession> {
 
   const me =
     created.find((m) => m.role === role && m.username) ?? created[role === 'parent' ? 0 : 2];
-  session = { familyId: family.id, memberId: me.id, memberName: me.name, role };
+  saveSession({ familyId: family.id, memberId: me.id, memberName: me.name, role });
 
-  return session;
+  return session!;
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -704,13 +749,13 @@ async function establishSession(res: ServerLoginResponse): Promise<ServerSession
     registerMembers([res.member]);
   }
   const role: Role = res.member.role === 'parent' ? 'parent' : 'child';
-  session = {
+  saveSession({
     familyId: res.family.id,
     memberId: res.member.id,
     memberName: res.member.name,
     role,
-  };
-  return session;
+  });
+  return session!;
 }
 
 /**
@@ -780,6 +825,7 @@ export async function fetchQuestions(familyId: string): Promise<Question[]> {
   const [qs, resps] = await Promise.all([
     listQuestions({ family_id: familyId }),
     listResponses({ family_id: familyId }),
+    listMembers(familyId).then(registerMembers).catch(() => {}),
   ]);
   // 응답은 created_at desc — 질문별 최신 응답 1건만 사용 (인라인 응답 모델)
   const respByQ = new Map<string, ServerResponse>();
@@ -831,18 +877,37 @@ export async function fetchPollVotes(familyId: string): Promise<{ votes: number[
 
 export async function pushAnswer(
   appQuestionId: number,
-  patch: { dur: string; transcript: string; era?: string }
+  patch: { dur: string; transcript: string; text?: string; from?: string; audioFilePath?: string }
 ): Promise<void> {
-  const sid = questionIds.serverId(appQuestionId);
-  if (!sid || !session) return;
+  if (!session) return;
+  let sid = questionIds.serverId(appQuestionId);
+
+  // 서버에 없는 질문(목업 등)이면 서버에 생성 후 매핑
+  if (!sid) {
+    if (!patch.text) return;
+    const fromId = memberIdByLabel.get(patch.from ?? '') ?? session.memberId;
+    // 부모에게 보낸 질문이면 to_member_id를 부모로, 아니면 현재 사용자
+    const parentMember = [...membersById.values()].find((m) => m.role === 'parent');
+    const toId = parentMember?.id ?? session.memberId;
+    const sq = await createQuestion({
+      family_id: session.familyId,
+      content: patch.text,
+      source: 'manual',
+      from_member_id: fromId,
+      to_member_id: toId,
+    });
+    sid = sq.id;
+    questionIds.bind(appQuestionId, sid);
+  }
+
   await createResponse({
     question_id: sid,
     member_id: session.memberId,
     content: patch.transcript,
     input_method: 'stt',
     transcript: patch.transcript,
-    era: patch.era,
     duration: patch.dur,
+    audio_file_path: patch.audioFilePath,
   });
 }
 

@@ -50,9 +50,12 @@ def generate_questions(
     category: str | None = None,
     from_member_id: str = "",
     to_member_id: str = "",
+    exclude: list[str] | None = None,
 ) -> list[dict]:
+    if exclude is None:
+        exclude = []
     questions = []
-    used: list[str] = []
+    used: list[str] = list(exclude)
 
     for _ in range(count):
         try:

@@ -33,6 +33,12 @@ yarn-error.*
 # local env files
 .env*.local
 
+# local API config (서버 주소가 포함되어 있어 추적하지 않음)
+src/api/local_config.ts
+
+# HTTPS proxy self-signed certs
+.certs/
+
 # typescript
 *.tsbuildinfo
 

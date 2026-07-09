@@ -40,6 +40,10 @@ export function HomeScreen({ navigation }: Props) {
   const aiDue = role === 'parent' && pendingChild.length === 0 && lastAnswerDaysAgo >= aiGapDays && !hasAi;
   const homeEmpty = pending.length === 0;
 
+  useEffect(() => {
+    if (aiDue) ensureAiQuestion().catch(() => {});
+  }, [aiDue, ensureAiQuestion]);
+
   const homeSub =
     pending.length > 0
       ? `오늘 답할 이야기가 ${pending.length}건 있어요`
@@ -47,23 +51,25 @@ export function HomeScreen({ navigation }: Props) {
         ? '이음이 질문을 준비했어요'
         : '모든 이야기에 답하셨어요';
 
-  // 원본 schedulePush: 부모 진입 1.4s 뒤 푸시 배너, 8s 뒤 자동 숨김 (세션 1회)
+  // 부모 진입 시 실제 pending 질문으로 푸시 배너 표시 (세션 1회)
   useEffect(() => {
     if (role !== 'parent' || pushScheduled) return;
+    const firstPending = questions.find((q) => q.status === 'pending');
+    if (!firstPending) return;
     pushScheduled = true;
     let hideTimer: ReturnType<typeof setTimeout> | undefined;
     const showTimer = setTimeout(() => {
-      setPush({ qid: 2, title: '서연의 새 질문이 도착했어요' });
+      setPush({ qid: firstPending.id, title: `${firstPending.from ?? '가족'}의 새 질문이 도착했어요` });
       hideTimer = setTimeout(() => setPush(null), 8000);
     }, 1400);
     return () => {
       clearTimeout(showTimer);
       if (hideTimer) clearTimeout(hideTimer);
     };
-  }, [role, setPush]);
+  }, [role, setPush, questions]);
 
-  const openAI = () => {
-    const id = ensureAiQuestion();
+  const openAI = async () => {
+    const id = await ensureAiQuestion();
     navigation.navigate('QuestionDetail', { questionId: id });
   };
 
@@ -95,7 +101,7 @@ export function HomeScreen({ navigation }: Props) {
               <Icon name="auto_awesome" size={19} color={colors.accent} />
               <Text style={styles.aiEyebrow}>이음이 준비한 질문 · 자녀 질문이 {aiGapDays}일째 없어요</Text>
             </View>
-            <Text style={styles.aiQuestion}>요즘 하루 중 가장 마음이 편안해지는 순간은 언제인가요?</Text>
+            <Text style={styles.aiQuestion}>{questions.find((q) => q.ai)?.text ?? '이음이 준비한 질문이에요'}</Text>
             <View style={styles.answerPill}>
               <Icon name="mic" size={19} color={colors.white} />
               <Text style={styles.answerPillText}>답변하기</Text>

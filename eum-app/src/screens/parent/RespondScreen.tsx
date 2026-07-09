@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, Alert } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, Alert, Platform } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Audio } from 'expo-av';
 
 import { ScreenContainer, Header, Icon, RecordingWave, PulseRing } from '../../components';
 import { colors, fonts, radius, sizes, shadow } from '../../theme';
@@ -31,6 +32,10 @@ export function RespondScreen({ route, navigation }: Props) {
   const [scribe, setScribe] = useState(false);
   const [scribeText, setScribeText] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [audioFilePath, setAudioFilePath] = useState<string | undefined>(undefined);
+  const [playing, setPlaying] = useState(false);
+  const audioRef = useRef<Audio.Sound | null>(null);
+  const webAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const recIdle = !recorder.recording && !recordDone;
   const recTime = fmt(recorder.durationSecs);
@@ -49,23 +54,64 @@ export function RespondScreen({ route, navigation }: Props) {
     setProcessing(true);
     try {
       const upload = await api.uploadAudioFile(result.uri);
+      setAudioFilePath(upload.filename);
       const stt = await api.transcribeAudio(upload.file_path);
       setTranscript(stt.text);
     } catch (e) {
-      console.warn('[eum] STT 변환 실패, 더미 텍스트 사용:', e);
-      setTranscript('음성 답변이 녹음되었어요.');
+      console.warn('[eum] STT 변환 실패, 서버에서 처리 예정:', e);
+      setTranscript('');
     }
     setProcessing(false);
   };
 
   const toggleScribe = () => setScribe((s) => !s);
 
+  const playRecording = async () => {
+    if (!recorder.uri) return;
+    if (Platform.OS === 'web') {
+      if (webAudioRef.current) { webAudioRef.current.pause(); webAudioRef.current = null; }
+      const audio = new (window as any).Audio(recorder.uri);
+      webAudioRef.current = audio;
+      audio.onended = () => setPlaying(false);
+      audio.onpause = () => setPlaying(false);
+      setPlaying(true);
+      await audio.play();
+    } else {
+      try {
+        if (audioRef.current) { await audioRef.current.unloadAsync(); audioRef.current = null; }
+        const { sound } = await Audio.Sound.createAsync({ uri: recorder.uri });
+        audioRef.current = sound;
+        setPlaying(true);
+        await sound.playAsync();
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish) { setPlaying(false); sound.setPositionAsync(0); }
+        });
+      } catch (e) { console.warn('[RespondScreen] playback failed:', e); }
+    }
+  };
+
+  const stopPlayback = async () => {
+    if (Platform.OS === 'web') {
+      webAudioRef.current?.pause();
+    } else {
+      await audioRef.current?.stopAsync();
+    }
+    setPlaying(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      audioRef.current?.unloadAsync();
+      webAudioRef.current?.pause();
+    };
+  }, []);
+
   const sendResp = () => {
     const scribeOk = scribe && scribeText.trim().length > 0;
     if (!recordDone && !scribeOk) return;
     const dur = scribeOk ? '글 답변' : recTime || '0:12';
-    const text = scribeOk ? scribeText.trim() : (transcript || '음성 답변이 전달되었어요.');
-    answerQuestion(curQ.id, { dur, transcript: text, era: '청년 시절' });
+    const text = scribeOk ? scribeText.trim() : transcript;
+    answerQuestion(curQ.id, { dur, transcript: text, audioFilePath: scribeOk ? undefined : audioFilePath });
     showToast('답변이 가족에게 전달되었어요');
     navigation.navigate('ParentTabs', { screen: 'Home' });
   };
@@ -78,6 +124,18 @@ export function RespondScreen({ route, navigation }: Props) {
         <View style={styles.qBox}>
           <Text style={styles.qBoxText}>Q. {curQ.text}</Text>
         </View>
+
+        {curQ.status === 'answered' && curQ.transcript ? (
+          <View style={styles.prevAnswerBox}>
+            <Text style={styles.prevAnswerLabel}>A. 이전 답변</Text>
+            <Text style={styles.prevAnswerText}>"{curQ.transcript}"</Text>
+            <View style={styles.prevAnswerMeta}>
+              <Icon name="play_circle" size={16} color={colors.accent} />
+              <Text style={styles.prevAnswerDur}>{curQ.dur ?? ''}</Text>
+              {curQ.category ? <Text style={styles.prevAnswerEra}>· {{childhood:'유년기',youth:'청년시절',twilight:'황혼기'}[curQ.category] ?? curQ.category}</Text> : null}
+            </View>
+          </View>
+        ) : null}
 
         <View style={styles.stage}>
           {recIdle ? (
@@ -117,10 +175,16 @@ export function RespondScreen({ route, navigation }: Props) {
                   <Text style={styles.transcriptText}>{transcript}</Text>
                 </View>
               )}
-              <Pressable style={styles.replayBtn} onPress={startRec}>
-                <Icon name="replay" size={20} color={colors.textMuted} />
-                <Text style={styles.replayText}>다시 녹음하기</Text>
-              </Pressable>
+              <View style={styles.playbackRow}>
+                <Pressable style={styles.playBtn} onPress={playing ? stopPlayback : playRecording}>
+                  <Icon name={playing ? 'pause_circle' : 'play_circle'} size={22} color={colors.accent} />
+                  <Text style={styles.playBtnText}>{playing ? '일시정지' : '녹음 듣기'}</Text>
+                </Pressable>
+                <Pressable style={styles.replayBtn} onPress={startRec}>
+                  <Icon name="replay" size={20} color={colors.textMuted} />
+                  <Text style={styles.replayText}>다시 녹음하기</Text>
+                </Pressable>
+              </View>
             </View>
           ) : null}
         </View>
@@ -175,6 +239,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   qBoxText: { fontFamily: fonts.bold, fontSize: 17, lineHeight: 26, color: colors.textMuted4 },
+
+  // 이전 답변
+  prevAnswerBox: {
+    width: '100%',
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border3,
+    borderRadius: radius.r18,
+    padding: 16,
+    gap: 8,
+    marginTop: 12,
+  },
+  prevAnswerLabel: { fontFamily: fonts.extraBold, fontSize: 13, color: colors.accent },
+  prevAnswerText: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 25, color: colors.text2 },
+  prevAnswerMeta: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
+  prevAnswerDur: { fontFamily: fonts.bold, fontSize: 13, color: colors.textMuted },
+  prevAnswerEra: { fontFamily: fonts.bold, fontSize: 13, color: colors.olive },
 
   stage: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 20, paddingVertical: 24 },
 
@@ -232,6 +313,9 @@ const styles = StyleSheet.create({
   transcriptText: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 26, color: colors.text },
   replayBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   replayText: { fontFamily: fonts.bold, fontSize: 16, color: colors.textMuted },
+  playbackRow: { flexDirection: 'row', alignItems: 'center', gap: 20 },
+  playBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  playBtnText: { fontFamily: fonts.bold, fontSize: 16, color: colors.accent },
 
   // scribe
   scribeSection: {

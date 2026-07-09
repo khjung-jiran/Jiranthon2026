@@ -30,6 +30,31 @@ logger = get_logger("eum.server")
 
 Base.metadata.create_all(bind=engine)
 
+# 기존 DB 카테고리 마이그레이션 (8개 → 3개)
+_VALID_CATEGORIES = {"childhood", "youth", "twilight"}
+_CATEGORY_MIGRATION = {
+    "love": "youth", "life": "twilight", "values": "twilight",
+    "family": "twilight", "food": "childhood", "seasonal": "twilight",
+}
+try:
+    from database import SessionLocal
+    from models import Question
+    _db = SessionLocal()
+    _migrated = 0
+    for q in _db.query(Question).all():
+        if q.category and q.category not in _VALID_CATEGORIES:
+            q.category = _CATEGORY_MIGRATION.get(q.category, "twilight")
+            _migrated += 1
+        elif not q.category:
+            q.category = "twilight"
+            _migrated += 1
+    if _migrated:
+        _db.commit()
+        logger.info(f"카테고리 마이그레이션: {_migrated}건")
+    _db.close()
+except Exception as e:
+    logger.warning(f"카테고리 마이그레이션 스킵: {e}")
+
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
 os.makedirs(os.path.join(UPLOAD_DIR, "audio"), exist_ok=True)
 os.makedirs(os.path.join(UPLOAD_DIR, "images"), exist_ok=True)

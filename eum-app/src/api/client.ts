@@ -11,11 +11,9 @@
  * ──────────────────────────────────────────────────────────────────────
  */
 import { Platform } from 'react-native';
+import { LOCAL_API_BASE } from './local_config';
 
-const DEFAULT_BASE_URL =
-  Platform.OS === 'web'
-    ? 'http://localhost:8000'
-    : 'http://localhost:8000'; // ← 실기기 테스트 시 'http://<PC-LAN-IP>:8000' 으로 교체
+const DEFAULT_BASE_URL = LOCAL_API_BASE;
 
 let baseUrl = DEFAULT_BASE_URL;
 

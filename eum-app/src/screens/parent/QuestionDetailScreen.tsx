@@ -75,6 +75,18 @@ export function QuestionDetailScreen({ route, navigation }: Props) {
 
         <Text style={styles.question}>{curQ.text}</Text>
 
+        {curQ.status === 'answered' && curQ.transcript ? (
+          <View style={styles.answerBox}>
+            <Text style={styles.answerLabel}>A. 이전 답변</Text>
+            <Text style={styles.answerText}>"{curQ.transcript}"</Text>
+            <View style={styles.answerMeta}>
+              <Icon name="play_circle" size={18} color={colors.accent} />
+              <Text style={styles.answerDur}>{curQ.dur ?? ''}</Text>
+              {curQ.era ? <Text style={styles.answerEra}>· {curQ.era}에 담김</Text> : null}
+            </View>
+          </View>
+        ) : null}
+
         {player.playing || ttsLoading ? (
           <View style={styles.ttsBox}>
             <View style={styles.eqWrap}>
@@ -117,6 +129,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginVertical: 26,
   },
+
+  // 이전 답변
+  answerBox: {
+    width: '100%',
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border3,
+    borderRadius: radius.r18,
+    padding: 18,
+    gap: 10,
+    marginBottom: 10,
+  },
+  answerLabel: { fontFamily: fonts.extraBold, fontSize: 13, color: colors.accent },
+  answerText: { fontFamily: fonts.regular, fontSize: 17, lineHeight: 27, color: colors.text2 },
+  answerMeta: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  answerDur: { fontFamily: fonts.bold, fontSize: 13, color: colors.textMuted },
+  answerEra: { fontFamily: fonts.bold, fontSize: 13, color: colors.olive },
 
   // TTS 재생 상태
   ttsBox: { alignItems: 'center', gap: 14, marginBottom: 6 },

@@ -30,7 +30,7 @@ export function ComposeScreen({ navigation }: Props) {
         rel: m.role === 'parent' ? '어머니/아버지' : '자녀',
       })));
     }).catch(() => {});
-    api.getAiSuggestions({ count: 4 }).then((r) => setAiQuestions(r.questions)).catch(() => {});
+    api.getAiSuggestions({ count: 4 }).then((r) => setAiQuestions(r.questions.map((q) => typeof q === 'string' ? q : q.content))).catch(() => {});
   }, []);
 
   const canSend = composeText.trim().length > 0 && !sending;

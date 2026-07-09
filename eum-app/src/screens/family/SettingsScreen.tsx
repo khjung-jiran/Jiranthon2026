@@ -11,8 +11,7 @@ import type { FontSizeOption } from '../../types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
-/** 환경설정 (sSetting, 725~801) — 원본에는 back 버튼이 없다(홈 기어로 진입, 시스템 뒤로가기/스와이프로 복귀) */
-export function SettingsScreen(_props: Props) {
+export function SettingsScreen({ navigation }: Props) {
   const role = useStore((s) => s.role);
   const currentUser = useStore((s) => s.currentUser);
   const settings = useStore((s) => s.settings);
@@ -46,11 +45,32 @@ export function SettingsScreen(_props: Props) {
     }).catch(() => {});
   }, []);
 
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+
+  const handleShowInviteCode = async () => {
+    const sess = api.getSession();
+    if (!sess) return;
+    try {
+      const { invite_code } = await api.getInviteCode(sess.familyId);
+      setInviteCode(invite_code);
+      showToast('초대 코드를 불러왔어요');
+    } catch (e) {
+      showToast('초대 코드를 불러오지 못했어요');
+    }
+  };
+
   return (
     <ScreenContainer edges={['top']}>
       <View style={s.head}>
-        <Text style={s.eyebrow}>환경설정</Text>
-        <Text style={s.h26}>설정</Text>
+        <View style={s.headRow}>
+          <Pressable style={s.backBtn} onPress={() => navigation.goBack()}>
+            <Icon name="arrow_back" size={24} color={colors.text} />
+          </Pressable>
+          <View style={s.flex}>
+            <Text style={s.eyebrow}>환경설정</Text>
+            <Text style={s.h26}>설정</Text>
+          </View>
+        </View>
       </View>
 
       <ScrollView style={s.flex} contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
@@ -156,10 +176,16 @@ export function SettingsScreen(_props: Props) {
               </View>
             </View>
           ))}
-          <Pressable style={s.inviteBtn} onPress={() => showToast('초대 링크를 복사했어요')}>
+          <Pressable style={s.inviteBtn} onPress={handleShowInviteCode}>
             <Icon name="person_add" size={19} color={colors.textMuted} />
-            <Text style={s.inviteBtnText}>가족 초대하기</Text>
+            <Text style={s.inviteBtnText}>초대코드 확인하기</Text>
           </Pressable>
+          {inviteCode ? (
+            <View style={s.inviteCodeBox}>
+              <Text style={s.inviteCodeLabel}>초대 코드</Text>
+              <Text style={s.inviteCodeText}>{inviteCode}</Text>
+            </View>
+          ) : null}
         </View>
 
         {/* 구독 */}
@@ -197,6 +223,8 @@ export function SettingsScreen(_props: Props) {
 const s = StyleSheet.create({
   flex: { flex: 1 },
   head: { paddingTop: 20, paddingHorizontal: 24, paddingBottom: 12 },
+  headRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  backBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.surfaceSoft, alignItems: 'center', justifyContent: 'center' },
   eyebrow: { fontFamily: fonts.extraBold, fontSize: 13, color: colors.accent, letterSpacing: 0.4 },
   h26: { fontFamily: fonts.extraBold, fontSize: 26, color: colors.text, marginTop: 5, letterSpacing: -0.5 },
 
@@ -261,6 +289,9 @@ const s = StyleSheet.create({
     gap: 6,
   },
   inviteBtnText: { fontFamily: fonts.bold, fontSize: 14, color: colors.textMuted },
+  inviteCodeBox: { backgroundColor: colors.surfaceSoft2, borderRadius: radius.r12, paddingVertical: 12, paddingHorizontal: 16, alignItems: 'center', gap: 4 },
+  inviteCodeLabel: { fontFamily: fonts.bold, fontSize: 12, color: colors.textMuted3 },
+  inviteCodeText: { fontFamily: fonts.extraBold, fontSize: 20, color: colors.accent, letterSpacing: 1 },
 
   planRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   planTitle: { fontFamily: fonts.extraBold, fontSize: 16, color: colors.text },

@@ -41,11 +41,12 @@ export interface Question {
   ago: string; // '2일 전' 등 표시용
   status: QuestionStatus;
   ai?: boolean; // AI 추천 질문 여부
+  category?: string; // 'childhood' | 'youth' | 'twilight'
   // 답변된 경우 채워짐 (인라인 응답 모델)
   dur?: string; // '0:48'
-  era?: string; // '청소년기' 등
   transcript?: string;
   transcriptEn?: string;
+  audioUrl?: string;
 }
 
 export type AnswerType = 'voice' | 'text';
@@ -58,19 +59,6 @@ export interface Answer {
   transcript?: string;
   dur?: string;
   createdAt?: string;
-}
-
-// ── 스토리북 ──────────────────────────────────────────────────────────
-export interface StorybookPage {
-  era: string; // '유년기' | '청소년기' | '청년 시절' | '부모 시절'
-  years: string; // '1955 – 1968'
-  title: string;
-  dur: string;
-  count: number; // 모인 이야기 수
-  isNew: boolean;
-  body: string;
-  audioUrl?: string;
-  sourceAnswerIds?: number[];
 }
 
 // ── 사진(앨범) ────────────────────────────────────────────────────────
