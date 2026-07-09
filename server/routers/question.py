@@ -56,24 +56,9 @@ def list_questions(
     return query.order_by(Question.created_at.desc()).all()
 
 
-@router.get("/questions/{qid}", response_model=QuestionOut)
-def get_question(qid: str, db: Session = Depends(get_db)):
-    q = db.query(Question).filter(Question.id == qid).first()
-    if not q:
-        raise HTTPException(404, "질문을 찾을 수 없습니다")
-    return q
-
-
-@router.delete("/questions/{qid}")
-def delete_question(qid: str, db: Session = Depends(get_db)):
-    q = db.query(Question).filter(Question.id == qid).first()
-    if not q:
-        raise HTTPException(404, "질문을 찾을 수 없습니다")
-    db.delete(q)
-    db.commit()
-    return {"success": True}
-
-
+# NOTE: 고정 경로(/questions/ai-suggestions)는 동적 경로(/questions/{qid})보다
+# 먼저 등록해야 한다. FastAPI는 등록 순서대로 매칭하므로, 아래에 두면
+# "ai-suggestions"가 qid로 잡혀 항상 404가 났다. (프론트 연동 중 발견·수정)
 @router.get("/questions/ai-suggestions")
 def get_ai_suggestions(
     category: str | None = None,
@@ -101,6 +86,24 @@ def get_ai_suggestions(
         return {"questions": questions}
     except Exception as e:
         raise HTTPException(500, f"질문 생성 실패: {e}")
+
+
+@router.get("/questions/{qid}", response_model=QuestionOut)
+def get_question(qid: str, db: Session = Depends(get_db)):
+    q = db.query(Question).filter(Question.id == qid).first()
+    if not q:
+        raise HTTPException(404, "질문을 찾을 수 없습니다")
+    return q
+
+
+@router.delete("/questions/{qid}")
+def delete_question(qid: str, db: Session = Depends(get_db)):
+    q = db.query(Question).filter(Question.id == qid).first()
+    if not q:
+        raise HTTPException(404, "질문을 찾을 수 없습니다")
+    db.delete(q)
+    db.commit()
+    return {"success": True}
 
 
 @router.post("/responses", response_model=ResponseOut)

@@ -90,6 +90,15 @@ export const colors = {
   // 앨범 그리드 캡션 오버레이 — text(#2E2318) 55% 불투명도와 동일한 rgb
   textScrim: 'rgba(46,35,24,0.55)',
 
+  // 소책자 정보카드 구분선 + 설정 가족 역할칩 배경 — 원본 #F4EADA (surfaceSoft2 #F5EADA와 1비트 다른 별도 값)
+  chipMuted: '#F4EADA',
+
+  // ImageSlot placeholder (RN 전용 대체물 — 원본에 대응 토큰 없음)
+  placeholderBg: 'rgba(0,0,0,0.04)',
+  placeholderBorder: 'rgba(0,0,0,0.25)',
+  placeholderIcon: 'rgba(0,0,0,0.45)',
+  placeholderText: 'rgba(0,0,0,0.55)',
+
   white: '#FFFFFF',
   black: '#000000',
 } as const;

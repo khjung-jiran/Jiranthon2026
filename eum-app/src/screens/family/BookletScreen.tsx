@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, Platform } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScreenContainer, Icon } from '../../components';
 import { colors, fonts, radius, shadow } from '../../theme';
@@ -94,7 +94,7 @@ const s = StyleSheet.create({
   coverSub: { fontFamily: fonts.regular, fontSize: 12, color: colors.coverText, opacity: 0.8, marginTop: 8 },
   qrRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   qrBox: { width: 44, height: 44, borderRadius: 8, backgroundColor: colors.coverText, alignItems: 'center', justifyContent: 'center' },
-  qrText: { fontFamily: 'monospace', fontSize: 11, fontWeight: '700', color: colors.accentStrong },
+  qrText: { fontFamily: Platform.select({ ios: 'Courier', android: 'monospace' }), fontSize: 11, fontWeight: '700', color: colors.accentStrong },
   qrCaption: { flex: 1, fontFamily: fonts.regular, fontSize: 11, lineHeight: 17, color: colors.coverText, opacity: 0.85 },
 
   infoCard: {
@@ -106,7 +106,7 @@ const s = StyleSheet.create({
     marginTop: 22,
   },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13 },
-  infoRowBorder: { borderBottomWidth: 1, borderBottomColor: colors.surfaceSoft2 },
+  infoRowBorder: { borderBottomWidth: 1, borderBottomColor: colors.chipMuted },
   infoText: { flex: 1, fontFamily: fonts.regular, fontSize: 14, color: colors.textMuted4 },
 
   footer: { paddingHorizontal: 22, paddingTop: 12, paddingBottom: 20, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.bgScreen },

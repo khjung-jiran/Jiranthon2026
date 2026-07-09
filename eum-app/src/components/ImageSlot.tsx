@@ -43,7 +43,7 @@ export function ImageSlot({
         style,
       ]}
     >
-      <Icon name="image" size={28} color="rgba(0,0,0,0.45)" />
+      <Icon name="image" size={28} color={colors.placeholderIcon} />
       <Text style={styles.caption}>{placeholder}</Text>
     </View>
   );
@@ -51,10 +51,10 @@ export function ImageSlot({
 
 const styles = StyleSheet.create({
   box: {
-    backgroundColor: 'rgba(0,0,0,0.04)',
+    backgroundColor: colors.placeholderBg,
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: 'rgba(0,0,0,0.25)',
+    borderColor: colors.placeholderBorder,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   caption: {
     fontFamily: fonts.medium,
     fontSize: 13,
-    color: 'rgba(0,0,0,0.55)',
+    color: colors.placeholderText,
     textAlign: 'center',
   },
 });

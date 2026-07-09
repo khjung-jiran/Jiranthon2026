@@ -236,7 +236,7 @@ const s = StyleSheet.create({
   familyAvatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   familyAvatarText: { fontFamily: fonts.bold, fontSize: 15, color: colors.white },
   familyLabel: { flex: 1, fontFamily: fonts.bold, fontSize: 15, color: colors.text },
-  familyChip: { paddingVertical: 5, paddingHorizontal: 10, borderRadius: radius.pill, backgroundColor: colors.surfaceSoft2 },
+  familyChip: { paddingVertical: 5, paddingHorizontal: 10, borderRadius: radius.pill, backgroundColor: colors.chipMuted },
   familyChipText: { fontFamily: fonts.extraBold, fontSize: 12, color: colors.textMuted3 },
   inviteBtn: {
     height: 46,

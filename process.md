@@ -43,5 +43,7 @@ Foundation(1) ─▶ [common · parent · child · family] 병렬(4) ─▶ Mana
 | [High] 글씨 크기 설정 미적용 | 🔄 수정 예정 |
 
 ## 다음 단계
-1. 커밋·push (solji) → WSL pull → `npx tsc --noEmit` 타입검증
-2. 리뷰 High/Medium 수정 → `expo start`로 실기기(QR)/웹 확인
+1. ✅ **서버 연동 완료** — `src/api/`(client+도메인 매핑) 신설, 스토어 `hydrate()`+`serverOnline`+쓰기 액션 best-effort 동기화. 서버 다운 시 목업 폴백(오프라인 모드). 화면 파일 무수정. 상세: `docs/process/integration.md`
+2. 커밋·push (solji) → WSL pull → `npx tsc --noEmit` 타입검증 → 서버(`uvicorn main:app --host 0.0.0.0`) 띄우고 왕복 스모크 테스트
+3. 리뷰 High/Medium 수정 → `expo start`로 실기기(QR)/웹 확인 (실기기는 `setApiBase('http://<PC-LAN-IP>:8000')` 필요)
+4. 음성 업로드(`/api/uploads/audio`)·STT/TTS 연동, 캘린더/앨범 하이드레이트(화면의 mock 직접 참조 해소 필요)
