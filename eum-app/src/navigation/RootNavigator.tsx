@@ -7,6 +7,7 @@ import { ParentTabs } from './ParentTabs';
 import { ChildTabs } from './ChildTabs';
 
 import { LoginScreen } from '../screens/common/LoginScreen';
+import { AuthScreen } from '../screens/common/AuthScreen';
 import { NotificationScreen } from '../screens/common/NotificationScreen';
 import { QuestionDetailScreen } from '../screens/parent/QuestionDetailScreen';
 import { RespondScreen } from '../screens/parent/RespondScreen';
@@ -31,7 +32,10 @@ export function RootNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {role === null ? (
-        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Group>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Auth" component={AuthScreen} />
+        </Stack.Group>
       ) : role === 'parent' ? (
         <Stack.Screen name="ParentTabs" component={ParentTabs} />
       ) : (

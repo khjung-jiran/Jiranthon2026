@@ -1,19 +1,22 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ScreenContainer, VoiceBars, Icon } from '../../components';
 import { colors, fonts } from '../../theme';
-import { useStore } from '../../store/useStore';
+import type { RootStackParamList } from '../../navigation/types';
 import type { Role } from '../../types';
 
 /**
  * 로그인 / 역할선택 (sLogin) — 원본 이음.dc.html 라인 47~76.
  * 로고 파형 + 타이틀 "이음" + 부모/자녀 선택 버튼 + 가족 초대 코드 안내.
- * 역할 진입은 store.login(role) → RootNavigator가 자동으로 탭으로 분기.
+ * 역할 선택 → Auth 화면(가입/로그인)으로 이동. 실제 세션 진입은 AuthScreen에서
+ * authLogin(서버) 또는 login(오프라인 데모)으로 수행한다.
  */
 export function LoginScreen() {
-  const login = useStore((s) => s.login);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-  const start = (role: Role) => login(role);
+  const start = (role: Role) => navigation.navigate('Auth', { role });
 
   return (
     <ScreenContainer>

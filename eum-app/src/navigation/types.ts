@@ -6,6 +6,7 @@
  *   type Props = NativeStackScreenProps<RootStackParamList, 'QuestionDetail'>;
  */
 import type { NavigatorScreenParams } from '@react-navigation/native';
+import type { Role } from '../types';
 
 /** 부모/자녀 하단 탭 (라벨: 홈/이야기/달력/사진) */
 export type ParentTabParamList = {
@@ -25,6 +26,7 @@ export type ChildTabParamList = {
 /** 루트 스택 (로그인 → 역할별 탭 → 위로 push되는 상세/모달 화면들) */
 export type RootStackParamList = {
   Login: undefined; // common/LoginScreen
+  Auth: { role: Role }; // common/AuthScreen (역할 선택 후 가입/로그인)
   ParentTabs: NavigatorScreenParams<ParentTabParamList>;
   ChildTabs: NavigatorScreenParams<ChildTabParamList>;
 

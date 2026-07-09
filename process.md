@@ -44,6 +44,7 @@ Foundation(1) ─▶ [common · parent · child · family] 병렬(4) ─▶ Mana
 
 ## 다음 단계
 1. ✅ **서버 연동 완료** — `src/api/`(client+도메인 매핑) 신설, 스토어 `hydrate()`+`serverOnline`+쓰기 액션 best-effort 동기화. 서버 다운 시 목업 폴백(오프라인 모드). 화면 파일 무수정. 상세: `docs/process/integration.md`
-2. 커밋·push (solji) → WSL pull → `npx tsc --noEmit` 타입검증 → 서버(`uvicorn main:app --host 0.0.0.0`) 띄우고 왕복 스모크 테스트
-3. 리뷰 High/Medium 수정 → `expo start`로 실기기(QR)/웹 확인 (실기기는 `setApiBase('http://<PC-LAN-IP>:8000')` 필요)
-4. 음성 업로드(`/api/uploads/audio`)·STT/TTS 연동, 캘린더/앨범 하이드레이트(화면의 mock 직접 참조 해소 필요)
+2. ✅ **회원가입/로그인 화면 완료** — `screens/common/AuthScreen.tsx` 신설(역할 선택 → 가입/로그인, 가족 생성·초대코드 참여, 초대코드 안내 모달, 오프라인 폴백). `api.signup/signin` + 스토어 `authLogin` 추가(기존 `login(role)`은 데모/오프라인용 유지, 기존 액션 시그니처 무변경). 세션은 메모리 전용(재시작 시 재로그인 — MVP). 상세: `docs/process/auth.md`
+3. 커밋·push (solji) → WSL pull → `npx tsc --noEmit` 타입검증 → 서버(`uvicorn main:app --host 0.0.0.0`) 띄우고 왕복 스모크 테스트 (+가입/로그인/초대코드/오프라인 폴백 4경로)
+4. 리뷰 High/Medium 수정 → `expo start`로 실기기(QR)/웹 확인 (실기기는 `setApiBase('http://<PC-LAN-IP>:8000')` 필요)
+5. 음성 업로드(`/api/uploads/audio`)·STT/TTS 연동, 캘린더/앨범 하이드레이트(화면의 mock 직접 참조 해소 필요), 세션 영속화(AsyncStorage) 및 hydrate 빈 배열 반영 정책 전환(신규 가족 목업 노출 해소)

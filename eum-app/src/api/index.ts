@@ -708,6 +708,98 @@ async function seedDemoData(familyId: string, members: ServerMember[]): Promise<
 }
 
 // ─────────────────────────────────────────────────────────────────────
+// 실계정 가입/로그인 (AuthScreen)
+// ─────────────────────────────────────────────────────────────────────
+
+/** 가입/로그인 성공 결과 — 스토어 authLogin()에 그대로 전달한다. */
+export interface AuthResult {
+  session: ServerSession;
+  member: ServerMember;
+  family: ServerFamily;
+  /** 가족 초대 코드 (가족 공유용) */
+  inviteCode: string | null;
+  /** 이번 가입에서 가족을 새로 만들었는지 (초대코드 안내 모달 노출 여부) */
+  createdFamily: boolean;
+}
+
+/** 로그인 응답으로 모듈 세션을 확정하고 구성원 라벨 매핑을 등록한다. */
+async function establishSession(res: ServerLoginResponse): Promise<ServerSession> {
+  try {
+    registerMembers(await listMembers(res.family.id));
+  } catch {
+    // 라벨 매핑 실패는 치명적이지 않음 (표시명이 원문으로 나올 뿐)
+    registerMembers([res.member]);
+  }
+  const role: Role = res.member.role === 'parent' ? 'parent' : 'child';
+  session = {
+    familyId: res.family.id,
+    memberId: res.member.id,
+    memberName: res.member.name,
+    role,
+  };
+  return session;
+}
+
+/**
+ * 회원가입 체인: 가족 생성 or 초대코드 참여 → 멤버 생성 → 로그인.
+ * - inviteCode가 있으면 참여(404 = 잘못된 코드), 없으면 familyName으로 새 가족 생성.
+ * - createMember는 아이디 중복 시 409를 throw한다.
+ * - 성공 시 데모 bootstrapSession과 동일한 모듈 세션이 확보되어,
+ *   이후 store.hydrate()의 bootstrapSession()이 이 세션을 재사용한다(데모 계정 미생성).
+ */
+export async function signup(input: {
+  name: string;
+  username: string;
+  password: string;
+  role: Role;
+  familyName?: string;
+  inviteCode?: string;
+}): Promise<AuthResult> {
+  let family: ServerFamily;
+  let createdFamily = false;
+  if (input.inviteCode) {
+    family = await joinFamily(input.inviteCode);
+  } else {
+    family = await createFamily(input.familyName?.trim() || `${input.name}네 가족`);
+    createdFamily = true;
+  }
+
+  await createMember({
+    family_id: family.id,
+    name: input.name,
+    role: input.role,
+    username: input.username,
+    password: input.password,
+  });
+
+  const res = await loginMember(input.username, input.password);
+  const sess = await establishSession(res);
+  return {
+    session: sess,
+    member: res.member,
+    family: res.family,
+    inviteCode: res.invite_code ?? res.family.invite_code,
+    createdFamily,
+  };
+}
+
+/** 기존 계정 로그인 (401 = 아이디/비밀번호 불일치). */
+export async function signin(input: {
+  username: string;
+  password: string;
+}): Promise<AuthResult> {
+  const res = await loginMember(input.username, input.password);
+  const sess = await establishSession(res);
+  return {
+    session: sess,
+    member: res.member,
+    family: res.family,
+    inviteCode: res.invite_code ?? res.family.invite_code,
+    createdFamily: false,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────
 // 스토어용 하이드레이트 함수 (서버 → 앱 타입)
 // ─────────────────────────────────────────────────────────────────────
 

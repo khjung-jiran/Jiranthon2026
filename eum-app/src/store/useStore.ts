@@ -91,7 +91,14 @@ interface StoreState {
   push: { qid: number; title: string } | null;
 
   // ── 세션 액션 ──
+  /** 데모/오프라인용 진입 — 목업 프로필로 로그인 (기존 화면 계약 유지) */
   login: (role: Role) => void;
+  /**
+   * 실제 서버 계정 세션으로 로그인 (AuthScreen 가입/로그인 성공 시).
+   * api.signup()/api.signin()의 결과를 그대로 받는다. 세션은 메모리 전용 —
+   * 영속화 없음(MVP), 앱 재시작 시 재로그인 필요.
+   */
+  authLogin: (auth: api.AuthResult) => void;
   logout: () => void;
   /** 서버 헬스체크 + 데이터 하이드레이트. 실패해도 절대 throw하지 않는다(목업 폴백) */
   hydrate: () => Promise<void>;
@@ -158,6 +165,24 @@ export const useStore = create<StoreState>((set, get) => ({
   login: (role) => {
     set({ role, currentUser: makeUser(role), tab: 'home' });
     void get().hydrate(); // 서버 세션 확보 + 데이터 로드 (실패 시 목업 유지)
+  },
+  authLogin: (auth) => {
+    const role: Role = auth.member.role === 'parent' ? 'parent' : 'child';
+    set({
+      role,
+      currentUser: {
+        id: auth.member.id,
+        name: auth.member.name,
+        role,
+        familyId: auth.member.family_id,
+        color: role === 'parent' ? '#7C8A55' : '#5B7086', // makeUser와 동일 팔레트
+      },
+      tab: 'home',
+      serverOnline: true,
+    });
+    // api.signup/signin이 이미 모듈 세션을 확보했으므로 hydrate의
+    // bootstrapSession()은 그 세션을 재사용한다 (데모 계정 생성 안 함).
+    void get().hydrate();
   },
   logout: () => set({ role: null, currentUser: null, tab: 'home', push: null }),
   switchRole: () => {
