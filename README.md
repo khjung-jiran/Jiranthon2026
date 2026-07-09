@@ -2,19 +2,19 @@
 
 > 자식이 부모님에게 질문하고, 부모님이 음성/텍스트로 응답하며, 그 답변들을 모아 스토리북으로 만드는 프로젝트
 
-## 전체 진행률: 5% █░░░░░░░░░░░░░░░░░░░
+## 전체 진행률: 90% █████████████████████░
 
 | 모듈 | 진행률 | 상태 |
 |------|--------|------|
-| `stt/` | 40% | 기본 구현 완료, 앱 연동 필요 |
-| `tts/` | 0% | 미시작 |
-| `question-engine/` | 0% | 미시작 |
-| `server/` | 0% | 미시작 |
-| `app/` | 0% | 미시작 |
-| `calendar/` | 0% | 미시작 |
-| `storybook/` | 0% | 미시작 |
-| `shared/` | 0% | 미시작 |
-| `models/` | 10% | 폴더 구조 설계 완료 |
+| `stt/` | 100% | Whisper + Google STT, 파일/실시간 변환, 앱 연동 완료 |
+| `tts/` | 100% | edge-tts (Microsoft Edge TTS) 구현 완료 |
+| `question-engine/` | 100% | 자동/수동 질문 생성, 카테고리 템플릿 완료 |
+| `server/` | 100% | FastAPI + SQLite, 모든 API 라우터 + 로깅 구현 완료 |
+| `eum-app/` | 95% | 14개 화면, 디자인 v2 반영, STT/TTS 연동, 소책자/모달 남음 |
+| `calendar/` | 100% | 서버 API + 앱 캘린더 화면 완료 |
+| `storybook/` | 60% | 스토리북 화면(목차+페이지) 구현, 소책자/생성 로직 일부 |
+| `shared/` | 100% | 공통 타입, 상수, 유틸 완료 |
+| `models/` | 100% | Whisper 모델 자동 다운로드 (~/.cache/whisper) |
 
 ## 프로젝트 개요
 
@@ -53,11 +53,11 @@ Jiranthon2026/
 ├── tts/                        # 텍스트 → 음성 변환 (Text-to-Speech)
 ├── question-engine/            # 질문 생성 엔진 (수동 + 자동)
 ├── server/                     # 백엔드 API 서버 및 데이터베이스
-├── app/                        # 통합 앱 (부모 모드 + 자식 모드, 역할 분기)
+├── eum-app/                    # 통합 앱 (Expo React Native, 부모/자녀 모드 분기)
 ├── calendar/                   # 가족 공유 캘린더 (사진, 음성/텍스트 댓글)
 ├── storybook/                  # 스토리북 생성 모듈
 ├── shared/                     # 공통 타입, 스키마, 유틸리티
-└── models/                     # AI/ML 모델 파일 (Vosk, LLM 등, .gitignore 제외)
+└── models/                     # AI/ML 모델 (Whisper 자동 다운로드, .gitignore 제외)
 ```
 
 ## 기술 스택 (제안)
@@ -66,9 +66,9 @@ Jiranthon2026/
 |------|------|
 | 서버 | Python (FastAPI) |
 | 데이터베이스 | SQLite (개발) → PostgreSQL (운영) |
-| STT | Vosk (오프라인) / Google Speech API (온라인) |
-| TTS | gTTS / Azure TTS / Naver Clova TTS |
-| 통합 앱 | React + TypeScript (웹), 역할별 모드 분기 |
+| STT | Whisper (오프라인) / Google Speech API (온라인) |
+| TTS | edge-tts (Microsoft Edge TTS) |
+| 통합 앱 | React Native + Expo (웹/iOS/Android), 역할별 모드 분기 |
 | 스토리북 | Python (Jinja2 템플릿) → PDF/HTML 생성 |
 
 ## 빠른 시작
@@ -84,12 +84,10 @@ pip install -r requirements.txt
 #    macOS:   brew install ffmpeg
 #    Ubuntu:  sudo apt install ffmpeg
 
-# 3. Vosk 모델 다운로드 (오프라인 STT용)
-#    https://alphacephei.com/vosk/models 에서 vosk-model-small-ko-0.22 다운로드
-#    압축 해제 후 models/stt/ 폴더에 배치
+# 3. Whisper 모델은 최초 실행 시 자동 다운로드됩니다 (~/.cache/whisper/)
 
 # 4. Node.js 의존성 (통합 앱)
-cd app && npm install
+cd eum-app && npm install
 ```
 
 ### 실행
@@ -100,11 +98,13 @@ uvicorn server.main:app --reload --port 8000
 # API 문서: http://localhost:8000/docs
 
 # 통합 앱 실행
-cd app && npm run dev
+cd eum-app && npm run web   # 웹
+# cd eum-app && npm run ios   # iOS 시뮬레이터
+# cd eum-app && npm run android  # Android 에뮬레이터
 
 # STT 파일 변환 (프로젝트 루트에서)
+python stt/stt_runner.py file recording.m4a whisper
 python stt/stt_runner.py file recording.m4a google
-python stt/stt_runner.py file recording.m4a vosk
 ```
 
 ### 의존성 목록

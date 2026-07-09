@@ -37,6 +37,9 @@ media/
 *.db
 *.sqlite3
 
+# 로그
+logs/
+
 # OS
 .DS_Store
 Thumbs.db

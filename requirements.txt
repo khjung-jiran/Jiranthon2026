@@ -13,7 +13,8 @@ pyaudio==0.2.14                # 마이크 입력 (실시간 인식)
 pydub==0.25.1                  # 오디오 포맷 변환 (m4a → wav 등)
 
 # --- TTS (텍스트 → 음성) ---
-gtts==2.5.4                    # Google Text-to-Speech
+edge-tts==7.0.0                 # Microsoft Edge TTS (오프라인, 고품질 한국어)
+gtts==2.5.4                    # Google Text-to-Speech (백업)
 
 # --- Server (백엔드 API) ---
 fastapi==0.115.6               # 웹 프레임워크
