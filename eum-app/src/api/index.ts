@@ -10,7 +10,7 @@
  * 레지스트리(makeIdRegistry)가 서버 id ↔ 앱 number id를 세션 동안 안정적으로
  * 양방향 매핑한다 (하이드레이트로 받은 항목에 대해 쓰기 액션 동기화 가능).
  */
-import { ApiError, apiGet, apiPost, apiPut, request } from './client';
+import { ApiError, apiGet, apiPost, apiPut, request, getApiBase } from './client';
 import type {
   Capsule,
   CapsuleStatus,
@@ -20,13 +20,6 @@ import type {
   Question,
   Role,
 } from '../types';
-import {
-  questions as mockQuestions,
-  capsules as mockCapsules,
-  notifs as mockNotifs,
-  pollTitle,
-  pollLabels,
-} from '../data/mock';
 
 export { setApiBase, getApiBase, ApiError } from './client';
 
@@ -346,6 +339,71 @@ export function updateSettings(
   return apiPut<{ success: boolean }>('/api/settings', patch, { member_id: memberId });
 }
 
+// -- 캘린더 (routers/calendar.py) --
+export interface ServerCalendarEntry {
+  id: string;
+  family_id: string;
+  date: string; // 'YYYY-MM-DD'
+  title: string;
+  created_by: string;
+  tag: string | null;
+  color: string | null;
+  created_at: string;
+}
+
+export function listCalendarEntries(familyId: string, month?: string): Promise<ServerCalendarEntry[]> {
+  return apiGet<ServerCalendarEntry[]>('/api/calendar/entries', { family_id: familyId, month });
+}
+
+export function createCalendarEntry(payload: {
+  family_id: string;
+  date: string;
+  title: string;
+  created_by: string;
+  tag?: string;
+  color?: string;
+}): Promise<ServerCalendarEntry> {
+  return apiPost<ServerCalendarEntry>('/api/calendar/entries', payload);
+}
+
+// -- 앨범 (routers/album.py) --
+export interface ServerPhoto {
+  id: string;
+  family_id: string;
+  url: string;
+  label: string | null;
+  who: string | null;
+  created_at: string;
+}
+
+export function listPhotos(familyId: string, who?: string): Promise<ServerPhoto[]> {
+  return apiGet<ServerPhoto[]>('/api/album', { family_id: familyId, who });
+}
+
+// -- STT/TTS (routers/voice.py) --
+export function transcribeAudio(filePath: string, engine?: string): Promise<{ text: string; audio_file_path: string }> {
+  return apiPost<{ text: string; audio_file_path: string }>('/api/stt/transcribe', { file_path: filePath, engine: engine ?? 'whisper', language: 'ko' });
+}
+
+export function synthesizeTTS(text: string): Promise<{ audio_url: string }> {
+  return apiPost<{ audio_url: string }>('/api/tts/synthesize', { text });
+}
+
+export async function uploadAudioFile(uri: string): Promise<{ file_path: string; filename: string; url: string }> {
+  const formData = new FormData();
+  formData.append('file', {
+    uri,
+    name: 'audio.wav',
+    type: 'audio/wav',
+  } as any);
+  const res = await fetch(`${getApiBase()}/api/uploads/audio`, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) throw new ApiError(`오디오 업로드 실패: ${res.status}`, res.status);
+  return res.json();
+}
+
 // ─────────────────────────────────────────────────────────────────────
 // ID 레지스트리 — 서버 string id ↔ 앱 number id
 // ─────────────────────────────────────────────────────────────────────
@@ -470,8 +528,6 @@ function ddayFromIso(iso: string): string {
 
 export function mapQuestion(sq: ServerQuestion, resp?: ServerResponse): Question {
   const isAi = sq.source !== 'manual';
-  // 서버 스키마에 transcript_en이 없으므로 동일 문구의 목업에서 영문 번역을 재사용
-  const mockMatch = mockQuestions.find((m) => m.text === sq.content);
   return {
     id: questionIds.appId(sq.id),
     text: sq.content,
@@ -483,7 +539,6 @@ export function mapQuestion(sq: ServerQuestion, resp?: ServerResponse): Question
     dur: resp?.duration ?? undefined,
     era: resp?.era ?? undefined,
     transcript: resp?.content ?? resp?.transcript ?? undefined,
-    transcriptEn: mockMatch?.transcriptEn,
   };
 }
 
@@ -553,6 +608,11 @@ export function getSession(): ServerSession | null {
   return session;
 }
 
+/** 로그아웃 시 모듈 세션 초기화 (다음 로그인 시 새 세션 확보) */
+export function clearSession(): void {
+  session = null;
+}
+
 const DEMO_PASSWORD = 'eum-demo';
 const DEMO_USERNAMES: Record<Role, string> = { parent: 'eum_parent', child: 'eum_child' };
 const DEMO_FAMILY_NAME = '김순자네 가족';
@@ -617,94 +677,7 @@ async function doBootstrap(role: Role): Promise<ServerSession> {
     created.find((m) => m.role === role && m.username) ?? created[role === 'parent' ? 0 : 2];
   session = { familyId: family.id, memberId: me.id, memberName: me.name, role };
 
-  try {
-    await seedDemoData(family.id, created);
-  } catch (err) {
-    console.warn('[eum] 데모 데이터 시드 일부 실패 (앱 동작에는 영향 없음):', err);
-  }
   return session;
-}
-
-/** 최초 1회: 목업(state)과 동일한 데모 데이터를 서버에 만들어 왕복 동기화를 가능하게 한다 */
-async function seedDemoData(familyId: string, members: ServerMember[]): Promise<void> {
-  const byName = (name: string) => members.find((m) => m.name === name);
-  const mom = byName('김순자');
-  const dad = byName('김영수');
-  const jihun = byName('지훈');
-  const seoyeon = byName('서연');
-  if (!mom || !dad || !jihun || !seoyeon) return;
-
-  // 질문 + 답변 (오래된 것부터 생성 → created_at desc 정렬이 목업 순서와 일치)
-  for (const q of [...mockQuestions].reverse()) {
-    const from = q.from === '서연' ? seoyeon : jihun;
-    const sq = await createQuestion({
-      family_id: familyId,
-      content: q.text,
-      source: 'manual',
-      from_member_id: from.id,
-      to_member_id: mom.id,
-    });
-    if (q.status === 'answered' && q.transcript) {
-      await createResponse({
-        question_id: sq.id,
-        member_id: mom.id,
-        content: q.transcript,
-        input_method: 'stt',
-        transcript: q.transcript,
-        era: q.era,
-        duration: q.dur,
-      });
-    }
-  }
-
-  // 타임캡슐 ('가족 모두' 등 비구성원 수신자는 라벨 문자열 그대로 저장)
-  const idOf = (label: string) => memberIdByLabel.get(label) ?? label;
-  for (const c of [...mockCapsules].reverse()) {
-    const sc = await createCapsule({
-      family_id: familyId,
-      from_member_id: idOf(c.from),
-      to_member_id: idOf(c.to),
-      title: c.title,
-      open_date: dotsToIso(c.when),
-      duration: c.dur,
-    });
-    if (c.status === 'open') await openCapsule(sc.id);
-  }
-
-  // 알림 (로그인 가능한 두 계정 모두에게 시드, 목업의 읽음 상태 반영)
-  const NAV_TYPE: Record<string, string> = {
-    caps: 'capsule',
-    poll: 'poll',
-    album: 'face',
-    c_resp: 'response',
-  };
-  for (const target of [mom, jihun]) {
-    for (const n of [...mockNotifs].reverse()) {
-      const sn = await createNotification({
-        member_id: target.id,
-        type: (n.nav && NAV_TYPE[n.nav]) || 'question',
-        title: n.title,
-        icon: n.icon,
-        color: n.color,
-        nav_target: n.nav ?? undefined,
-      });
-      if (!n.unread) await markNotificationRead(sn.id);
-    }
-  }
-
-  // 투표 (초기 득표 [2,1,0]: 엄마·아빠 → 0번, 서연 → 1번)
-  const poll = await createPoll({
-    family_id: familyId,
-    title: pollTitle,
-    created_by: jihun.id,
-    options: [...pollLabels],
-  });
-  const opt = (i: number) => poll.options[i]?.id;
-  if (opt(0)) {
-    await votePoll(poll.id, { member_id: mom.id, option_id: opt(0)! });
-    await votePoll(poll.id, { member_id: dad.id, option_id: opt(0)! });
-  }
-  if (opt(1)) await votePoll(poll.id, { member_id: seoyeon.id, option_id: opt(1)! });
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -835,26 +808,20 @@ export async function fetchSettings(memberId: string): Promise<{
   return { autoTranslate: s.auto_translate, voiceGuide: s.voice_guide, fontSize };
 }
 
-/** 현재(목업과 동일한) 투표의 서버 매핑 캐시 — votePollByIndex에서 사용 */
-let currentPoll: { serverId: string; optionIds: string[] } | null = null;
+/** 현재 투표의 서버 매핑 캐시 — votePollByIndex에서 사용 */
+let currentPoll: { serverId: string; optionIds: string[]; title: string; labels: string[] } | null = null;
 
 /**
- * 목업과 같은 제목의 투표를 찾아 옵션별 득표수 반환.
- * 화면(PollScreen)이 라벨을 mock에서 직접 읽으므로, 옵션 순서를
- * pollLabels 순서로 정렬해 인덱스가 일치하도록 맞춘다.
+ * 서버에서 최신 투표를 찾아 옵션별 득표수와 라벨을 반환.
  */
-export async function fetchPollVotes(familyId: string): Promise<number[] | null> {
+export async function fetchPollVotes(familyId: string): Promise<{ votes: number[]; labels: string[]; title: string } | null> {
   const polls = await listPolls(familyId);
-  const poll = polls.find((p) => p.title === pollTitle) ?? polls[0];
+  const poll = polls[0];
   if (!poll || poll.options.length === 0) return null;
 
-  let options = poll.options;
-  if (poll.title === pollTitle) {
-    const ordered = pollLabels.map((label) => poll.options.find((o) => o.label === label));
-    if (ordered.every((o): o is ServerPollOption => o !== undefined)) options = ordered;
-  }
-  currentPoll = { serverId: poll.id, optionIds: options.map((o) => o.id) };
-  return options.map((o) => o.vote_count);
+  const options = poll.options;
+  currentPoll = { serverId: poll.id, optionIds: options.map((o) => o.id), title: poll.title, labels: options.map((o) => o.label) };
+  return { votes: options.map((o) => o.vote_count), labels: options.map((o) => o.label), title: poll.title };
 }
 
 // ─────────────────────────────────────────────────────────────────────

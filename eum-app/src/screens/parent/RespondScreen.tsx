@@ -1,19 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, TextInput, StyleSheet, Alert } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { ScreenContainer, Header, Icon, RecordingWave, PulseRing } from '../../components';
 import { colors, fonts, radius, sizes, shadow } from '../../theme';
 import { useStore } from '../../store/useStore';
 import { formatDuration as fmt } from '../../utils/time';
+import { useAudioRecorder } from '../../hooks/useAudioRecorder';
+import * as api from '../../api';
 import type { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Respond'>;
 
 /**
  * 부모 답변하기 (sPRespond, 원본 201~255).
- * "답변 말하기" 녹음 버튼 → recIdle/recording/recordDone 3단계 + 텍스트 대필(scribe) 모드.
- * 실제 STT/녹음은 목업(1초 타이머로 recordSecs 증가)으로 재현.
+ * "답변 말하기" 녹음 버튼 → 실제 녹음 → 서버 STT 변환 → 답변 전송.
+ * 텍스트 대필(scribe) 모드 지원.
  */
 export function RespondScreen({ route, navigation }: Props) {
   const { questionId } = route.params;
@@ -22,37 +24,38 @@ export function RespondScreen({ route, navigation }: Props) {
   const answerQuestion = useStore((s) => s.answerQuestion);
   const showToast = useStore((s) => s.showToast);
 
-  const [recording, setRecording] = useState(false);
+  const recorder = useAudioRecorder();
+  const currentUser = useStore((s) => s.currentUser);
   const [recordDone, setRecordDone] = useState(false);
-  const [recordSecs, setRecordSecs] = useState(0);
+  const [transcript, setTranscript] = useState('');
   const [scribe, setScribe] = useState(false);
   const [scribeText, setScribeText] = useState('');
+  const [processing, setProcessing] = useState(false);
 
-  const recIdle = !recording && !recordDone;
-  const recTime = fmt(recordSecs);
-  const canSend = recordDone || (scribe && scribeText.trim().length > 0);
+  const recIdle = !recorder.recording && !recordDone;
+  const recTime = fmt(recorder.durationSecs);
+  const canSend = (recordDone || (scribe && scribeText.trim().length > 0)) && !processing;
 
-  const recTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const clearRecTimer = () => {
-    if (recTimer.current) {
-      clearInterval(recTimer.current);
-      recTimer.current = null;
-    }
-  };
-  useEffect(() => clearRecTimer, []);
-
-  const startRec = () => {
-    clearRecTimer();
-    setRecording(true);
+  const startRec = async () => {
     setRecordDone(false);
-    setRecordSecs(0);
-    recTimer.current = setInterval(() => setRecordSecs((s) => s + 1), 1000);
+    setTranscript('');
+    await recorder.start();
   };
 
-  const stopRec = () => {
-    clearRecTimer();
-    setRecording(false);
+  const stopRec = async () => {
+    const result = await recorder.stop();
+    if (!result) return;
     setRecordDone(true);
+    setProcessing(true);
+    try {
+      const upload = await api.uploadAudioFile(result.uri);
+      const stt = await api.transcribeAudio(upload.file_path);
+      setTranscript(stt.text);
+    } catch (e) {
+      console.warn('[eum] STT 변환 실패, 더미 텍스트 사용:', e);
+      setTranscript('음성 답변이 녹음되었어요.');
+    }
+    setProcessing(false);
   };
 
   const toggleScribe = () => setScribe((s) => !s);
@@ -60,10 +63,9 @@ export function RespondScreen({ route, navigation }: Props) {
   const sendResp = () => {
     const scribeOk = scribe && scribeText.trim().length > 0;
     if (!recordDone && !scribeOk) return;
-    const dur = scribeOk ? '글 답변' : fmt(recordSecs) || '0:12';
-    const transcript = scribeOk ? scribeText.trim() : '방금 녹음한 음성 답변이 가족에게 전달되었어요.';
-    answerQuestion(curQ.id, { dur, transcript, era: '청년 시절' });
-    clearRecTimer();
+    const dur = scribeOk ? '글 답변' : recTime || '0:12';
+    const text = scribeOk ? scribeText.trim() : (transcript || '음성 답변이 전달되었어요.');
+    answerQuestion(curQ.id, { dur, transcript: text, era: '청년 시절' });
     showToast('답변이 가족에게 전달되었어요');
     navigation.navigate('ParentTabs', { screen: 'Home' });
   };
@@ -87,7 +89,7 @@ export function RespondScreen({ route, navigation }: Props) {
             </View>
           ) : null}
 
-          {recording ? (
+          {recorder.recording ? (
             <View style={styles.recWrap}>
               <RecordingWave color={colors.accent} active count={30} />
               <Text style={styles.recTime}>{recTime}</Text>
@@ -107,13 +109,14 @@ export function RespondScreen({ route, navigation }: Props) {
                 <Icon name="check" size={40} color={colors.accent} />
               </View>
               <Text style={styles.doneTitle}>녹음 완료 · {recTime}</Text>
-              <View style={styles.playerBox}>
-                <Icon name="play_circle" size={34} color={colors.accent} />
-                <View style={styles.playerTrack}>
-                  <View style={styles.playerFill} />
+              {processing ? (
+                <Text style={styles.processingText}>음성을 텍스트로 변환 중…</Text>
+              ) : (
+                <View style={styles.transcriptBox}>
+                  <Text style={styles.transcriptLabel}>변환된 텍스트</Text>
+                  <Text style={styles.transcriptText}>{transcript}</Text>
                 </View>
-                <Text style={styles.playerTime}>{recTime}</Text>
-              </View>
+              )}
               <Pressable style={styles.replayBtn} onPress={startRec}>
                 <Icon name="replay" size={20} color={colors.textMuted} />
                 <Text style={styles.replayText}>다시 녹음하기</Text>
@@ -134,7 +137,7 @@ export function RespondScreen({ route, navigation }: Props) {
             <View style={styles.scribeBody}>
               <View style={styles.scribeBadge}>
                 <Icon name="supervisor_account" size={16} color={colors.blue} />
-                <Text style={styles.scribeBadgeText}>대필 모드 · 지훈이 대신 입력해요</Text>
+                <Text style={styles.scribeBadgeText}>대필 모드 · {currentUser?.name ?? '자녀'}이 대신 입력해요</Text>
               </View>
               <TextInput
                 value={scribeText}
@@ -223,21 +226,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   doneTitle: { fontFamily: fonts.bold, fontSize: 19, color: colors.text },
-  playerBox: {
-    width: '100%',
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.border3,
-    borderRadius: radius.r18,
-    paddingVertical: 16,
-    paddingHorizontal: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  playerTrack: { flex: 1, height: 8, borderRadius: 6, backgroundColor: colors.track, overflow: 'hidden' },
-  playerFill: { width: '38%', height: '100%', borderRadius: 6, backgroundColor: colors.accent },
-  playerTime: { fontFamily: fonts.bold, fontSize: 14, color: colors.textMuted },
+  processingText: { fontFamily: fonts.regular, fontSize: 15, color: colors.textMuted, marginTop: 4 },
+  transcriptBox: { width: '100%', backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border3, borderRadius: radius.r18, padding: 16, gap: 6 },
+  transcriptLabel: { fontFamily: fonts.extraBold, fontSize: 13, color: colors.textFaint2 },
+  transcriptText: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 26, color: colors.text },
   replayBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   replayText: { fontFamily: fonts.bold, fontSize: 16, color: colors.textMuted },
 

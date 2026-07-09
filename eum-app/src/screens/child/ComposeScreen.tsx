@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, StyleSheet } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { ScreenContainer, Overlay, Icon } from '../../components';
 import { colors, fonts, radius } from '../../theme';
 import { useStore } from '../../store/useStore';
-import { aiQuestions, targets as targetOptions } from '../../data/mock';
+import * as api from '../../api';
 import type { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Compose'>;
@@ -13,15 +13,49 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Compose'>;
 export function ComposeScreen({ navigation }: Props) {
   const target = useStore((s) => s.target);
   const setTarget = useStore((s) => s.setTarget);
+  const showToast = useStore((s) => s.showToast);
 
   const [composeText, setComposeText] = useState('');
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [aiQuestions, setAiQuestions] = useState<string[]>([]);
+  const [targetOptions, setTargetOptions] = useState<{ name: string; rel: string }[]>([]);
 
-  const canSend = composeText.trim().length > 0;
+  useEffect(() => {
+    const session = api.getSession();
+    if (!session) return;
+    api.listMembers(session.familyId).then((members) => {
+      setTargetOptions(members.filter((m) => m.role === 'parent').map((m) => ({
+        name: m.name,
+        rel: m.role === 'parent' ? '어머니/아버지' : '자녀',
+      })));
+    }).catch(() => {});
+    api.getAiSuggestions({ count: 4 }).then((r) => setAiQuestions(r.questions)).catch(() => {});
+  }, []);
 
-  const sendQuestion = () => {
+  const canSend = composeText.trim().length > 0 && !sending;
+
+  const sendQuestion = async () => {
     if (!canSend) return;
+    setSending(true);
+    try {
+      const session = api.getSession();
+      if (session) {
+        const targetMember = await api.listMembers(session.familyId);
+        const match = targetMember.find((m) => m.name === target || target.includes(m.name));
+        await api.createQuestion({
+          family_id: session.familyId,
+          content: composeText.trim(),
+          source: 'manual',
+          from_member_id: session.memberId,
+          to_member_id: match?.id ?? targetMember.find((m) => m.role === 'parent')?.id ?? session.memberId,
+        });
+      }
+    } catch (e) {
+      console.warn('[eum] 질문 전송 실패 (로컬만 반영):', e);
+    }
     setSent(true);
+    setSending(false);
   };
   const closeSent = () => {
     setSent(false);

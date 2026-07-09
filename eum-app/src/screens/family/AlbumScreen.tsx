@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, Pressable, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { ScreenContainer, Icon } from '../../components';
 import { colors, fonts, radius, tint } from '../../theme';
 import { useStore } from '../../store/useStore';
-import { photos as mockPhotos, albumFilters } from '../../data/mock';
+import * as api from '../../api';
 import type { Photo } from '../../types';
 
 /** 원본 photosData 톤 배경(반복 대각 스트라이프)의 근사 — RN 단순화: 톤 옅은 배경 + 카메라 아이콘 */
@@ -33,9 +33,29 @@ function ChildAlbum() {
   const extraPhotos = useStore((s) => s.extraPhotos);
   const addPhoto = useStore((s) => s.addPhoto);
   const showToast = useStore((s) => s.showToast);
+  const [serverPhotos, setServerPhotos] = useState<Photo[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const allPhotos = [...extraPhotos, ...mockPhotos];
+  const loadPhotos = useCallback(async () => {
+    const session = api.getSession();
+    if (!session) return;
+    setRefreshing(true);
+    try {
+      const photos = await api.listPhotos(session.familyId);
+      setServerPhotos(photos.map((p) => ({
+        label: p.label ?? '',
+        who: p.who ?? '',
+        tone: '#7C8A55',
+      })));
+    } catch (e) { console.warn('[eum] 사진 조회 실패:', e); }
+    setRefreshing(false);
+  }, []);
+
+  useEffect(() => { loadPhotos(); }, [loadPhotos]);
+
+  const allPhotos = [...extraPhotos, ...serverPhotos];
   const filtered = allPhotos.filter((p) => albumFilter === '전체' || p.who === albumFilter);
+  const albumFilters = ['전체', ...Array.from(new Set(serverPhotos.map((p) => p.who).filter(Boolean)))];
 
   const onUpload = () => {
     addPhoto();
@@ -94,7 +114,25 @@ function ChildAlbum() {
 // ── 부모 모드 ────────────────────────────────────────────────────────
 function ParentAlbum() {
   const extraPhotos = useStore((s) => s.extraPhotos);
-  const allPhotos = [...extraPhotos, ...mockPhotos];
+  const [serverPhotos, setServerPhotos] = useState<Photo[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const session = api.getSession();
+      if (!session) return;
+      try {
+        const photos = await api.listPhotos(session.familyId);
+        setServerPhotos(photos.map((p) => ({
+          label: p.label ?? '',
+          who: p.who ?? '',
+          tone: '#7C8A55',
+        })));
+      } catch (e) { console.warn('[eum] 사진 조회 실패:', e); }
+    };
+    load();
+  }, []);
+
+  const allPhotos = [...extraPhotos, ...serverPhotos];
   const photosParent = allPhotos.slice(0, 6);
 
   return (

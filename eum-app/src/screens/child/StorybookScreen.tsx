@@ -1,27 +1,66 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { ScreenContainer, Icon } from '../../components';
 import { colors, fonts, radius, tint } from '../../theme';
-import { storybookPages, eraTone } from '../../data/mock';
+import * as api from '../../api';
+import type { StorybookPage } from '../../types';
 import type { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Storybook'>;
 
 type StoryView = 'toc' | 'page';
 
+const ERA_TONE: Record<string, string> = {
+  '유년기': '#7C8A55',
+  '청소년기': '#5B7086',
+  '청년 시절': '#9A7B3C',
+  '부모 시절': '#8C5F6E',
+};
+
+const ERA_ORDER = ['유년기', '청소년기', '청년 시절', '부모 시절'];
+
 export function StorybookScreen({ navigation }: Props) {
   const [storyView, setStoryView] = useState<StoryView>('toc');
   const [storyPage, setStoryPage] = useState(0);
   const [storyPlaying, setStoryPlaying] = useState(false);
+  const [pages, setPages] = useState<StorybookPage[]>([]);
   const playTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => () => {
-    if (playTimer.current) clearTimeout(playTimer.current);
+  const loadStories = useCallback(async () => {
+    const session = api.getSession();
+    if (!session) return;
+    try {
+      const responses = await api.listResponses({ family_id: session.familyId });
+      if (responses.length === 0) return;
+      const byEra = new Map<string, StorybookPage>();
+      for (const r of responses) {
+        const era = r.era ?? '청년 시절';
+        if (!byEra.has(era)) {
+          byEra.set(era, {
+            era,
+            years: '',
+            title: r.content.slice(0, 20) + '…',
+            dur: r.duration ?? '0:00',
+            count: 1,
+            isNew: false,
+            body: r.content,
+          });
+        } else {
+          const existing = byEra.get(era)!;
+          existing.count = (existing.count ?? 1) + 1;
+        }
+      }
+      const sorted = ERA_ORDER.filter((e) => byEra.has(e)).map((e) => byEra.get(e)!);
+      setPages(sorted);
+    } catch (e) { console.warn('[eum] 스토리북 조회 실패:', e); }
   }, []);
 
-  const chTotal = storybookPages.reduce((a, p) => a + (p.count || 1), 0);
+  useEffect(() => { loadStories(); }, [loadStories]);
+  useEffect(() => () => { if (playTimer.current) clearTimeout(playTimer.current); }, []);
+
+  const chTotal = pages.reduce((a, p) => a + (p.count || 1), 0);
 
   const back = () => {
     if (storyView === 'page') {
@@ -49,7 +88,7 @@ export function StorybookScreen({ navigation }: Props) {
   };
 
   const nextStory = () => {
-    setStoryPage((p) => Math.min(p + 1, storybookPages.length - 1));
+    setStoryPage((p) => Math.min(p + 1, pages.length - 1));
     setStoryPlaying(false);
   };
   const prevStory = () => {
@@ -57,13 +96,35 @@ export function StorybookScreen({ navigation }: Props) {
     setStoryPlaying(false);
   };
 
-  const cur = storybookPages[storyPage];
-  const eraColor = eraTone[cur.era] || colors.olive;
+  const cur = pages[storyPage];
+  const eraColor = cur ? (ERA_TONE[cur.era] || colors.olive) : colors.olive;
   const prNow = cur.count || 1;
   const prTotal = 3;
   const progPct = Math.min(100, Math.round((prNow / prTotal) * 100));
   const progText =
     prNow >= prTotal ? '챕터 완성!' : `이야기 ${prNow}/${prTotal} · ${prTotal - prNow}개 더 모으면 완성`;
+
+  if (pages.length === 0) {
+    return (
+      <ScreenContainer edges={['top', 'bottom']}>
+        <View style={styles.topBar}>
+          <Pressable style={styles.backBtn} onPress={back}>
+            <Icon name="arrow_back" size={26} color={colors.text} />
+          </Pressable>
+          <View>
+            <Text style={styles.topTitle}>이야기책</Text>
+            <Text style={styles.topSub}>가족의 이야기</Text>
+          </View>
+        </View>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 }}>
+          <Icon name="auto_stories" size={48} color={colors.textFaint} />
+          <Text style={{ fontFamily: fonts.bold, fontSize: 18, color: colors.textMuted, marginTop: 16, textAlign: 'center' }}>
+            아직 모인 이야기가 없어요{'\n'}질문에 답하면 이야기가 쌓여요
+          </Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer edges={['top', 'bottom']}>
@@ -74,7 +135,7 @@ export function StorybookScreen({ navigation }: Props) {
         </Pressable>
         <View>
           <Text style={styles.topTitle}>이야기책</Text>
-          <Text style={styles.topSub}>엄마 김순자의 이야기</Text>
+          <Text style={styles.topSub}>가족의 이야기</Text>
         </View>
       </View>
 
@@ -88,16 +149,16 @@ export function StorybookScreen({ navigation }: Props) {
           <View style={styles.tocHeaderCard}>
             <Icon name="auto_stories" size={34} color={colors.coverText} />
             <View style={styles.flex}>
-              <Text style={styles.tocHeaderTitle}>엄마 김순자의 이야기</Text>
-              <Text style={styles.tocHeaderSub}>모인 이야기 {chTotal}편 · 챕터 4개</Text>
+              <Text style={styles.tocHeaderTitle}>가족의 이야기</Text>
+              <Text style={styles.tocHeaderSub}>모인 이야기 {chTotal}편 · 챕터 {pages.length}개</Text>
             </View>
           </View>
 
           <Text style={styles.sectionLabel}>목차</Text>
 
           <View style={styles.chapterList}>
-            {storybookPages.map((p, i) => {
-              const cColor = eraTone[p.era] || colors.olive;
+            {pages.map((p, i) => {
+              const cColor = ERA_TONE[p.era] || colors.olive;
               return (
                 <Pressable key={p.era} style={styles.chapterCard} onPress={() => openCh(i)}>
                   <View style={[styles.chapterNum, { backgroundColor: tint(cColor, 12) }]}>
@@ -169,7 +230,7 @@ export function StorybookScreen({ navigation }: Props) {
               <Icon name="chevron_left" size={26} color={colors.text} />
             </Pressable>
             <View style={styles.dotsRow}>
-              {storybookPages.map((p, i) => (
+              {pages.map((p, i) => (
                 <View
                   key={p.era}
                   style={{
@@ -182,7 +243,7 @@ export function StorybookScreen({ navigation }: Props) {
               ))}
             </View>
             <Pressable
-              style={[styles.navBtnAccent, { opacity: storyPage === storybookPages.length - 1 ? 0.4 : 1 }]}
+              style={[styles.navBtnAccent, { opacity: storyPage === pages.length - 1 ? 0.4 : 1 }]}
               onPress={nextStory}
             >
               <Icon name="chevron_right" size={26} color={colors.white} />

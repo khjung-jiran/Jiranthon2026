@@ -7,7 +7,6 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScreenContainer, Icon, ImageSlot } from '../../components';
 import { colors, fonts, radius, typography } from '../../theme';
 import { useStore } from '../../store/useStore';
-import { aiHomeQuestionText } from '../../data/mock';
 import { avatarColorFor as avColor } from '../../utils/avatar';
 import type { ParentTabParamList, RootStackParamList } from '../../navigation/types';
 
@@ -30,6 +29,7 @@ export function HomeScreen({ navigation }: Props) {
   const aiGapDays = useStore((s) => s.aiGapDays);
   const ensureAiQuestion = useStore((s) => s.ensureAiQuestion);
   const setPush = useStore((s) => s.setPush);
+  const currentUser = useStore((s) => s.currentUser);
 
   const hasUnread = notifs.some((n) => n.unread);
 
@@ -73,7 +73,7 @@ export function HomeScreen({ navigation }: Props) {
       <View style={styles.head}>
         <View style={styles.headText}>
           <Text style={styles.eyebrow}>부모님 모드</Text>
-          <Text style={styles.greeting}>안녕하세요, 순자님</Text>
+          <Text style={styles.greeting}>안녕하세요, {currentUser?.name ?? '회원'}님</Text>
           <Text style={styles.sub}>{homeSub}</Text>
         </View>
         <View style={styles.headBtns}>
@@ -95,7 +95,7 @@ export function HomeScreen({ navigation }: Props) {
               <Icon name="auto_awesome" size={19} color={colors.accent} />
               <Text style={styles.aiEyebrow}>이음이 준비한 질문 · 자녀 질문이 {aiGapDays}일째 없어요</Text>
             </View>
-            <Text style={styles.aiQuestion}>{aiHomeQuestionText}</Text>
+            <Text style={styles.aiQuestion}>요즘 하루 중 가장 마음이 편안해지는 순간은 언제인가요?</Text>
             <View style={styles.answerPill}>
               <Icon name="mic" size={19} color={colors.white} />
               <Text style={styles.answerPillText}>답변하기</Text>

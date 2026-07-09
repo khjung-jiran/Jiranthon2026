@@ -1,34 +1,32 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, Pressable, StyleSheet, Alert, TextInput } from 'react-native';
 import { ScreenContainer, Icon } from '../../components';
 import { colors, fonts, radius, tint } from '../../theme';
 import { useStore } from '../../store/useStore';
-import { calendarEvents, calendarDotMap, todayDate, weekdays } from '../../data/mock';
+import * as api from '../../api';
+import { weekdays } from '../../data/mock';
 
 type Cell = { n: number; fg: string; bg: string; dot: string };
 
 /** 원본 renderVals cells 생성 로직 그대로 이식 */
 function buildCells(): Cell[] {
+  const realToday = new Date().getDate();
   const cells: Cell[] = [];
   [28, 29, 30].forEach((n) => cells.push({ n, fg: colors.textFaint5, bg: 'transparent', dot: 'transparent' }));
   for (let n = 1; n <= 31; n++) {
-    const today = n === todayDate;
+    const today = n === realToday;
     cells.push({
       n,
       fg: today ? colors.white : colors.text2,
       bg: today ? colors.accent : 'transparent',
-      dot: calendarDotMap[n] || 'transparent',
+      dot: 'transparent',
     });
   }
   cells.push({ n: 1, fg: colors.textFaint5, bg: 'transparent', dot: 'transparent' });
   return cells;
 }
 
-const events = calendarEvents.map((e) => ({
-  ...e,
-  byline: e.by + ' 등록',
-  dateLabel: '7월 ' + e.d + '일 (' + e.dow + ')',
-}));
+type CalEvent = { d: number; dow: string; title: string; by: string; tag: string; color: string; byline: string; dateLabel: string };
 
 /** 가족 캘린더 (sCal, 445~515) — 부모/자녀 탭 공용 */
 export function CalendarScreen() {
@@ -39,6 +37,56 @@ export function CalendarScreen() {
 // ── 자녀 모드 ────────────────────────────────────────────────────────
 function ChildCalendar() {
   const cells = buildCells();
+  const [events, setEvents] = useState<CalEvent[]>([]);
+  const [adding, setAdding] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDate, setNewDate] = useState('');
+
+  const loadEvents = useCallback(async () => {
+    const session = api.getSession();
+    if (!session) return;
+    try {
+      const entries = await api.listCalendarEntries(session.familyId, '2026-07');
+      if (entries.length > 0) {
+        const mapped = entries.map((e) => ({
+          d: new Date(e.date).getDate(),
+          dow: ['일', '월', '화', '수', '목', '금', '토'][new Date(e.date).getDay()],
+          title: e.title,
+          by: '가족',
+          tag: e.tag ?? '가족',
+          color: e.color ?? '#AC5D3B',
+          byline: '가족 등록',
+          dateLabel: '7월 ' + new Date(e.date).getDate() + '일',
+        }));
+        setEvents(mapped as any);
+      }
+    } catch (e) { console.warn('[eum] 캘린더 조회 실패:', e); }
+  }, []);
+
+  useEffect(() => { loadEvents(); }, [loadEvents]);
+
+  const addEvent = async () => {
+    if (!newTitle.trim() || !newDate.trim()) return;
+    const session = api.getSession();
+    if (!session) return;
+    try {
+      const day = parseInt(newDate, 10);
+      const isoDate = `2026-07-${String(day).padStart(2, '0')}`;
+      await api.createCalendarEntry({
+        family_id: session.familyId,
+        date: isoDate,
+        title: newTitle.trim(),
+        created_by: session.memberId,
+        tag: '가족',
+        color: '#AC5D3B',
+      });
+      setAdding(false);
+      setNewTitle('');
+      setNewDate('');
+      loadEvents();
+    } catch (e) { Alert.alert('일정 추가 실패', String(e)); }
+  };
+
   return (
     <ScreenContainer edges={['top']} scroll contentContainerStyle={s.childBody} stickyHeaderIndices={undefined}>
       <View style={s.childHead}>
@@ -92,10 +140,36 @@ function ChildCalendar() {
           ))}
         </View>
 
-        <Pressable style={s.addBtn}>
-          <Icon name="add" size={22} color={colors.textMuted} />
-          <Text style={s.addText}>일정 추가</Text>
-        </Pressable>
+        {adding ? (
+          <View style={s.addForm}>
+            <TextInput
+              style={s.addInput}
+              placeholder="일정 제목"
+              value={newTitle}
+              onChangeText={setNewTitle}
+            />
+            <TextInput
+              style={s.addInput}
+              placeholder="날짜 (예: 15)"
+              value={newDate}
+              onChangeText={setNewDate}
+              keyboardType="numeric"
+            />
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Pressable style={s.addConfirmBtn} onPress={addEvent}>
+                <Text style={s.addConfirmText}>추가</Text>
+              </Pressable>
+              <Pressable style={s.addCancelBtn} onPress={() => setAdding(false)}>
+                <Text style={s.addCancelText}>취소</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <Pressable style={s.addBtn} onPress={() => setAdding(true)}>
+            <Icon name="add" size={22} color={colors.textMuted} />
+            <Text style={s.addText}>일정 추가</Text>
+          </Pressable>
+        )}
       </View>
     </ScreenContainer>
   );
@@ -103,6 +177,31 @@ function ChildCalendar() {
 
 // ── 부모 모드 ────────────────────────────────────────────────────────
 function ParentCalendar() {
+  const [events, setEvents] = useState<CalEvent[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const session = api.getSession();
+      if (!session) return;
+      try {
+        const entries = await api.listCalendarEntries(session.familyId, '2026-07');
+        if (entries.length > 0) {
+          setEvents(entries.map((e) => ({
+            d: new Date(e.date).getDate(),
+            dow: ['일', '월', '화', '수', '목', '금', '토'][new Date(e.date).getDay()],
+            title: e.title,
+            by: '가족',
+            tag: e.tag ?? '가족',
+            color: e.color ?? '#AC5D3B',
+            byline: '가족 등록',
+            dateLabel: '7월 ' + new Date(e.date).getDate() + '일',
+          })) as any);
+        }
+      } catch (e) { console.warn('[eum] 캘린더 조회 실패:', e); }
+    };
+    load();
+  }, []);
+
   return (
     <ScreenContainer edges={['top']} scroll contentContainerStyle={{ paddingBottom: 8 }}>
       <View style={s.parentHead}>
@@ -214,6 +313,13 @@ const s = StyleSheet.create({
     gap: 7,
   },
   addText: { fontFamily: fonts.bold, fontSize: 15, color: colors.textMuted },
+
+  addForm: { marginTop: 14, gap: 10, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border3, borderRadius: radius.r16, padding: 16 },
+  addInput: { borderWidth: 1.5, borderColor: colors.border2, borderRadius: radius.r12, padding: 12, fontSize: 16, fontFamily: fonts.regular, color: colors.text },
+  addConfirmBtn: { flex: 1, height: 48, borderRadius: radius.r12, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+  addConfirmText: { color: colors.white, fontSize: 16, fontFamily: fonts.bold },
+  addCancelBtn: { flex: 1, height: 48, borderRadius: radius.r12, borderWidth: 1.5, borderColor: colors.border2, alignItems: 'center', justifyContent: 'center' },
+  addCancelText: { color: colors.textMuted, fontSize: 16, fontFamily: fonts.bold },
 
   // 부모
   parentHead: { paddingTop: 22, paddingHorizontal: 26, paddingBottom: 14 },

@@ -4,7 +4,6 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScreenContainer, Icon } from '../../components';
 import { colors, fonts, radius, tint } from '../../theme';
 import { useStore } from '../../store/useStore';
-import { pollLabels } from '../../data/mock';
 import type { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Poll'>;
@@ -13,6 +12,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Poll'>;
 export function PollScreen({ navigation }: Props) {
   const pollVotes = useStore((s) => s.pollVotes);
   const pollVoted = useStore((s) => s.pollVoted);
+  const pollLabels = useStore((s) => s.pollLabels);
+  const pollTitle = useStore((s) => s.pollTitle);
   const vote = useStore((s) => s.vote);
 
   const total = pollVotes.reduce((a, b) => a + b, 0);
@@ -35,11 +36,14 @@ export function PollScreen({ navigation }: Props) {
         </View>
 
         <Text style={s.title}>
-          추석 가족 모임,{'\n'}언제가 좋아요?
+          {pollTitle || '가족 투표'}
         </Text>
-        <Text style={s.sub}>지훈 제안 · 10월 1일 마감 · {total}명 참여</Text>
+        <Text style={s.sub}>{total}명 참여</Text>
 
-        <View style={s.options}>
+        {pollLabels.length === 0 ? (
+          <Text style={s.hint}>아직 진행 중인 투표가 없어요</Text>
+        ) : (
+          <View style={s.options}>
           {pollLabels.map((label, i) => {
             const v = pollVotes[i] ?? 0;
             const pct = total ? Math.round((v / total) * 100) : 0;
@@ -72,7 +76,8 @@ export function PollScreen({ navigation }: Props) {
               </Pressable>
             );
           })}
-        </View>
+          </View>
+        )}
 
         <Text style={s.hint}>{hint}</Text>
       </ScrollView>

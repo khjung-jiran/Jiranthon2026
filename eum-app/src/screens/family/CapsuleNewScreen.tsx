@@ -13,6 +13,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'CapsuleNew'>;
 /** 타임캡슐 작성 (sCapsNew, 591~645) */
 export function CapsuleNewScreen({ navigation }: Props) {
   const role = useStore((s) => s.role);
+  const currentUser = useStore((s) => s.currentUser);
   const sealCapsule = useStore((s) => s.sealCapsule);
   const showToast = useStore((s) => s.showToast);
 
@@ -48,7 +49,7 @@ export function CapsuleNewScreen({ navigation }: Props) {
       when: capWhen,
       title: capTitle,
       dur: fmt(recordSecs),
-      from: role === 'parent' ? '엄마' : '지훈',
+      from: currentUser?.name ?? (role === 'parent' ? '부모님' : '자녀'),
     });
     navigation.goBack();
     showToast(`타임캡슐을 봉인했어요 · ${w.when}에 열려요`, 3000);

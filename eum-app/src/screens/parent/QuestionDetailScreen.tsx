@@ -6,56 +6,58 @@ import { ScreenContainer, Header, Icon, EqBars } from '../../components';
 import { colors, fonts, radius } from '../../theme';
 import { useStore } from '../../store/useStore';
 import { avatarColorFor as avColor } from '../../utils/avatar';
+import { useAudioPlayer } from '../../hooks/useAudioPlayer';
+import * as api from '../../api';
 import type { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'QuestionDetail'>;
 
 /**
  * 부모 질문 상세 (sPDetail, 원본 174~200).
- * 큰 질문 텍스트 + "질문 듣기" TTS 버튼(재생상태 ttsPlaying: 이퀄/진행바) + 답변하기.
- * TTS는 목업 타이머(130ms마다 +3%, 100%에서 정지)로 재현.
+ * 큰 질문 텍스트 + "질문 듣기" TTS 버튼 (서버 TTS 합성 → 실제 오디오 재생) + 답변하기.
  */
 export function QuestionDetailScreen({ route, navigation }: Props) {
   const { questionId } = route.params;
   const questions = useStore((s) => s.questions);
   const curQ = questions.find((q) => q.id === questionId) ?? questions[0];
 
-  const [ttsPlaying, setTtsPlaying] = useState(false);
+  const [ttsLoading, setTtsLoading] = useState(false);
   const [ttsPct, setTtsPct] = useState(0);
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const player = useAudioPlayer();
+  const pctTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const clear = () => {
-    if (timer.current) {
-      clearInterval(timer.current);
-      timer.current = null;
-    }
+  const clearPct = () => {
+    if (pctTimer.current) { clearInterval(pctTimer.current); pctTimer.current = null; }
   };
+  useEffect(() => { clearPct(); player.stop(); }, []);
 
-  useEffect(() => clear, []);
-
-  const toggleTTS = () => {
-    if (ttsPlaying) {
-      clear();
-      setTtsPlaying(false);
+  const toggleTTS = async () => {
+    if (player.playing) {
+      clearPct();
+      await player.stop();
+      setTtsPct(0);
       return;
     }
-    setTtsPlaying(true);
-    setTtsPct(0);
-    timer.current = setInterval(() => {
-      setTtsPct((p) => {
-        const next = p + 3;
-        if (next >= 100) {
-          clear();
-          setTtsPlaying(false);
-          return 100;
-        }
-        return next;
-      });
-    }, 130);
+    setTtsLoading(true);
+    try {
+      const tts = await api.synthesizeTTS(curQ.text);
+      setTtsLoading(false);
+      setTtsPct(0);
+      pctTimer.current = setInterval(() => {
+        setTtsPct((p) => Math.min(100, p + 3));
+      }, 130);
+      await player.play(tts.audio_url);
+      clearPct();
+      setTtsPct(100);
+    } catch (e) {
+      console.warn('[eum] TTS 재생 실패:', e);
+      setTtsLoading(false);
+    }
   };
 
   const goRespond = () => {
-    clear();
+    clearPct();
+    player.stop();
     navigation.navigate('Respond', { questionId });
   };
 
@@ -73,12 +75,12 @@ export function QuestionDetailScreen({ route, navigation }: Props) {
 
         <Text style={styles.question}>{curQ.text}</Text>
 
-        {ttsPlaying ? (
+        {player.playing || ttsLoading ? (
           <View style={styles.ttsBox}>
             <View style={styles.eqWrap}>
               <EqBars color={colors.accent} active count={5} />
             </View>
-            <Text style={styles.ttsLabel}>질문을 듣고 계세요…</Text>
+            <Text style={styles.ttsLabel}>{ttsLoading ? '음성 준비 중…' : '질문을 듣고 계세요…'}</Text>
             <View style={styles.track}>
               <View style={[styles.trackFill, { width: `${ttsPct}%` }]} />
             </View>
@@ -88,8 +90,8 @@ export function QuestionDetailScreen({ route, navigation }: Props) {
 
       <View style={styles.footer}>
         <Pressable style={styles.ttsBtn} onPress={toggleTTS}>
-          <Icon name={ttsPlaying ? 'pause_circle' : 'play_circle'} size={26} color={colors.accent} />
-          <Text style={styles.ttsBtnText}>{ttsPlaying ? '그만 듣기' : '질문 듣기'}</Text>
+          <Icon name={player.playing ? 'pause_circle' : 'play_circle'} size={26} color={colors.accent} />
+          <Text style={styles.ttsBtnText}>{player.playing ? '그만 듣기' : ttsLoading ? '준비 중…' : '질문 듣기'}</Text>
         </Pressable>
         <Pressable style={styles.respondBtn} onPress={goRespond}>
           <Icon name="mic" size={26} color={colors.white} />

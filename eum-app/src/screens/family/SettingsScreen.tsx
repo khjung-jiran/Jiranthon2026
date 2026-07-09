@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScreenContainer, Icon } from '../../components';
 import { colors, fonts, radius } from '../../theme';
 import { useStore } from '../../store/useStore';
-import { family, fontSizeOptions, aiGapOptions } from '../../data/mock';
+import { fontSizeOptions, aiGapOptions } from '../../data/mock';
+import * as api from '../../api';
 import type { RootStackParamList } from '../../navigation/types';
 import type { FontSizeOption } from '../../types';
 
@@ -13,6 +14,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 /** 환경설정 (sSetting, 725~801) — 원본에는 back 버튼이 없다(홈 기어로 진입, 시스템 뒤로가기/스와이프로 복귀) */
 export function SettingsScreen(_props: Props) {
   const role = useStore((s) => s.role);
+  const currentUser = useStore((s) => s.currentUser);
   const settings = useStore((s) => s.settings);
   const aiGapDays = useStore((s) => s.aiGapDays);
   const switchRole = useStore((s) => s.switchRole);
@@ -25,15 +27,24 @@ export function SettingsScreen(_props: Props) {
 
   const isP = role === 'parent';
   const meColor = isP ? colors.olive : colors.blue;
-  const meInitial = isP ? '순' : '지';
-  const meName = isP ? '김순자' : '지훈';
+  const meName = currentUser?.name ?? (isP ? '부모님' : '자녀');
+  const meInitial = meName[0] ?? '나';
   const meRole = isP ? '부모님 모드 이용 중' : '자녀 모드 이용 중';
   const roleSwitchLabel = isP ? '자녀 모드로' : '부모님 모드로';
 
-  const familySet = family.map((m) => ({
-    ...m,
-    roleChip: m.label === '엄마' || m.label === '아빠' ? '부모님' : '자녀',
-  }));
+  const [familySet, setFamilySet] = useState<{ label: string; name: string; color: string; roleChip: string }[]>([]);
+  React.useEffect(() => {
+    const sess = api.getSession();
+    if (!sess) return;
+    api.listMembers(sess.familyId).then((members) => {
+      setFamilySet(members.map((m) => ({
+        label: m.name,
+        name: m.name,
+        color: m.role === 'parent' ? colors.olive : colors.blue,
+        roleChip: m.role === 'parent' ? '부모님' : '자녀',
+      })));
+    }).catch(() => {});
+  }, []);
 
   return (
     <ScreenContainer edges={['top']}>

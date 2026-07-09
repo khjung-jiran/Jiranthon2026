@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -7,7 +7,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ScreenContainer, Icon } from '../../components';
 import { colors, fonts, radius, shadow } from '../../theme';
 import { useStore } from '../../store/useStore';
-import { family as familyMock } from '../../data/mock';
+import * as api from '../../api';
 import type { ChildTabParamList, RootStackParamList } from '../../navigation/types';
 
 type Props = CompositeScreenProps<
@@ -20,6 +20,7 @@ export function DashboardScreen({ navigation }: Props) {
   const capsules = useStore((s) => s.capsules);
   const notifs = useStore((s) => s.notifs);
   const pollVoted = useStore((s) => s.pollVoted);
+  const currentUser = useStore((s) => s.currentUser);
 
   const pending = questions.filter((q) => q.status === 'pending');
   const answered = questions.filter((q) => q.status === 'answered');
@@ -30,14 +31,30 @@ export function DashboardScreen({ navigation }: Props) {
   const capsSub = readyCount > 0 ? `오늘 열리는 음성 편지 ${readyCount}통` : '정해진 날에 열리는 음성 편지';
   const pollStatusLabel = pollVoted !== null ? '참여 완료' : '아직 참여 전이에요';
 
+  const myName = currentUser?.name ?? '회원';
+  const myInitial = myName[0] ?? '나';
+
+  const [familyMembers, setFamilyMembers] = useState<{ label: string; name: string; color: string }[]>([]);
+  useEffect(() => {
+    const session = api.getSession();
+    if (!session) return;
+    api.listMembers(session.familyId).then((members) => {
+      setFamilyMembers(members.map((m) => ({
+        label: m.name,
+        name: m.name,
+        color: m.role === 'parent' ? colors.olive : colors.blue,
+      })));
+    }).catch(() => {});
+  }, []);
+
   return (
     <ScreenContainer edges={['top']} scroll contentContainerStyle={styles.content}>
       {/* 헤더 */}
       <View style={styles.headerRow}>
         <View>
           <Text style={styles.eyebrow}>자녀 모드</Text>
-          <Text style={styles.greeting}>안녕하세요, 지훈님</Text>
-          <Text style={styles.subGreeting}>엄마 김순자님과의 이야기</Text>
+          <Text style={styles.greeting}>안녕하세요, {myName}님</Text>
+          <Text style={styles.subGreeting}>가족과의 이야기를 모아요</Text>
         </View>
         <View style={styles.headerActions}>
           <Pressable style={styles.iconCircle} onPress={() => navigation.navigate('Notification')}>
@@ -48,7 +65,7 @@ export function DashboardScreen({ navigation }: Props) {
             <Icon name="settings" size={23} color={colors.textMuted4} />
           </Pressable>
           <View style={styles.meAvatar}>
-            <Text style={styles.meAvatarText}>지</Text>
+            <Text style={styles.meAvatarText}>{myInitial}</Text>
           </View>
         </View>
       </View>
@@ -112,7 +129,7 @@ export function DashboardScreen({ navigation }: Props) {
       {/* 우리 가족 */}
       <Text style={styles.sectionLabel}>우리 가족</Text>
       <View style={styles.familyRow}>
-        {familyMock.map((m) => (
+        {familyMembers.map((m) => (
           <View key={m.label} style={styles.familyItem}>
             <View style={[styles.familyAvatar, { backgroundColor: m.color }]}>
               <Text style={styles.familyAvatarText}>{m.name.slice(0, 1)}</Text>

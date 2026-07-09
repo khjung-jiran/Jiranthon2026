@@ -18,14 +18,9 @@ import type {
   FontSizeOption,
 } from '../types';
 import {
-  questions as mockQuestions,
-  capsules as mockCapsules,
-  notifs as mockNotifs,
-  pollVotesInit,
-  defaultTarget,
-  defaultAiGapDays,
-  aiHomeQuestionText,
   capsuleWhenMap,
+  defaultAiGapDays,
+  defaultTarget,
 } from '../data/mock';
 import * as api from '../api';
 
@@ -79,6 +74,8 @@ interface StoreState {
   notifs: Notif[];
   pollVotes: number[];
   pollVoted: number | null;
+  pollLabels: string[];
+  pollTitle: string;
   albumFilter: string;
   extraPhotos: Photo[];
   aiGapDays: number;
@@ -147,11 +144,13 @@ export const useStore = create<StoreState>((set, get) => ({
   tab: 'home',
   serverOnline: false,
 
-  questions: mockQuestions,
-  capsules: mockCapsules,
-  notifs: mockNotifs,
-  pollVotes: [...pollVotesInit],
+  questions: [],
+  capsules: [],
+  notifs: [],
+  pollVotes: [0, 0, 0],
   pollVoted: null,
+  pollLabels: [],
+  pollTitle: '',
   albumFilter: '전체',
   extraPhotos: [],
   aiGapDays: defaultAiGapDays,
@@ -184,7 +183,20 @@ export const useStore = create<StoreState>((set, get) => ({
     // bootstrapSession()은 그 세션을 재사용한다 (데모 계정 생성 안 함).
     void get().hydrate();
   },
-  logout: () => set({ role: null, currentUser: null, tab: 'home', push: null }),
+  logout: () => {
+    api.clearSession();
+    set({
+      role: null,
+      currentUser: null,
+      tab: 'home',
+      push: null,
+      questions: [],
+      capsules: [],
+      notifs: [],
+      pollVotes: [0, 0, 0],
+      pollVoted: null,
+    });
+  },
   switchRole: () => {
     const next: Role = get().role === 'parent' ? 'child' : 'parent';
     set({ role: next, currentUser: makeUser(next), tab: 'home' });
@@ -200,20 +212,20 @@ export const useStore = create<StoreState>((set, get) => ({
       return;
     }
     try {
-      const sess = await api.bootstrapSession(get().role ?? 'child');
-      const [qs, caps, ns, votes, settings] = await Promise.all([
+      // authLogin()으로 이미 실제 세션이 있으면 bootstrapSession(데모 시드) 건너뛰기
+      const sess = api.getSession() ?? await api.bootstrapSession(get().role ?? 'child');
+      const [qs, caps, ns, pollData, settings] = await Promise.all([
         safe(api.fetchQuestions(sess.familyId), '질문 조회'),
         safe(api.fetchCapsules(sess.familyId), '캡슐 조회'),
         safe(api.fetchNotifs(sess.memberId), '알림 조회'),
         safe(api.fetchPollVotes(sess.familyId), '투표 조회'),
         safe(api.fetchSettings(sess.memberId), '설정 조회'),
       ]);
-      // 서버가 빈 값을 주면 목업을 유지한다 (데모 UX 보존, 빈 화면 방지)
-      if (qs && qs.length > 0) set({ questions: qs });
-      if (caps && caps.length > 0) set({ capsules: caps });
-      if (ns && ns.length > 0) set({ notifs: ns });
-      // 화면이 투표 라벨을 mock에서 직접 읽으므로 옵션 수가 같을 때만 반영
-      if (votes && votes.length === get().pollVotes.length) set({ pollVotes: votes });
+      // 서버 온라인이면 빈 배열이어도 덮어쓴다 (신규 가입자 = 빈 화면)
+      if (qs) set({ questions: qs });
+      if (caps) set({ capsules: caps });
+      if (ns) set({ notifs: ns });
+      if (pollData) set({ pollVotes: pollData.votes, pollLabels: pollData.labels, pollTitle: pollData.title });
       if (settings) set({ settings });
     } catch (e) {
       console.warn('[eum] 서버 하이드레이트 실패 — 목업 유지:', e);
@@ -246,7 +258,7 @@ export const useStore = create<StoreState>((set, get) => ({
   ensureAiQuestion: () => {
     const exists = get().questions.some((q) => q.id === 99);
     if (!exists) {
-      const q: Question = { id: 99, ai: true, text: aiHomeQuestionText, from: '이음', rel: 'AI 질문', ago: '지금', status: 'pending' };
+      const q: Question = { id: 99, ai: true, text: '요즘 하루 중 가장 마음이 편안해지는 순간은 언제인가요?', from: '이음', rel: 'AI 질문', ago: '지금', status: 'pending' };
       set((s) => ({ questions: [q, ...s.questions] }));
     }
     return 99;
