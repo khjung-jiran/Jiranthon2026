@@ -16,6 +16,8 @@ export interface ScreenContainerProps {
   style?: StyleProp<ViewStyle>;
   /** scroll일 때 contentContainerStyle */
   contentContainerStyle?: StyleProp<ViewStyle>;
+  /** scroll일 때 고정 헤더 인덱스 (ScrollView.stickyHeaderIndices) */
+  stickyHeaderIndices?: number[];
 }
 
 /**
@@ -29,6 +31,7 @@ export function ScreenContainer({
   scroll = false,
   style,
   contentContainerStyle,
+  stickyHeaderIndices,
 }: ScreenContainerProps) {
   return (
     <SafeAreaView edges={edges} style={[styles.root, { backgroundColor }, style]}>
@@ -36,6 +39,7 @@ export function ScreenContainer({
         <ScrollView
           style={styles.flex}
           contentContainerStyle={contentContainerStyle}
+          stickyHeaderIndices={stickyHeaderIndices}
           showsVerticalScrollIndicator={false}
         >
           {children}
