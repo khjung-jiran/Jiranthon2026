@@ -1,0 +1,36 @@
+# =============================================================================
+# 보이스오브패밀리 전체 의존성 (Python)
+# =============================================================================
+# 이 파일 하나로 모든 Python 모듈의 의존성을 설치할 수 있습니다.
+#
+# 설치: pip install -r requirements.txt
+# =============================================================================
+
+# --- STT (음성 → 텍스트) ---
+openai-whisper==20240930       # OpenAI Whisper (오프라인, 높은 인식률)
+SpeechRecognition==3.10.4      # Google Web Speech API (온라인)
+pyaudio==0.2.14                # 마이크 입력 (실시간 인식)
+pydub==0.25.1                  # 오디오 포맷 변환 (m4a → wav 등)
+
+# --- TTS (텍스트 → 음성) ---
+gtts==2.5.4                    # Google Text-to-Speech
+
+# --- Server (백엔드 API) ---
+fastapi==0.115.6               # 웹 프레임워크
+uvicorn==0.34.0                # ASGI 서버
+sqlalchemy==2.0.36             # ORM
+pydantic==2.10.4               # 데이터 검증
+python-multipart==0.0.20       # 파일 업로드
+python-jose==3.3.0             # JWT 인증
+passlib==1.7.4                 # 비밀번호 해싱
+
+# --- Question Engine (질문 생성) ---
+# (Phase 2에서 LLM 라이브러리 추가 예정: openai, anthropic 등)
+
+# --- Storybook (스토리북 생성) ---
+jinja2==3.1.5                  # HTML 템플릿 엔진
+weasyprint==63.1               # HTML → PDF 변환
+
+# --- 공통 유틸리티 ---
+python-dotenv==1.0.1           # .env 환경변수 로드
+requests==2.34.2               # HTTP 클라이언트
