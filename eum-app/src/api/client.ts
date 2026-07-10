@@ -5,17 +5,26 @@
  * - 웹(expo web)        : http://localhost:8000  (기본값)
  * - Android 에뮬레이터   : http://10.0.2.2:8000   (에뮬레이터의 localhost는 "기기 자신")
  * - iOS 시뮬레이터       : http://localhost:8000
- * - ⚠️ 실기기(Expo Go 등) 테스트 시: 반드시 PC의 LAN IP로 교체해야 한다.
- *     예) setApiBase('http://192.168.0.10:8000')
- *     (PC와 기기가 같은 Wi-Fi, Windows 방화벽에서 8000 포트 인바운드 허용 필요)
+ * - 실기기(Expo Go): Metro 호스트(hostUri)에서 PC IP를 자동 감지해 :8000으로 접속.
+ *     (PC와 기기가 같은 Wi-Fi + Windows에서 8000/8081 인바운드 허용·포트프록시 필요)
+ *     자동 감지가 안 되는 환경이면 setApiBase('http://<PC-LAN-IP>:8000') 수동 지정.
  * ──────────────────────────────────────────────────────────────────────
  */
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+
+/** Expo Go/개발빌드에서 Metro 번들을 내려준 호스트(PC)의 IP. 실패 시 null */
+function devServerHost(): string | null {
+  const hostUri: string | undefined = Constants.expoConfig?.hostUri;
+  if (!hostUri) return null;
+  const host = hostUri.split(':')[0];
+  return host || null;
+}
 
 const DEFAULT_BASE_URL =
   Platform.OS === 'web'
     ? 'http://localhost:8000'
-    : 'http://localhost:8000'; // ← 실기기 테스트 시 'http://<PC-LAN-IP>:8000' 으로 교체
+    : `http://${devServerHost() ?? 'localhost'}:8000`;
 
 let baseUrl = DEFAULT_BASE_URL;
 
