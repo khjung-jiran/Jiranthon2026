@@ -23,6 +23,7 @@ import {
   defaultTarget,
 } from '../data/mock';
 import * as api from '../api';
+import { navigate } from '../navigation/navRef';
 
 /**
  * 서버 연동 원칙: "서버 우선, 실패 시 목업 폴백".
@@ -214,6 +215,13 @@ export const useStore = create<StoreState>((set, get) => ({
       pollVotes: [0, 0, 0],
       pollVoted: null,
     });
+    // 루트 네비게이터가 role === null 조건으로 Login을 렌더링할 시간이 필요하므로
+    // 약간 지연시켜 안전하게 네비게이션을 호출합니다.
+    setTimeout(() => {
+      try {
+        navigate('Login');
+      } catch {}
+    }, 50);
   },
   switchRole: () => {
     const next: Role = get().role === 'parent' ? 'child' : 'parent';
