@@ -1,0 +1,73 @@
+#!/bin/bash
+#
+# httpd — 이음 PHP 서버 시작/중지/재시작 스크립트
+#
+
+PROJECT_ROOT="/Users/changseopyeum/Jiransecurity/Jiranthon2026"
+PHP_SERVER_DIR="$PROJECT_ROOT/php-server"
+PORT=8000
+PID_FILE="$PROJECT_ROOT/init.d/httpd.pid"
+LOG_FILE="$PROJECT_ROOT/init.d/httpd.log"
+
+start() {
+    if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+        echo "httpd already running (PID $(cat "$PID_FILE"))"
+        return 1
+    fi
+    echo "Starting httpd on port $PORT ..."
+    cd "$PHP_SERVER_DIR"
+    nohup php -S 0.0.0.0:$PORT -t public public/router.php > "$LOG_FILE" 2>&1 &
+    echo $! > "$PID_FILE"
+    sleep 1
+    if kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+        echo "httpd started (PID $(cat "$PID_FILE"))"
+    else
+        echo "httpd failed to start — check $LOG_FILE"
+        rm -f "$PID_FILE"
+        return 1
+    fi
+}
+
+stop() {
+    if [ ! -f "$PID_FILE" ]; then
+        echo "httpd not running"
+        return 0
+    fi
+    PID=$(cat "$PID_FILE")
+    if kill -0 "$PID" 2>/dev/null; then
+        echo "Stopping httpd (PID $PID) ..."
+        kill "$PID"
+        sleep 1
+        if kill -0 "$PID" 2>/dev/null; then
+            kill -9 "$PID"
+        fi
+        echo "httpd stopped"
+    else
+        echo "httpd not running (stale PID file)"
+    fi
+    rm -f "$PID_FILE"
+}
+
+restart() {
+    stop
+    start
+}
+
+status() {
+    if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+        echo "httpd running (PID $(cat "$PID_FILE")) on port $PORT"
+    else
+        echo "httpd not running"
+    fi
+}
+
+case "$1" in
+    start)   start ;;
+    stop)    stop ;;
+    restart) restart ;;
+    status)  status ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|status}"
+        exit 1
+        ;;
+esac
