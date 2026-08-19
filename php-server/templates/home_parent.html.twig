@@ -1,0 +1,336 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}이음 · 홈 (어머니/아버지){% endblock %}
+
+{% block content %}
+<!-- 화면: 홈 (어머니/아버지) / 탭: 홈 -->
+<main class="app app--status app--parent">
+  <div class="phome">
+
+    <!-- 인사 -->
+    <header class="phome__top">
+      <div class="phome__date" id="homeDate"></div>
+      <h1 class="phome__greet" id="greetName">안녕하세요</h1>
+      <div class="phome__link" id="homeLink" style="display:none;">
+        <span class="dot dot--lg"></span>
+        <span class="phome__link-text" id="homeLinkText"></span>
+      </div>
+    </header>
+
+    <!-- 퀵 액션 -->
+    <div class="phome__quick">
+      <a class="phome__quick-btn phome__quick-btn--primary" href="/parent-answer">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+        <span>질문에 답하기</span>
+      </a>
+      <a class="phome__quick-btn phome__quick-btn--plain" href="/story-child">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#201B16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>내 이야기</span>
+      </a>
+    </div>
+
+    <!-- 도착한 질문 (카드 덱) -->
+    <section class="phome__body" id="questionSection" style="display:none;">
+      <div class="deck-head">
+        <div class="deck-head__left">
+          <span class="phome__sec" id="questionSecTitle">도착한 질문</span>
+          <span class="pill pill--primary" id="questionCount">0</span>
+        </div>
+        <span class="deck-head__hint">← 카드를 밀어보세요</span>
+      </div>
+      <div class="deck" id="questionDeck" style="position:relative;overflow:hidden;"></div>
+      <div class="deck-dots" id="questionDots"></div>
+    </section>
+
+  </div>
+
+  <!-- 하단 탭바 (어머니/아버지 · 홈 활성) -->
+  <nav class="tabbar tabbar--parent">
+    <a class="tabbar__item" href="/story-child">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span class="tabbar__label">이야기</span>
+    </a>
+    <a class="tabbar__item" href="/album">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span class="tabbar__label">앨범</span>
+    </a>
+    <a class="tabbar__item tabbar__item--on" href="/home">
+      <span class="tabbar__home">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+      </span>
+      <span class="tabbar__label tabbar__label--on">홈</span>
+    </a>
+    <a class="tabbar__item" href="/calendar">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+      <span class="tabbar__label">캘린더</span>
+    </a>
+    <a class="tabbar__item" href="/settings">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+      <span class="tabbar__label">설정</span>
+    </a>
+  </nav>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function checkAuth() {
+    var auth = localStorage.getItem('eum_auth') || sessionStorage.getItem('eum_auth');
+    if (!auth) {
+      window.location.href = '/login';
+      return;
+    }
+    try {
+      var data = JSON.parse(auth);
+      var member = data.member || {};
+      var family = data.family || {};
+      var name = member.name || '';
+
+      if (name) {
+        document.getElementById('greetName').textContent = '안녕하세요, ' + name + '님';
+      }
+
+      var now = new Date();
+      var days = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+      document.getElementById('homeDate').textContent =
+        (now.getMonth()+1) + '월 ' + now.getDate() + '일 ' + days[now.getDay()];
+
+      if (family.id) {
+        document.getElementById('homeLink').style.display = 'flex';
+        document.getElementById('homeLinkText').textContent = '가족과 연결되어 있어요';
+      }
+
+      loadQuestions(member.id, member.family_id);
+    } catch (e) {}
+  })();
+
+  var allQuestions = [];
+  var currentCardIdx = 0;
+  var isDragging = false;
+  var dragStartX = 0;
+  var dragDx = 0;
+  var deckWidth = 0;
+
+  async function loadQuestions(memberId, familyId) {
+    if (!familyId) return;
+    try {
+      var res = await fetch('/api/questions?family_id=' + encodeURIComponent(familyId) + '&to_member_id=' + encodeURIComponent(memberId));
+      if (!res.ok) return;
+      var questions = await res.json();
+      var pending = questions.filter(function(q) { return q.status === 'pending'; });
+
+      if (!pending || pending.length === 0) {
+        var seedRes = await fetch('/api/questions/seed', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ family_id: familyId, parent_member_id: memberId })
+        });
+        if (seedRes.ok) {
+          res = await fetch('/api/questions?family_id=' + encodeURIComponent(familyId) + '&to_member_id=' + encodeURIComponent(memberId));
+          if (res.ok) {
+            questions = await res.json();
+            pending = questions.filter(function(q) { return q.status === 'pending'; });
+          }
+        }
+      }
+
+      if (pending && pending.length > 0) {
+        pending.sort(function(a, b) {
+          var aAuto = a.source === 'auto' || !a.from_member_id;
+          var bAuto = b.source === 'auto' || !b.from_member_id;
+          if (aAuto && !bAuto) return 1;
+          if (!aAuto && bAuto) return -1;
+          var aTime = a.created_at || '';
+          var bTime = b.created_at || '';
+          if (aTime < bTime) return -1;
+          if (aTime > bTime) return 1;
+          return 0;
+        });
+        allQuestions = pending;
+        renderDeck(pending);
+      }
+    } catch (e) {}
+  }
+
+  function renderDeck(questions) {
+    document.getElementById('questionSection').style.display = '';
+    document.getElementById('questionCount').textContent = questions.length;
+
+    var deck = document.getElementById('questionDeck');
+    var dots = document.getElementById('questionDots');
+    deck.innerHTML = '';
+    dots.innerHTML = '';
+
+    var catLabels = { childhood: '유년기', youth: '청년시절', twilight: '황혼기' };
+
+    questions.forEach(function(q, i) {
+      var isAuto = q.source === 'auto' || !q.from_member_id;
+      var fromName = isAuto ? 'AI 이음이' : (q.from_member_name || '가족');
+
+      var card = document.createElement('article');
+      card.className = 'deck__card';
+
+      var top = document.createElement('div');
+      top.className = 'deck__card-top';
+      var from = document.createElement('span');
+      from.className = 'deck__from';
+      from.textContent = isAuto ? 'AI 이음이 제안' : fromName + '이(가) 보낸 질문';
+      var time = document.createElement('span');
+      time.className = 'deck__time';
+      time.textContent = '오늘';
+      top.appendChild(from);
+      top.appendChild(time);
+
+      var qText = document.createElement('div');
+      qText.className = 'deck__q';
+      qText.textContent = q.content || q.question || '';
+
+      var sub = document.createElement('div');
+      sub.className = 'deck__sub';
+      sub.textContent = isAuto
+        ? "일대기 '" + (catLabels[q.category] || '기억') + "' 챕터를 채울 수 있는 질문이에요"
+        : '천천히, 편하실 때 답해 주세요.';
+
+      var spacer = document.createElement('div');
+      spacer.className = 'spacer';
+
+      var cta = document.createElement('a');
+      cta.className = 'btn btn--primary deck__cta';
+      cta.href = '/parent-answer?qid=' + encodeURIComponent(q.id);
+      var ctaLabel = document.createElement('span');
+      ctaLabel.className = 'btn__label';
+      ctaLabel.textContent = '답변하기';
+      cta.appendChild(ctaLabel);
+
+      card.appendChild(top);
+      card.appendChild(qText);
+      card.appendChild(sub);
+      card.appendChild(spacer);
+      card.appendChild(cta);
+
+      card.style.position = 'absolute';
+      card.style.top = '0';
+      card.style.left = '0';
+      card.style.width = '100%';
+      card.style.transform = i === 0 ? 'translateX(0)' : 'translateX(100%)';
+      card.style.transition = 'transform .3s ease';
+      card.style.opacity = i === 0 ? '1' : '0';
+      deck.appendChild(card);
+
+      var dot = document.createElement('span');
+      dot.className = 'deck-dots__i' + (i === 0 ? ' deck-dots__i--on' : '');
+      dot.onclick = function() { showCard(i); };
+      dots.appendChild(dot);
+    });
+
+    initSwipe();
+  }
+
+  function showCard(idx) {
+    var cards = document.querySelectorAll('#questionDeck .deck__card');
+    var dots = document.querySelectorAll('#questionDots .deck-dots__i');
+    if (idx < 0) idx = 0;
+    if (idx >= cards.length) idx = cards.length - 1;
+    cards.forEach(function(c, i) {
+      c.style.transition = 'transform .3s ease, opacity .3s ease';
+      if (i === idx) {
+        c.style.transform = 'translateX(0)';
+        c.style.opacity = '1';
+      } else if (i < idx) {
+        c.style.transform = 'translateX(-100%)';
+        c.style.opacity = '0';
+      } else {
+        c.style.transform = 'translateX(100%)';
+        c.style.opacity = '0';
+      }
+    });
+    dots.forEach(function(d, i) { d.className = 'deck-dots__i' + (i === idx ? ' deck-dots__i--on' : ''); });
+    currentCardIdx = idx;
+  }
+
+  function initSwipe() {
+    var deck = document.getElementById('questionDeck');
+    if (!deck) return;
+
+    function getX(e) {
+      if (e.touches && e.touches.length) return e.touches[0].clientX;
+      if (e.changedTouches && e.changedTouches.length) return e.changedTouches[0].clientX;
+      return e.clientX;
+    }
+
+    function onDown(e) {
+      isDragging = true;
+      dragStartX = getX(e);
+      dragDx = 0;
+      deckWidth = deck.offsetWidth;
+      var cards = deck.querySelectorAll('.deck__card');
+      cards.forEach(function(c) {
+        c.style.transition = 'none';
+      });
+    }
+
+    function onMove(e) {
+      if (!isDragging) return;
+      dragDx = getX(e) - dragStartX;
+      if (Math.abs(dragDx) < 5) return;
+
+      var progress = dragDx / deckWidth;
+      var gap = 12;
+      var cards = deck.querySelectorAll('.deck__card');
+      cards.forEach(function(c, i) {
+        var base;
+        var opacity = 0;
+        var scale = 1;
+        if (i === currentCardIdx) {
+          base = dragDx;
+          opacity = 1 - Math.abs(progress) * 0.3;
+          scale = 1 - Math.abs(progress) * 0.05;
+        } else if (i === currentCardIdx + 1) {
+          base = deckWidth + gap + dragDx;
+          opacity = Math.max(0, 1 - Math.abs(progress) * 0.7);
+          if (dragDx < 0) opacity = Math.min(1, Math.abs(progress) + 0.3);
+          scale = 0.92 + Math.abs(progress) * 0.08;
+        } else if (i === currentCardIdx - 1) {
+          base = -(deckWidth + gap) + dragDx;
+          opacity = Math.max(0, 1 - Math.abs(progress) * 0.7);
+          if (dragDx > 0) opacity = Math.min(1, Math.abs(progress) + 0.3);
+          scale = 0.92 + Math.abs(progress) * 0.08;
+        } else if (i > currentCardIdx) {
+          base = deckWidth + gap;
+          opacity = 0;
+        } else {
+          base = -(deckWidth + gap);
+          opacity = 0;
+        }
+        c.style.transform = 'translateX(' + base + 'px) scale(' + scale + ')';
+        c.style.opacity = opacity;
+      });
+    }
+
+    function onUp(e) {
+      if (!isDragging) return;
+      isDragging = false;
+      var cards = deck.querySelectorAll('.deck__card');
+      cards.forEach(function(c) { c.style.transition = 'transform .3s ease, opacity .3s ease'; });
+
+      var threshold = deckWidth / 4;
+      if (dragDx < -threshold) {
+        showCard(currentCardIdx + 1);
+      } else if (dragDx > threshold) {
+        showCard(currentCardIdx - 1);
+      } else {
+        showCard(currentCardIdx);
+      }
+    }
+
+    deck.addEventListener('touchstart', onDown, { passive: true });
+    deck.addEventListener('touchmove', onMove, { passive: true });
+    deck.addEventListener('touchend', onUp, { passive: true });
+
+    deck.addEventListener('mousedown', function(e) { e.preventDefault(); onDown(e); });
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }
+</script>
+{% endblock %}

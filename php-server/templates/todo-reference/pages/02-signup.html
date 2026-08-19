@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390,initial-scale=1">
+<title>이음 · 회원가입</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../css/eium.css">
+</head>
+<body>
+
+<!--
+  화면: 회원가입 / 진입점: 로그인 화면 하단 "회원가입"
+  ※ 이 화면은 원본 프로토타입에 없어, 동일한 디자인 시스템으로 신규 구성했습니다.
+-->
+<main class="app signup">
+
+  <div class="signup__head page-head">
+    <a class="icon-btn" href="01-login.html" aria-label="뒤로">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <span class="page-head__title">회원가입</span>
+  </div>
+
+  <h1 class="signup__title">가족을 이어볼까요</h1>
+  <p class="signup__desc">가입 후 가족 코드를 주고받으면<br>서로의 질문과 답변이 연결돼요.</p>
+
+  <!-- 역할 선택 -->
+  <div class="field">
+    <span class="field__label">어떤 역할로 사용하시나요?</span>
+  </div>
+  <div class="role-pick">
+    <label class="role role--on">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C05430" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span class="role__name">자녀</span>
+      <span class="role__sub">질문을 보내고<br>이야기를 모아요</span>
+    </label>
+    <label class="role">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+      <span class="role__name">부모</span>
+      <span class="role__sub">목소리로<br>답해요</span>
+    </label>
+  </div>
+
+  <form action="#" method="post">
+    <label class="field">
+      <span class="field__label">이름</span>
+      <input class="input" type="text" name="name" placeholder="지훈">
+    </label>
+
+    <label class="field">
+      <span class="field__label">아이디</span>
+      <input class="input" type="text" name="userId" placeholder="영문 · 숫자 4~20자">
+    </label>
+
+    <label class="field">
+      <span class="field__label">비밀번호</span>
+      <input class="input" type="password" name="password" placeholder="8자 이상, 숫자 포함">
+      <span class="field__help">영문 · 숫자를 섞어 8자 이상 입력해 주세요.</span>
+    </label>
+
+    <label class="field">
+      <span class="field__label">비밀번호 확인</span>
+      <input class="input" type="password" name="passwordConfirm" placeholder="한 번 더 입력해 주세요">
+    </label>
+
+    <label class="field">
+      <span class="field__label">가족 코드 <span class="field__help">(선택)</span></span>
+      <input class="input" type="text" name="familyCode" placeholder="예: EIUM-4821">
+      <span class="field__help">나중에 설정에서도 연결할 수 있어요.</span>
+    </label>
+
+    <!-- 약관 동의 -->
+    <div class="agree">
+      <label class="agree__row">
+        <span class="check__box">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </span>
+        <span class="agree__text"><b>[필수]</b> 이용약관에 동의합니다</span>
+      </label>
+      <label class="agree__row">
+        <span class="check__box">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </span>
+        <span class="agree__text"><b>[필수]</b> 개인정보 처리방침에 동의합니다</span>
+      </label>
+      <label class="agree__row">
+        <span class="check__box check__box--off">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </span>
+        <span class="agree__text">[선택] 새 질문 · 이야기 완성 알림 받기</span>
+      </label>
+    </div>
+
+    <button type="submit" class="btn btn--primary btn--block signup__submit">
+      <span class="btn__label">가입하고 시작하기</span>
+    </button>
+  </form>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,292 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}이음 · 이야기 (자녀 모드){% endblock %}
+
+{% block content %}
+<main class="app app--status app--scroll-fixed">
+  <div class="story">
+    <div class="grain"></div>
+
+    <header class="story__head">
+      <div class="story__kicker">우리 가족의 서재</div>
+      <h1 class="story__title">이야기</h1>
+      <div class="story__tabs">
+        <button type="button" class="seg seg--on" onclick="switchTab('fragments')">단편집</button>
+        <button type="button" class="seg seg--off" onclick="switchTab('life')">일대기</button>
+        <button type="button" class="pill--soon">회고록 · 준비 중</button>
+      </div>
+    </header>
+
+    <!-- 단편집 -->
+    <section class="story__list" id="tab-fragments">
+      <div id="fragmentsList" style="display:flex;flex-direction:column;gap:9px;">
+        <!-- 데이터 로드 후 JS로 채움 -->
+      </div>
+    </section>
+
+    <!-- 일대기 -->
+    <section class="life" id="tab-life" style="display:none;">
+      <div id="lifeList" style="display:flex;flex-direction:column;gap:9px;">
+        <!-- 데이터 로드 후 JS로 채움 -->
+      </div>
+    </section>
+
+  </div>
+
+  <!-- 상세 모달 -->
+  <div id="detailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:var(--c-bg);border-radius:20px;padding:24px 20px 32px;width:100%;max-width:390px;max-height:calc(var(--app-height, 100vh) - 32px);overflow-y:auto;-webkit-overflow-scrolling:touch;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;position:sticky;top:0;background:var(--c-bg);padding-bottom:8px;z-index:1;">
+        <h2 style="font-size:1.15rem;font-weight:600;margin:0;" id="detailTitle">보기</h2>
+        <button type="button" onclick="closeDetailModal()" style="background:none;border:none;cursor:pointer;padding:4px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="detailBody"></div>
+    </div>
+  </div>
+
+  <!-- 하단 탭바 (이야기 활성) -->
+  <nav class="tabbar">
+    <a class="tabbar__item tabbar__item--on" href="/story-child">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span class="tabbar__label tabbar__label--on">이야기</span>
+    </a>
+    <a class="tabbar__item" href="/album">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span class="tabbar__label">앨범</span>
+    </a>
+    <a class="tabbar__item" href="/home">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+      <span class="tabbar__label">홈</span>
+    </a>
+    <a class="tabbar__item" href="/calendar">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+      <span class="tabbar__label">캘린더</span>
+    </a>
+    <a class="tabbar__item" href="/settings">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+      <span class="tabbar__label">설정</span>
+    </a>
+  </nav>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var authData = null;
+
+  (function checkAuth() {
+    var auth = localStorage.getItem('eum_auth') || sessionStorage.getItem('eum_auth');
+    if (!auth) { window.location.href = '/login'; return; }
+    try {
+      authData = JSON.parse(auth);
+      loadResponses();
+      loadStorybook();
+    } catch (e) {}
+  })();
+
+  function switchTab(tab) {
+    var f = document.getElementById('tab-fragments');
+    var l = document.getElementById('tab-life');
+    var segs = document.querySelectorAll('.seg');
+    if (tab === 'fragments') {
+      f.style.display = '';
+      l.style.display = 'none';
+      segs[0].className = 'seg seg--on';
+      segs[1].className = 'seg seg--off';
+    } else {
+      f.style.display = 'none';
+      l.style.display = '';
+      segs[0].className = 'seg seg--off';
+      segs[1].className = 'seg seg--on';
+    }
+  }
+
+  async function loadResponses() {
+    if (!authData || !authData.family) return;
+    try {
+      var res = await fetch('/api/responses?family_id=' + encodeURIComponent(authData.family.id));
+      if (!res.ok) return;
+      var responses = await res.json();
+      renderResponses(responses);
+    } catch (e) {}
+  }
+
+  function renderResponses(responses) {
+    var fragList = document.getElementById('fragmentsList');
+    if (!fragList) return;
+    if (!responses || responses.length === 0) {
+      fragList.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--c-text-3);font-size:14px;">아직 도착한 답변이 없어요.<br>부모님께 질문을 보내보세요!</div>';
+      return;
+    }
+    var catLabels = { childhood: '유년기', youth: '청년시절', twilight: '황혼기' };
+    var html = '';
+    responses.forEach(function(r) {
+      var qContent = r.question_content || '';
+      var aContent = r.content || r.transcript || '';
+      var cat = catLabels[r.question_category] || '기억';
+      var pillClass = r.input_method === 'voice' ? 'pill--tag-warm' : 'pill--tag-green';
+      var pillText = r.input_method === 'voice' ? '음성 답변' : '질문 답변';
+      var date = r.created_at ? r.created_at.substring(5, 10).replace('-', '월 ') + '일' : '';
+      var preview = aContent.substring(0, 80) + (aContent.length > 80 ? '…' : '');
+
+      html += '<a class="scard" href="#detail-' + r.id + '" onclick="showDetail(\'' + r.id + '\');return false;">';
+      html += '<div class="scard__meta-row">';
+      html += '<span class="pill ' + pillClass + '">' + pillText + '</span>';
+      html += '<span class="scard__meta">' + date + '</span>';
+      html += '</div>';
+      html += '<div class="scard__title">' + escapeHtml(qContent) + '</div>';
+      html += '<p class="scard__preview">' + escapeHtml(preview) + '</p>';
+      html += '</a>';
+    });
+    fragList.innerHTML = html;
+  }
+
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function showDetail(respId) {
+    var modal = document.getElementById('detailModal');
+    var body = document.getElementById('detailBody');
+    modal.style.display = 'flex';
+    body.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--c-text-3);font-size:14px;">불러오는 중…</div>';
+
+    fetch('/api/responses?family_id=' + encodeURIComponent(authData.family.id))
+      .then(function(r) { return r.json(); })
+      .then(function(responses) {
+        var r = responses.find(function(x) { return x.id === respId; });
+        if (!r) { body.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--c-text-3);font-size:14px;">답변을 찾을 수 없어요</div>'; return; }
+        var catLabels = { childhood: '유년기', youth: '청년시절', twilight: '황혼기' };
+        var cat = catLabels[r.question_category] || '기억';
+        var html = '';
+        html += '<div style="margin-bottom:20px;">';
+        html += '<div style="font-size:13px;color:var(--c-text-3);font-weight:600;margin-bottom:8px;">' + cat + ' · 질문</div>';
+        html += '<div style="font-size:20px;font-weight:700;line-height:1.5;color:var(--c-ink);">' + escapeHtml(r.question_content || '') + '</div>';
+        html += '</div>';
+        html += '<div style="height:1px;background:rgba(0,0,0,0.08);margin:20px 0;"></div>';
+        html += '<div>';
+        html += '<div style="font-size:13px;color:var(--c-text-3);font-weight:600;margin-bottom:8px;">답변</div>';
+        html += '<div style="font-size:17px;line-height:1.7;color:var(--c-ink);white-space:pre-wrap;">' + escapeHtml(r.content || r.transcript || '') + '</div>';
+        html += '</div>';
+        body.innerHTML = html;
+      })
+      .catch(function() {
+        body.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--c-text-3);font-size:14px;">불러올 수 없어요</div>';
+      });
+  }
+
+  function closeDetailModal() {
+    document.getElementById('detailModal').style.display = 'none';
+  }
+
+  async function loadStorybook() {
+    if (!authData || !authData.family) return;
+    try {
+      var res = await fetch('/api/storybook?family_id=' + encodeURIComponent(authData.family.id));
+      if (!res.ok) return;
+      var data = await res.json();
+      var chapters = data.chapters || [];
+      renderChapters(chapters);
+
+      // 백그라운드 생성 중인 경우 폴링
+      var hasGenerating = chapters.some(function(ch) { return ch.has_new && ch.count > 0 && !ch.body; });
+      var hasPending = chapters.some(function(ch) { return ch.has_new; });
+      if (hasPending) {
+        setTimeout(function() { loadStorybook(); }, 5000);
+      }
+    } catch (e) {}
+  }
+
+  var storybookCache = [];
+
+  function renderChapters(chapters) {
+    storybookCache = chapters;
+    var lifeList = document.getElementById('lifeList');
+    lifeList.innerHTML = '';
+
+    if (chapters.length === 0) {
+      lifeList.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--c-muted);font-size:14px;">아직 답변된 이야기가 없어요.<br>부모님께 질문을 보내보세요!</div>';
+      return;
+    }
+
+    var catLabels = { childhood: '유년기', youth: '청년시절', twilight: '황혼기' };
+    var hasLife = false;
+
+    chapters.forEach(function(ch, idx) {
+      if (ch.count > 0 && ch.body) {
+        hasLife = true;
+        var banner = document.createElement('a');
+        banner.className = 'life__banner';
+        banner.style.cursor = 'pointer';
+        banner.href = '#life-' + idx;
+        banner.onclick = function(e) { e.preventDefault(); showLifeDetail(idx); };
+        var kicker = document.createElement('div');
+        kicker.className = 'life__banner-kicker';
+        kicker.textContent = catLabels[ch.category] || '기억';
+        var btitle = document.createElement('div');
+        btitle.className = 'life__banner-title';
+        btitle.textContent = ch.title;
+        banner.appendChild(kicker);
+        banner.appendChild(btitle);
+
+        var preview = document.createElement('p');
+        preview.className = 'scard__preview';
+        preview.style.marginTop = '12px';
+        preview.style.color = 'rgba(248,243,231,.8)';
+        preview.textContent = ch.body.substring(0, 120) + '…';
+        banner.appendChild(preview);
+
+        var meta = document.createElement('span');
+        meta.className = 'scard__meta';
+        meta.style.marginTop = '8px';
+        meta.style.display = 'block';
+        meta.style.color = 'rgba(248,243,231,.6)';
+        meta.textContent = '답변 ' + ch.count + '개로 엮은 이야기';
+        banner.appendChild(meta);
+
+        lifeList.appendChild(banner);
+      } else if (ch.has_new) {
+        hasLife = true;
+        var placeholder = document.createElement('div');
+        placeholder.className = 'life__banner';
+        var pk = document.createElement('div');
+        pk.className = 'life__banner-kicker';
+        pk.textContent = catLabels[ch.category] || '기억';
+        var pt = document.createElement('div');
+        pt.className = 'life__banner-title';
+        pt.textContent = '이야기를 엮고 있어요…';
+        placeholder.appendChild(pk);
+        placeholder.appendChild(pt);
+        lifeList.appendChild(placeholder);
+      }
+    });
+
+    if (!hasLife) {
+      lifeList.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--c-muted);font-size:14px;">일대기가 아직 시작되지 않았어요.</div>';
+    }
+  }
+
+  function showLifeDetail(idx) {
+    var ch = storybookCache[idx];
+    if (!ch) return;
+    var modal = document.getElementById('detailModal');
+    var body = document.getElementById('detailBody');
+    var titleEl = document.getElementById('detailTitle');
+    var catLabels = { childhood: '유년기', youth: '청년시절', twilight: '황혼기' };
+    titleEl.textContent = (catLabels[ch.category] || '기억') + ' · 일대기';
+    modal.style.display = 'flex';
+
+    var html = '';
+    html += '<div style="font-size:22px;font-weight:700;line-height:1.5;color:var(--c-ink);margin-bottom:16px;">' + escapeHtml(ch.title) + '</div>';
+    html += '<div style="font-size:12px;color:var(--c-text-3);font-weight:600;margin-bottom:14px;">답변 ' + ch.count + '개로 엮은 이야기</div>';
+    html += '<div style="height:1px;background:rgba(0,0,0,0.08);margin:16px 0;"></div>';
+    html += '<div style="font-size:17px;line-height:1.8;color:var(--c-ink);white-space:pre-wrap;">' + escapeHtml(ch.body) + '</div>';
+    body.innerHTML = html;
+  }
+</script>
+{% endblock %}

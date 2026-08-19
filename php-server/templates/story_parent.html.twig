@@ -1,0 +1,225 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}이음 · 이야기 (어머니/아버지){% endblock %}
+
+{% block content %}
+<main class="app app--status app--parent app--scroll-fixed">
+  <div class="pstory">
+
+    <header class="pstory__head">
+      <div class="pstory__kicker">차곡차곡 쌓이는</div>
+      <h1 class="pstory__title" id="storyTitle">나의 이야기</h1>
+    </header>
+
+    <!-- 자녀 소식 카드 -->
+    <section class="pstory__news">
+      <div class="pstory__news-who">
+        <span class="avatar avatar--warm avatar--lg" id="childAvatar"></span>
+        <span class="pstory__news-label" id="childLabel">가족의 소식</span>
+      </div>
+      <div class="pstory__news-title" id="newsTitle">아직 쌓인 이야기가 없어요</div>
+      <div class="pstory__news-sub">질문에 답하면서 하나씩 쌓아가요.</div>
+    </section>
+
+    <!-- 내 답변 리스트 -->
+    <section style="padding:0 24px;margin-top:24px;">
+      <h2 style="font-size:18px;font-weight:700;margin:0 0 12px;">내가 답한 이야기</h2>
+      <div id="respList" style="display:flex;flex-direction:column;gap:9px;">
+        <div style="text-align:center;color:var(--c-text-3);font-size:14px;padding:24px 0;">불러오는 중…</div>
+      </div>
+    </section>
+
+    <!-- 책장 + 진행률 -->
+    <section class="pstory__books">
+      <h2 class="pstory__books-title">내 이야기가 책이 되고 있어요</h2>
+
+      <div class="shelf">
+        <div class="book book--short"><span class="book__spine">단편집</span></div>
+        <div class="book book--life"><span class="book__spine">일대기</span></div>
+        <div class="shelf__meta">
+          <div class="shelf__count" id="storyCount">이야기 0편</div>
+          <div class="shelf__desc">천천히, 하나씩<br>쌓여가고 있어요</div>
+        </div>
+      </div>
+
+      <div class="progress-block">
+        <div class="progress-block__row">
+          <span>일대기 채워짐</span>
+          <span class="progress-block__pct" id="progressPct">0%</span>
+        </div>
+        <div class="bar bar--lg"><div class="bar__fill bar__fill--grad" id="progressBar" style="width:0%"></div></div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- 답변 상세 모달 -->
+  <div id="detailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:var(--c-bg);border-radius:20px;padding:24px 20px 32px;width:100%;max-width:390px;max-height:calc(var(--app-height, 100vh) - 32px);overflow-y:auto;-webkit-overflow-scrolling:touch;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;position:sticky;top:0;background:var(--c-bg);padding-bottom:8px;z-index:1;">
+        <h2 style="font-size:1.15rem;font-weight:600;margin:0;">답변 보기</h2>
+        <button type="button" onclick="closeDetailModal()" style="background:none;border:none;cursor:pointer;padding:4px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="detailBody"></div>
+    </div>
+  </div>
+
+  <!-- 하단 탭바 (어머니/아버지 · 이야기 활성) -->
+  <nav class="tabbar tabbar--parent">
+    <a class="tabbar__item tabbar__item--on" href="/story-child">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span class="tabbar__label tabbar__label--on">이야기</span>
+    </a>
+    <a class="tabbar__item" href="/album">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span class="tabbar__label">앨범</span>
+    </a>
+    <a class="tabbar__item" href="/home">
+      <span class="tabbar__home tabbar__home--off">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+      </span>
+      <span class="tabbar__label">홈</span>
+    </a>
+    <a class="tabbar__item" href="/calendar">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+      <span class="tabbar__label">캘린더</span>
+    </a>
+    <a class="tabbar__item" href="/settings">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+      <span class="tabbar__label">설정</span>
+    </a>
+  </nav>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var authData = null;
+  var responsesCache = [];
+
+  (function checkAuth() {
+    var auth = localStorage.getItem('eum_auth') || sessionStorage.getItem('eum_auth');
+    if (!auth) { window.location.href = '/login'; return; }
+    try {
+      authData = JSON.parse(auth);
+      var member = authData.member || {};
+      var family = authData.family || {};
+      var name = member.name || '';
+
+      if (name) {
+        document.getElementById('storyTitle').textContent = name + '님의 이야기';
+      }
+      if (family.id) {
+        document.getElementById('newsTitle').innerHTML = '가족과 연결되어 있어요<br>질문에 답하면서 이야기를 쌓아가요';
+      }
+
+      loadResponses(member.id, family.id);
+      loadStorybook(family.id);
+    } catch (e) {}
+  })();
+
+  async function loadResponses(memberId, familyId) {
+    if (!familyId) return;
+    try {
+      var res = await fetch('/api/responses?family_id=' + encodeURIComponent(familyId) + '&member_id=' + encodeURIComponent(memberId));
+      if (!res.ok) return;
+      var responses = await res.json();
+      responsesCache = responses;
+      renderResponses(responses);
+    } catch (e) {}
+  }
+
+  function renderResponses(responses) {
+    var list = document.getElementById('respList');
+    if (!responses || responses.length === 0) {
+      list.innerHTML = '<div style="text-align:center;color:var(--c-text-3);font-size:14px;padding:24px 0;">아직 답한 이야기가 없어요.<br>질문에 답하면서 하나씩 쌓아가요!</div>';
+      document.getElementById('storyCount').textContent = '이야기 0편';
+      return;
+    }
+
+    document.getElementById('storyCount').textContent = '이야기 ' + responses.length + '편';
+
+    var catLabels = { childhood: '유년기', youth: '청년시절', twilight: '황혼기' };
+    var html = '';
+    responses.forEach(function(r) {
+      var qContent = r.question_content || '';
+      var aContent = r.content || r.transcript || '';
+      var pillClass = r.input_method === 'voice' ? 'pill--tag-warm' : 'pill--tag-green';
+      var pillText = r.input_method === 'voice' ? '음성 답변' : '질문 답변';
+      var date = r.created_at ? r.created_at.substring(5, 10).replace('-', '월 ') + '일' : '';
+      var preview = aContent.substring(0, 80) + (aContent.length > 80 ? '…' : '');
+
+      html += '<a class="scard" href="#detail-' + r.id + '" onclick="showDetail(\'' + r.id + '\');return false;">';
+      html += '<div class="scard__meta-row">';
+      html += '<span class="pill ' + pillClass + '">' + pillText + '</span>';
+      html += '<span class="scard__meta">' + date + '</span>';
+      html += '</div>';
+      html += '<div class="scard__title">' + escapeHtml(qContent) + '</div>';
+      html += '<p class="scard__preview">' + escapeHtml(preview) + '</p>';
+      html += '</a>';
+    });
+    list.innerHTML = html;
+  }
+
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function showDetail(respId) {
+    var modal = document.getElementById('detailModal');
+    var body = document.getElementById('detailBody');
+    modal.style.display = 'flex';
+
+    var r = responsesCache.find(function(x) { return x.id === respId; });
+    if (!r) { body.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--c-text-3);font-size:14px;">답변을 찾을 수 없어요</div>'; return; }
+
+    var catLabels = { childhood: '유년기', youth: '청년시절', twilight: '황혼기' };
+    var cat = catLabels[r.question_category] || '기억';
+    var html = '';
+    html += '<div style="margin-bottom:20px;">';
+    html += '<div style="font-size:13px;color:var(--c-text-3);font-weight:600;margin-bottom:8px;">' + cat + ' · 질문</div>';
+    html += '<div style="font-size:20px;font-weight:700;line-height:1.5;color:var(--c-ink);">' + escapeHtml(r.question_content || '') + '</div>';
+    html += '</div>';
+    html += '<div style="height:1px;background:rgba(0,0,0,0.08);margin:20px 0;"></div>';
+    html += '<div>';
+    html += '<div style="font-size:13px;color:var(--c-text-3);font-weight:600;margin-bottom:8px;">답변</div>';
+    html += '<div style="font-size:17px;line-height:1.7;color:var(--c-ink);white-space:pre-wrap;">' + escapeHtml(r.content || r.transcript || '') + '</div>';
+    html += '</div>';
+    body.innerHTML = html;
+  }
+
+  function closeDetailModal() {
+    document.getElementById('detailModal').style.display = 'none';
+  }
+
+  async function loadStorybook(familyId) {
+    if (!familyId) return;
+    try {
+      var res = await fetch('/api/storybook?family_id=' + encodeURIComponent(familyId));
+      if (!res.ok) return;
+      var data = await res.json();
+      var chapters = data.chapters || [];
+      var total = 0;
+      var filled = 0;
+      chapters.forEach(function(ch) {
+        total++;
+        if (ch.count > 0 && ch.body) filled++;
+      });
+      var pct = total > 0 ? Math.round(filled / total * 100) : 0;
+      document.getElementById('progressPct').textContent = pct + '%';
+      document.getElementById('progressBar').style.width = pct + '%';
+
+      // 백그라운드 생성 중인 경우 폴링
+      var hasPending = chapters.some(function(ch) { return ch.has_new; });
+      if (hasPending) {
+        setTimeout(function() { loadStorybook(familyId); }, 5000);
+      }
+    } catch (e) {}
+  }
+</script>
+{% endblock %}

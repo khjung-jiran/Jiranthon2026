@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390,initial-scale=1">
+<title>이음 · 캘린더</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../css/eium.css">
+</head>
+<body>
+
+<!--
+  화면: 캘린더 / 탭: 캘린더
+  · .cal__day--today  = 오늘(11일)
+  · .cal__day-dot     = 일정 있는 날 점 (주황=가족 기념일 / .--green=일반 일정)
+  · 1일이 수요일이라 앞에 빈 칸 3개를 넣습니다.
+-->
+<main class="app app--status">
+  <div class="cal">
+
+    <header class="cal__head">
+      <div>
+        <div class="cal__kicker">우리 가족의 날들</div>
+        <h1 class="cal__title">2026년 7월</h1>
+      </div>
+    </header>
+
+    <div class="cal__grid-wrap">
+      <div class="cal__grid">
+        <div class="cal__dow cal__dow--sun">일</div>
+        <div class="cal__dow">월</div>
+        <div class="cal__dow">화</div>
+        <div class="cal__dow">수</div>
+        <div class="cal__dow">목</div>
+        <div class="cal__dow">금</div>
+        <div class="cal__dow">토</div>
+
+        <div class="cal__day"></div>
+        <div class="cal__day"></div>
+        <div class="cal__day"></div>
+        <div class="cal__day">1</div>
+        <div class="cal__day">2<span class="cal__day-dot cal__day-dot--green"></span></div>
+        <div class="cal__day">3</div>
+        <div class="cal__day">4</div>
+
+        <div class="cal__day cal__day--sun">5</div>
+        <div class="cal__day">6</div>
+        <div class="cal__day">7</div>
+        <div class="cal__day">8</div>
+        <div class="cal__day">9</div>
+        <div class="cal__day">10</div>
+        <div class="cal__day cal__day--today">11</div>
+
+        <div class="cal__day cal__day--sun">12</div>
+        <div class="cal__day">13</div>
+        <div class="cal__day">14</div>
+        <div class="cal__day">15<span class="cal__day-dot cal__day-dot--green"></span></div>
+        <div class="cal__day">16</div>
+        <div class="cal__day">17</div>
+        <div class="cal__day">18</div>
+
+        <div class="cal__day cal__day--sun">19</div>
+        <div class="cal__day">20</div>
+        <div class="cal__day">21</div>
+        <div class="cal__day">22</div>
+        <div class="cal__day">23</div>
+        <div class="cal__day">24<span class="cal__day-dot"></span></div>
+        <div class="cal__day">25</div>
+
+        <div class="cal__day cal__day--sun">26</div>
+        <div class="cal__day">27</div>
+        <div class="cal__day">28</div>
+        <div class="cal__day">29</div>
+        <div class="cal__day">30</div>
+        <div class="cal__day">31</div>
+      </div>
+    </div>
+
+    <section class="cal__events">
+      <div class="cal__events-head">
+        <span class="sec-title">다가오는 일정</span>
+        <button type="button" class="cal__add">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C05430" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          일정 추가
+        </button>
+      </div>
+
+      <div class="cal__list">
+        <article class="event">
+          <div class="event__date event__date--warm">
+            <span class="event__mo">7월</span>
+            <span class="event__day">24</span>
+          </div>
+          <div class="event__body">
+            <div class="event__title">아버지 생신</div>
+            <div class="event__sub">2주 뒤 · 온 가족 저녁 식사</div>
+          </div>
+          <span class="pill pill--dday">D-13</span>
+        </article>
+
+        <article class="event">
+          <div class="event__date">
+            <span class="event__mo">8월</span>
+            <span class="event__day">2</span>
+          </div>
+          <div class="event__body">
+            <div class="event__title">가족 나들이 — 남한산성</div>
+            <div class="event__sub">일요일 오전 · 어머니가 제안했어요</div>
+          </div>
+        </article>
+
+        <article class="event">
+          <div class="event__date">
+            <span class="event__mo">8월</span>
+            <span class="event__day">15</span>
+          </div>
+          <div class="event__body">
+            <div class="event__title">어머니 칠순 준비 모임</div>
+            <div class="event__sub">수민이네 집 · 오후 5시</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- 하단 탭바 (캘린더 활성) -->
+  <nav class="tabbar">
+    <a class="tabbar__item" href="05-story-child.html">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span class="tabbar__label">이야기</span>
+    </a>
+    <a class="tabbar__item" href="07-album.html">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span class="tabbar__label">앨범</span>
+    </a>
+    <a class="tabbar__item" href="03-home-child.html">
+      <span class="tabbar__home tabbar__home--off">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+      </span>
+      <span class="tabbar__label">홈</span>
+    </a>
+    <a class="tabbar__item tabbar__item--on" href="08-calendar.html">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+      <span class="tabbar__label tabbar__label--on">캘린더</span>
+    </a>
+    <a class="tabbar__item" href="09-settings.html">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+      <span class="tabbar__label">설정</span>
+    </a>
+  </nav>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390,initial-scale=1">
+<title>이음 · 이야기 상세 (2쪽 · QR)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../css/eium.css">
+</head>
+<body>
+
+<!--
+  화면: 이야기 상세 — 2쪽 (인용문 + 음성 QR)
+  11-story-detail.html 과 헤더/네비는 동일하고, .detail__page 내용만 다릅니다.
+-->
+<main class="app detail">
+  <div class="grain grain--fine"></div>
+  <div class="detail__rule"></div>
+
+  <div class="detail__bar">
+    <a class="icon-btn icon-btn--paper" href="05-story-child.html" aria-label="뒤로">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <button type="button" class="detail__booklet">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F8F3E7" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      이 이야기로 소책자 만들기
+    </button>
+  </div>
+
+  <div class="detail__body">
+    <header class="detail__head">
+      <div class="detail__kicker">일대기 · 청년기</div>
+      <h1 class="detail__title">1974년, 아버지의 첫 출근날</h1>
+      <div class="detail__meta">7월 8일 음성 답변에서 · 4분 분량</div>
+    </header>
+
+    <article class="detail__page">
+      <blockquote class="detail__quote">"버스 창문에 비친 내 얼굴이<br>꼭 어른 같아서, 괜히 한 번 웃었지."</blockquote>
+      <p>사무실 문을 열었을 때 나던 잉크 냄새와 종이 냄새를, 아버지는 오십 년이 지난 지금도 기억하고 있었다.</p>
+
+      <div class="spacer"></div>
+
+      <!-- 인쇄본에서도 음성을 들을 수 있는 QR -->
+      <div class="detail__qr-row">
+        <svg class="detail__qr" width="56" height="56" viewBox="0 0 51 51" role="img" aria-label="음성 재생 QR 코드">
+          <path d="M0 0h15v15H0zM3 3v9h9V3z" fill="#2B2622" fill-rule="evenodd"/><rect x="5" y="5" width="5" height="5" fill="#2B2622"/>
+          <path d="M36 0h15v15H36zM39 3v9h9V3z" fill="#2B2622" fill-rule="evenodd"/><rect x="41" y="5" width="5" height="5" fill="#2B2622"/>
+          <path d="M0 36h15v15H0zM3 39v9h9v-9z" fill="#2B2622" fill-rule="evenodd"/><rect x="5" y="41" width="5" height="5" fill="#2B2622"/>
+          <path d="M20 2h4v4h-4zM26 6h4v4h-4zM20 10h4v4h-4zM30 12h4v4h-4zM2 20h4v4H2zM8 24h4v4H8zM14 20h4v4h-4zM20 24h4v4h-4zM26 20h4v4h-4zM32 24h4v4h-4zM38 20h4v4h-4zM44 24h4v4h-4zM20 32h4v4h-4zM26 38h4v4h-4zM20 44h4v4h-4zM32 32h4v4h-4zM38 38h4v4h-4zM44 44h4v4h-4zM32 44h4v4h-4zM44 32h4v4h-4z" fill="#2B2622"/>
+        </svg>
+        <div class="detail__qr-text">
+          <div class="detail__qr-title">이 날의 목소리 다시 듣기</div>
+          <div class="detail__qr-sub">인쇄된 책에서도 QR을 찍으면<br>목소리를 들을 수 있어요</div>
+        </div>
+      </div>
+    </article>
+
+    <nav class="detail__nav">
+      <a class="detail__nav-btn" href="11-story-detail.html">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        이전 장
+      </a>
+      <span class="detail__nav-label">2 / 2</span>
+      <button type="button" class="detail__nav-btn" disabled>
+        다음 장
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </nav>
+  </div>
+
+</main>
+</body>
+</html>

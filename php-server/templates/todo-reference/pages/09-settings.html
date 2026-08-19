@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390,initial-scale=1">
+<title>이음 · 설정</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../css/eium.css">
+</head>
+<body>
+
+<!-- 화면: 설정 / 탭: 설정 -->
+<main class="app app--status">
+  <div class="set">
+
+    <header class="set__head">
+      <h1 class="set__title">설정</h1>
+    </header>
+
+    <div class="set__list">
+
+      <!-- 프로필 -->
+      <div class="srow">
+        <span class="avatar avatar--warm avatar--xl">지</span>
+        <div class="srow__body">
+          <div class="srow__name">지훈</div>
+          <div class="srow__sub">자녀 모드 · 어머니, 아버지와 연결됨</div>
+        </div>
+      </div>
+
+      <!-- 모드 전환 -->
+      <a class="srow srow--link" href="04-home-parent.html">
+        <span class="srow__icon srow__icon--warm">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#C05430" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+        </span>
+        <div class="srow__body">
+          <div class="srow__title">부모 모드로 전환</div>
+          <div class="srow__sub">글씨와 버튼 크기가 달라져요</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B4A99C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
+
+      <!-- 프라이버시 -->
+      <div class="srow">
+        <span class="srow__icon srow__icon--green">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2E5B4C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </span>
+        <div class="srow__body">
+          <div class="srow__title">프라이버시</div>
+          <div class="srow__sub">목소리와 기억은 기기 안에서만 처리돼요.<br>가족 외에는 누구도 볼 수 없어요.</div>
+        </div>
+      </div>
+
+      <!-- 알림 -->
+      <div class="srow">
+        <span class="srow__icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </span>
+        <div class="srow__body">
+          <div class="srow__title">알림</div>
+          <div class="srow__sub">새 질문 · 이야기 완성 소식</div>
+        </div>
+        <!-- OFF 상태는 .switch--off 추가 -->
+        <span class="switch"><span class="switch__knob"></span></span>
+      </div>
+
+      <!-- 로그아웃 / 탈퇴 그룹 -->
+      <div class="sgroup">
+        <a class="srow srow--link" href="01-login.html">
+          <span class="srow__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+          </span>
+          <div class="srow__body">
+            <div class="srow__title">로그아웃</div>
+            <div class="srow__sub">모아둔 이야기는 그대로 보관돼요</div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B4A99C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+
+        <div class="sgroup__divider"></div>
+
+        <a class="srow srow--link" href="15-delete-account.html">
+          <span class="srow__icon srow__icon--danger">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C0392B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></svg>
+          </span>
+          <div class="srow__body">
+            <div class="srow__title srow__title--danger">계정 탈퇴</div>
+            <div class="srow__sub">모든 질문·답변과 이야기책이 삭제돼요</div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D9A9A2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 하단 탭바 (설정 활성) -->
+  <nav class="tabbar">
+    <a class="tabbar__item" href="05-story-child.html">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span class="tabbar__label">이야기</span>
+    </a>
+    <a class="tabbar__item" href="07-album.html">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span class="tabbar__label">앨범</span>
+    </a>
+    <a class="tabbar__item" href="03-home-child.html">
+      <span class="tabbar__home tabbar__home--off">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+      </span>
+      <span class="tabbar__label">홈</span>
+    </a>
+    <a class="tabbar__item" href="08-calendar.html">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+      <span class="tabbar__label">캘린더</span>
+    </a>
+    <a class="tabbar__item tabbar__item--on" href="09-settings.html">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+      <span class="tabbar__label tabbar__label--on">설정</span>
+    </a>
+  </nav>
+
+</main>
+</body>
+</html>

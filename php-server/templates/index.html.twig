@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}이음{% endblock %}
+
+{% block content %}
+<main class="app" style="display:flex;align-items:center;justify-content:center;min-height:var(--app-height,100vh);">
+  <p style="color:var(--c-text-sub,#999);font-size:14px;">로딩 중…</p>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    var auth = localStorage.getItem('eum_auth') || sessionStorage.getItem('eum_auth');
+    window.location.replace(auth ? '/home' : '/login');
+  })();
+</script>
+{% endblock %}

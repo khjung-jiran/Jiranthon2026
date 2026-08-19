@@ -1,0 +1,410 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}이음 · 질문에 답하기{% endblock %}
+
+{% block content %}
+<!-- 화면: 질문에 답하기 (어머니/아버지 · 음성 녹음) -->
+<main class="app answer" id="answerPage">
+
+  <div class="answer__bar">
+    <a class="icon-btn icon-btn--lg" href="/home" aria-label="뒤로">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#201B16" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <span class="page-head__title">질문에 답하기</span>
+  </div>
+
+  <section class="answer__q-card" id="qCard">
+    <div class="answer__q-label" id="qLabel">질문</div>
+    <div class="answer__q" id="qText">질문을 불러오는 중…</div>
+    <button type="button" class="answer__listen" id="listenBtn" onclick="playQuestionTTS()" style="display:none;">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#2E5B4C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+      <span class="answer__listen-text">질문 듣기</span>
+    </button>
+  </section>
+
+  <div class="answer__mic-area">
+    <div class="mic-wrap" id="micWrap">
+      <span class="mic-ring" id="ring1" style="display:none;"></span>
+      <span class="mic-ring mic-ring--delay" id="ring2" style="display:none;"></span>
+      <button type="button" class="mic" id="micBtn" aria-label="녹음" onclick="toggleRecording()">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="micIcon"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+      </button>
+    </div>
+
+    <div class="wave" id="wave" style="display:none;">
+      <i style="height:10px;animation-delay:0s"></i><i style="height:18px;animation-delay:.06s"></i>
+      <i style="height:30px;animation-delay:.11s"></i><i style="height:22px;animation-delay:.17s"></i>
+      <i style="height:38px;animation-delay:.22s"></i><i style="height:26px;animation-delay:.28s"></i>
+      <i style="height:14px;animation-delay:.33s"></i><i style="height:32px;animation-delay:.39s"></i>
+      <i style="height:44px;animation-delay:.44s"></i><i style="height:28px;animation-delay:.50s"></i>
+      <i style="height:16px;animation-delay:.55s"></i><i style="height:36px;animation-delay:.61s"></i>
+      <i style="height:24px;animation-delay:.66s"></i><i style="height:40px;animation-delay:.72s"></i>
+      <i style="height:20px;animation-delay:.77s"></i><i style="height:30px;animation-delay:.83s"></i>
+      <i style="height:12px;animation-delay:.88s"></i><i style="height:26px;animation-delay:.94s"></i>
+      <i style="height:34px;animation-delay:.99s"></i><i style="height:18px;animation-delay:1.05s"></i>
+      <i style="height:28px;animation-delay:1.10s"></i><i style="height:42px;animation-delay:1.16s"></i>
+      <i style="height:22px;animation-delay:1.21s"></i><i style="height:14px;animation-delay:1.27s"></i>
+    </div>
+
+    <div class="answer__status" id="statusBar">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">버튼을 눌러 말씀해 주세요</span>
+    </div>
+    <div class="answer__status-sub" id="statusSub"></div>
+
+    <!-- 텍스트 입력하기 버튼 -->
+    <button type="button" class="answer__text-toggle" id="textModeBtn" onclick="showTextInput()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>
+      <span>텍스트로 입력하기</span>
+    </button>
+  </div>
+
+  <!-- 텍스트 입력 모드 (질문 카드 아래, 마이크 영역 대체) -->
+  <div id="textMode" style="display:none;flex:1;flex-direction:column;width:100%;padding-bottom:24px;">
+    <div class="answer__q-card" style="flex:1;display:flex;flex-direction:column;">
+      <div class="answer__q-label">답변 입력</div>
+      <textarea id="textAnswer" placeholder="여기에 답변을 적어주세요" style="flex:1;border:none;background:transparent;font-size:17px;line-height:1.7;color:var(--c-ink-parent);font-family:inherit;outline:none;resize:none;min-height:160px;margin-top:10px;"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button type="button" class="btn btn--outline btn--lg" onclick="cancelTextInput()" style="flex:1;">
+        <span class="btn__label">취소</span>
+      </button>
+      <button type="button" class="btn btn--green btn--lg" onclick="sendTextAnswer()" style="flex:1;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <span class="btn__label">보내기</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- done 상태에서만 노출 -->
+  <div class="answer__actions" id="actionsBar" style="display:none;">
+    <button type="button" class="btn btn--outline btn--lg" onclick="resetRecording()">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#4A4238" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      <span class="btn__label">다시 녹음</span>
+    </button>
+    <button type="button" class="btn btn--green btn--lg" onclick="sendAnswer()">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      <span class="btn__label">보내기</span>
+    </button>
+  </div>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var authData = null;
+  var questionData = null;
+  var mediaRecorder = null;
+  var audioChunks = [];
+  var audioBlob = null;
+  var recordStartTime = 0;
+  var recordTimer = null;
+  var state = 'idle'; // idle → rec → done
+
+  (function init() {
+    var auth = localStorage.getItem('eum_auth') || sessionStorage.getItem('eum_auth');
+    if (!auth) { window.location.href = '/login'; return; }
+    try {
+      authData = JSON.parse(auth);
+    } catch (e) { return; }
+
+    var params = new URLSearchParams(window.location.search);
+    var qid = params.get('qid');
+    if (qid) {
+      loadQuestion(qid);
+    } else {
+      loadLatestQuestion();
+    }
+  })();
+
+  async function loadQuestion(qid) {
+    try {
+      var res = await fetch('/api/questions/' + encodeURIComponent(qid));
+      if (!res.ok) return;
+      questionData = await res.json();
+      renderQuestion();
+    } catch (e) {}
+  }
+
+  async function loadLatestQuestion() {
+    if (!authData || !authData.member) return;
+    var memberId = authData.member.id;
+    var familyId = authData.member.family_id;
+    try {
+      var res = await fetch('/api/questions?family_id=' + encodeURIComponent(familyId) + '&to_member_id=' + encodeURIComponent(memberId));
+      if (!res.ok) return;
+      var questions = await res.json();
+      if (questions && questions.length > 0) {
+        questionData = questions[0];
+        renderQuestion();
+      } else {
+        document.getElementById('qText').textContent = '도착한 질문이 없어요.';
+      }
+    } catch (e) {}
+  }
+
+  function renderQuestion() {
+    if (!questionData) return;
+    var fromName = questionData.from_member_name || '가족';
+    document.getElementById('qLabel').textContent = fromName + '의 질문';
+    document.getElementById('qText').textContent = questionData.content || '';
+    document.getElementById('listenBtn').style.display = 'inline-flex';
+  }
+
+  async function playQuestionTTS() {
+    if (!questionData || !questionData.content) return;
+    var btn = document.getElementById('listenBtn');
+    btn.disabled = true;
+    try {
+      var res = await fetch('/api/tts/synthesize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: questionData.content, language: 'ko' })
+      });
+      if (!res.ok) { alert('음성 재생에 실패했어요'); return; }
+      var data = await res.json();
+      if (data.audio_url) {
+        var audio = new Audio(data.audio_url);
+        audio.play();
+      }
+    } catch (e) {
+      alert('서버에 연결할 수 없어요');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function toggleRecording() {
+    if (state === 'idle') {
+      startRecording();
+    } else if (state === 'rec') {
+      stopRecording();
+    } else if (state === 'done') {
+      resetRecording();
+    }
+  }
+
+  async function startRecording() {
+    try {
+      var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = function(e) {
+        if (e.data.size > 0) audioChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = function() {
+        audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        stream.getTracks().forEach(function(t) { t.stop(); });
+        setState('done');
+        transcribeAudio();
+      };
+
+      mediaRecorder.start();
+      recordStartTime = Date.now();
+      setState('rec');
+      startTimer();
+    } catch (e) {
+      alert('마이크에 접근할 수 없어요. 권한을 허용해 주세요.');
+    }
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+    stopTimer();
+  }
+
+  function resetRecording() {
+    audioBlob = null;
+    audioChunks = [];
+    sttText = '';
+    setState('idle');
+  }
+
+  function setState(newState) {
+    state = newState;
+    var micBtn = document.getElementById('micBtn');
+    var micIcon = document.getElementById('micIcon');
+    var wave = document.getElementById('wave');
+    var ring1 = document.getElementById('ring1');
+    var ring2 = document.getElementById('ring2');
+    var statusBar = document.getElementById('statusBar');
+    var statusDot = document.getElementById('statusDot');
+    var statusText = document.getElementById('statusText');
+    var statusSub = document.getElementById('statusSub');
+    var actionsBar = document.getElementById('actionsBar');
+
+    if (newState === 'idle') {
+      micBtn.classList.remove('mic--done');
+      wave.style.display = 'none';
+      ring1.style.display = 'none';
+      ring2.style.display = 'none';
+      statusDot.className = 'dot';
+      statusText.textContent = '버튼을 눌러 말씀해 주세요';
+      statusSub.textContent = '';
+      actionsBar.style.display = 'none';
+      micIcon.innerHTML = '<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>';
+    } else if (newState === 'rec') {
+      micBtn.classList.remove('mic--done');
+      wave.style.display = 'flex';
+      ring1.style.display = 'block';
+      ring2.style.display = 'block';
+      statusDot.className = 'dot dot--rec';
+      statusSub.textContent = '다 하시면 버튼을 한 번 더 눌러 주세요';
+      actionsBar.style.display = 'none';
+      micIcon.innerHTML = '<rect x="6" y="6" width="12" height="12" rx="2" fill="#fff" stroke="none"/>';
+    } else if (newState === 'done') {
+      micBtn.classList.add('mic--done');
+      wave.style.display = 'none';
+      ring1.style.display = 'none';
+      ring2.style.display = 'none';
+      statusDot.className = 'dot';
+      statusText.textContent = '잘 담겼어요 · ' + formatDuration(Date.now() - recordStartTime);
+      statusSub.textContent = '';
+      actionsBar.style.display = 'flex';
+      micIcon.innerHTML = '<path d="M20 6 9 17l-5-5"/>';
+    }
+  }
+
+  function startTimer() {
+    stopTimer();
+    recordTimer = setInterval(function() {
+      if (state === 'rec') {
+        document.getElementById('statusText').textContent = '말씀하고 계세요 · ' + formatDuration(Date.now() - recordStartTime);
+      }
+    }, 500);
+  }
+
+  function stopTimer() {
+    if (recordTimer) { clearInterval(recordTimer); recordTimer = null; }
+  }
+
+  function formatDuration(ms) {
+    var sec = Math.floor(ms / 1000);
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  var sttText = '';
+
+  async function transcribeAudio() {
+    if (!audioBlob) return;
+    document.getElementById('statusSub').textContent = '텍스트로 변환 중…';
+    try {
+      var formData = new FormData();
+      formData.append('file', audioBlob, 'answer.webm');
+      var res = await fetch('/api/stt/transcribe', { method: 'POST', body: formData });
+      if (!res.ok) { document.getElementById('statusSub').textContent = ''; return; }
+      var data = await res.json();
+      sttText = data.text || data.transcript || '';
+      if (sttText) {
+        document.getElementById('statusSub').textContent = '"' + sttText.substring(0, 60) + (sttText.length > 60 ? '…' : '') + '"';
+      } else {
+        document.getElementById('statusSub').textContent = '음성이 인식되지 않았어요. 다시 녹음하거나 텍스트로 입력해 주세요.';
+      }
+    } catch (e) {
+      document.getElementById('statusSub').textContent = '';
+    }
+  }
+
+  function showTextInput() {
+    document.querySelector('.answer__mic-area').style.display = 'none';
+    document.getElementById('textMode').style.display = 'flex';
+    document.getElementById('textAnswer').focus();
+  }
+
+  function cancelTextInput() {
+    document.getElementById('textMode').style.display = 'none';
+    document.querySelector('.answer__mic-area').style.display = '';
+    document.getElementById('textAnswer').value = '';
+  }
+
+  async function sendTextAnswer() {
+    var text = document.getElementById('textAnswer').value.trim();
+    if (!text) { alert('답변을 입력해 주세요'); return; }
+    if (!authData || !authData.member) { alert('로그인 정보가 없어요'); return; }
+    if (!questionData) { alert('질문 정보가 없어요'); return; }
+
+    var btn = document.querySelector('#textMode .btn--green');
+    if (btn) { btn.disabled = true; btn.querySelector('.btn__label').textContent = '보내는 중…'; }
+
+    try {
+      var respRes = await fetch('/api/responses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question_id: questionData.id,
+          member_id: authData.member.id,
+          content: text,
+          input_method: 'text'
+        })
+      });
+      if (!respRes.ok) {
+        var err = await respRes.json().catch(function() { return {}; });
+        alert(err.detail || '답변 전송에 실패했어요');
+        return;
+      }
+      alert('답변이 전송되었어요!');
+      window.location.href = '/home';
+    } catch (e) {
+      alert('서버에 연결할 수 없어요');
+    } finally {
+      if (btn) { btn.disabled = false; btn.querySelector('.btn__label').textContent = '보내기'; }
+    }
+  }
+
+  async function sendAnswer() {
+    if (!audioBlob) { alert('녹음이 없어요'); return; }
+    if (!authData || !authData.member) { alert('로그인 정보가 없어요'); return; }
+    if (!questionData) { alert('질문 정보가 없어요'); return; }
+
+    var btn = document.querySelector('.btn--green');
+    if (btn) { btn.disabled = true; btn.querySelector('.btn__label').textContent = '보내는 중…'; }
+
+    try {
+      // 1. 오디오 업로드
+      var formData = new FormData();
+      formData.append('file', audioBlob, 'answer.webm');
+
+      var uploadRes = await fetch('/api/uploads/audio', {
+        method: 'POST',
+        body: formData
+      });
+      if (!uploadRes.ok) { alert('오디오 업로드에 실패했어요'); return; }
+      var uploadData = await uploadRes.json();
+
+      // 2. 답변 생성 (STT 텍스트가 있으면 함께 전송)
+      var respRes = await fetch('/api/responses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question_id: questionData.id,
+          member_id: authData.member.id,
+          audio_file_path: uploadData.file_path,
+          content: sttText || '',
+          input_method: 'voice',
+          duration: formatDuration(Date.now() - recordStartTime)
+        })
+      });
+
+      if (!respRes.ok) {
+        var err = await respRes.json().catch(function() { return {}; });
+        alert(err.detail || '답변 전송에 실패했어요');
+        return;
+      }
+
+      alert('답변이 전송되었어요!');
+      window.location.href = '/home';
+    } catch (e) {
+      alert('서버에 연결할 수 없어요');
+    } finally {
+      if (btn) { btn.disabled = false; btn.querySelector('.btn__label').textContent = '보내기'; }
+    }
+  }
+</script>
+{% endblock %}

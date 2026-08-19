@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390,initial-scale=1">
+<title>이음 · 처리 중</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../css/eium.css">
+</head>
+<body>
+
+<!--
+  화면: 처리 중 (음성 답변 → 글 변환)
+  진입점: 홈 '도착한 답변' 탭 → 약 3.4초 뒤 자동으로 13-story-piece.html 로 전환
+  .proc__line 문구는 0.9초 간격으로 아래 4개가 순환합니다.
+    1) 어머니의 목소리를 글로 옮기고 있어요…
+    2) "새벽 다섯 시, 하얀 와이셔츠를 입고…"
+    3) 문장을 다듬고 있어요…
+    4) 대표 문장을 고르고 있어요…
+-->
+<main class="app proc">
+
+  <div class="proc__orb">
+    <div class="proc__orb-glow"></div>
+    <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#E4643E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+  </div>
+
+  <h1 class="proc__title">오늘의 이야기를<br>정리하고 있어요</h1>
+
+  <div class="proc__dots">
+    <span class="proc__dot"></span>
+    <span class="proc__dot"></span>
+    <span class="proc__dot"></span>
+  </div>
+
+  <div class="proc__line">어머니의 목소리를 글로 옮기고 있어요…</div>
+
+  <div class="privacy-pill proc__privacy">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2E5B4C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <span class="privacy-pill__text">목소리와 기억은 기기 안에서만 처리돼요</span>
+  </div>
+
+</main>
+</body>
+</html>

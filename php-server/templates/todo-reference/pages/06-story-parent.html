@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390,initial-scale=1">
+<title>이음 · 이야기 (부모 모드)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../css/eium.css">
+</head>
+<body>
+
+<!--
+  화면: 이야기 (부모 모드) / 탭: 이야기
+  자녀 모드와 달리 목록이 아니라 "내 이야기가 쌓이는 모습"을 크게 보여줍니다.
+-->
+<main class="app app--status app--parent">
+  <div class="pstory">
+
+    <header class="pstory__head">
+      <div class="pstory__kicker">차곡차곡 쌓이는</div>
+      <h1 class="pstory__title">순자님의 이야기</h1>
+    </header>
+
+    <!-- 자녀 소식 카드 -->
+    <section class="pstory__news">
+      <div class="pstory__news-who">
+        <span class="avatar avatar--warm avatar--lg">지</span>
+        <span class="pstory__news-label">지훈이의 소식</span>
+      </div>
+      <div class="pstory__news-title">지훈이가 어제 어머님의<br>'붕어빵 가게' 이야기를<br>세 번 들었어요</div>
+      <div class="pstory__news-sub">어머님의 목소리를 아주 좋아해요.<br>다음 이야기도 기다리고 있어요.</div>
+    </section>
+
+    <!-- 책장 + 진행률 -->
+    <section class="pstory__books">
+      <h2 class="pstory__books-title">내 이야기가 책이 되고 있어요</h2>
+
+      <div class="shelf">
+        <div class="book book--short"><span class="book__spine">단편집</span></div>
+        <div class="book book--life"><span class="book__spine">일대기</span></div>
+        <div class="shelf__meta">
+          <div class="shelf__count">이야기 12편</div>
+          <div class="shelf__desc">천천히, 하나씩<br>쌓여가고 있어요</div>
+        </div>
+      </div>
+
+      <div class="progress-block">
+        <div class="progress-block__row">
+          <span>일대기 채워짐</span>
+          <span class="progress-block__pct">45%</span>
+        </div>
+        <div class="bar bar--lg"><div class="bar__fill bar__fill--grad" style="width:45%"></div></div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- 하단 탭바 (부모 모드 · 이야기 활성) -->
+  <nav class="tabbar tabbar--parent">
+    <a class="tabbar__item tabbar__item--on" href="06-story-parent.html">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span class="tabbar__label tabbar__label--on">이야기</span>
+    </a>
+    <a class="tabbar__item" href="07-album.html">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span class="tabbar__label">앨범</span>
+    </a>
+    <a class="tabbar__item" href="04-home-parent.html">
+      <span class="tabbar__home tabbar__home--off">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+      </span>
+      <span class="tabbar__label">홈</span>
+    </a>
+    <a class="tabbar__item" href="08-calendar.html">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+      <span class="tabbar__label">캘린더</span>
+    </a>
+    <a class="tabbar__item" href="09-settings.html">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+      <span class="tabbar__label">설정</span>
+    </a>
+  </nav>
+
+</main>
+</body>
+</html>

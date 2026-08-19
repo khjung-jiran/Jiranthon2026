@@ -1,0 +1,400 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}이음 · 홈 (자녀 모드){% endblock %}
+
+{% block content %}
+<!-- 화면: 홈 (자녀 모드) / 탭: 홈 -->
+<main class="app app--status">
+  <div class="home">
+
+    <!-- 인사 + 알림 -->
+    <header class="home__top">
+      <div>
+        <div class="home__date" id="homeDate"></div>
+        <h1 class="home__greet" id="greetName">안녕하세요</h1>
+        <div class="home__link" id="homeLink" style="display:none;">
+          <span class="dot"></span>
+          <span class="home__link-text" id="homeLinkText"></span>
+        </div>
+      </div>
+      <button type="button" class="bell" aria-label="알림" onclick="showNotifications()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span class="bell__badge" id="bellBadge" style="display:none;"></span>
+      </button>
+    </header>
+
+    <!-- 퀵 액션 2개 -->
+    <div class="quick">
+      <a class="quick__btn quick__btn--primary" href="/send-question">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        <div>
+          <div class="quick__title">질문 보내기</div>
+          <div class="quick__sub">궁금한 것을 물어보세요</div>
+        </div>
+      </a>
+      <a class="quick__btn quick__btn--plain" href="/story-child">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2E5B4C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+        <div>
+          <div class="quick__title">도착한 답변 <span class="quick__count" id="replyCount">0</span></div>
+          <div class="quick__sub" id="replySub">아직 도착한 답변이 없어요</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- 질문 카드 덱 -->
+    <section class="deck-wrap" id="deckWrap" style="display:none;">
+      <div class="deck-head">
+        <div class="deck-head__left">
+          <span class="sec-title">도착한 질문</span>
+          <span class="pill pill--primary" id="questionCount">0</span>
+        </div>
+        <span class="deck-head__hint">← 카드를 밀어보세요</span>
+      </div>
+      <div class="deck" id="deck" style="position:relative;overflow:hidden;"></div>
+      <div class="deck-dots" id="deckDots"></div>
+    </section>
+
+  </div>
+
+  <!-- 하단 탭바 (홈 활성) -->
+  <nav class="tabbar">
+    <a class="tabbar__item" href="/story-child">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span class="tabbar__label">이야기</span>
+    </a>
+    <a class="tabbar__item" href="/album">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span class="tabbar__label">앨범</span>
+    </a>
+    <a class="tabbar__item tabbar__item--on" href="/home">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+      <span class="tabbar__label tabbar__label--on">홈</span>
+    </a>
+    <a class="tabbar__item" href="/calendar">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+      <span class="tabbar__label">캘린더</span>
+    </a>
+    <a class="tabbar__item" href="/settings">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+      <span class="tabbar__label">설정</span>
+    </a>
+  </nav>
+
+  <!-- 알림 모달 -->
+  <div id="notifModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:flex-end;justify-content:center;">
+    <div style="background:var(--c-bg);border-radius:20px 20px 0 0;padding:24px 20px 32px;width:100%;max-width:390px;max-height:70vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h2 style="font-size:1.15rem;font-weight:600;margin:0;">알림</h2>
+        <button type="button" onclick="closeNotifModal()" style="background:none;border:none;cursor:pointer;padding:4px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="notifList" style="display:flex;flex-direction:column;gap:12px;">
+        <div style="text-align:center;color:var(--c-text-3);font-size:0.9rem;padding:24px 0;">알림을 불러오는 중…</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var authData = null;
+
+  (function checkAuth() {
+    var auth = localStorage.getItem('eum_auth') || sessionStorage.getItem('eum_auth');
+    if (!auth) {
+      window.location.href = '/login';
+      return;
+    }
+    try {
+      authData = JSON.parse(auth);
+      var member = authData.member || {};
+      var family = authData.family || {};
+      var name = member.name || '';
+
+      if (name) {
+        document.getElementById('greetName').textContent = '안녕하세요, ' + name + '님';
+      }
+      if (family.id) {
+        document.getElementById('homeLink').style.display = 'flex';
+        document.getElementById('homeLinkText').textContent = '가족과 연결되어 있어요';
+      }
+
+      loadAiSuggestions(member.id, family.id);
+      loadAnsweredCount(family.id);
+      loadUnreadCount();
+    } catch (e) {}
+
+    var now = new Date();
+    var days = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+    document.getElementById('homeDate').textContent =
+      (now.getMonth()+1) + '월 ' + now.getDate() + '일 ' + days[now.getDay()];
+  })();
+
+  async function loadAiSuggestions(memberId, familyId) {
+    if (!memberId) return;
+    try {
+      var res = await fetch('/api/questions/ai-suggestions?count=3&from_member_id=' + encodeURIComponent(memberId));
+      if (!res.ok) return;
+      var data = await res.json();
+      var questions = data.questions || [];
+      if (questions.length === 0) return;
+
+      document.getElementById('deckWrap').style.display = '';
+      document.getElementById('questionCount').textContent = questions.length;
+
+      var deck = document.getElementById('deck');
+      var dots = document.getElementById('deckDots');
+      deck.innerHTML = '';
+      dots.innerHTML = '';
+
+      questions.forEach(function(q, i) {
+        var card = document.createElement('article');
+        card.className = 'deck__card';
+
+        var top = document.createElement('div');
+        top.className = 'deck__card-top';
+        var from = document.createElement('span');
+        from.className = 'deck__from';
+        from.textContent = 'AI 이음이 제안';
+        var time = document.createElement('span');
+        time.className = 'deck__time';
+        time.textContent = '오늘';
+        top.appendChild(from);
+        top.appendChild(time);
+
+        var qText = document.createElement('div');
+        qText.className = 'deck__q';
+        qText.textContent = q.content;
+
+        var sub = document.createElement('div');
+        sub.className = 'deck__sub';
+        var catLabels = { childhood: '유년기', youth: '청년시절', twilight: '황혼기' };
+        sub.textContent = "일대기 '" + (catLabels[q.category] || '기억') + "' 챕터를 채울 수 있는 질문이에요";
+
+        var spacer = document.createElement('div');
+        spacer.className = 'spacer';
+
+        var cta = document.createElement('a');
+        cta.className = 'btn btn--primary deck__cta';
+        cta.href = '/send-question?q=' + encodeURIComponent(q.content) + '&cat=' + encodeURIComponent(q.category || '');
+        var label = document.createElement('span');
+        label.className = 'btn__label';
+        label.textContent = '이 질문 보내기';
+        cta.appendChild(label);
+
+        card.appendChild(top);
+        card.appendChild(qText);
+        card.appendChild(sub);
+        card.appendChild(spacer);
+        card.appendChild(cta);
+
+        card.style.position = 'absolute';
+        card.style.top = '0';
+        card.style.left = '0';
+        card.style.width = '100%';
+        card.style.transform = i === 0 ? 'translateX(0)' : 'translateX(100%)';
+        card.style.transition = 'transform .3s ease';
+        card.style.opacity = i === 0 ? '1' : '0';
+        deck.appendChild(card);
+
+        var dot = document.createElement('span');
+        dot.className = 'deck-dots__i' + (i === 0 ? ' deck-dots__i--on' : '');
+        dot.onclick = function() { showCard(i); };
+        dots.appendChild(dot);
+      });
+
+      initSwipe();
+    } catch (e) {}
+  }
+
+  function showCard(idx) {
+    var cards = document.querySelectorAll('#deck .deck__card');
+    var dots = document.querySelectorAll('#deckDots .deck-dots__i');
+    if (idx < 0) idx = 0;
+    if (idx >= cards.length) idx = cards.length - 1;
+    cards.forEach(function(c, i) {
+      c.style.transition = 'transform .3s ease, opacity .3s ease';
+      if (i === idx) {
+        c.style.transform = 'translateX(0)';
+        c.style.opacity = '1';
+      } else if (i < idx) {
+        c.style.transform = 'translateX(-100%)';
+        c.style.opacity = '0';
+      } else {
+        c.style.transform = 'translateX(100%)';
+        c.style.opacity = '0';
+      }
+    });
+    dots.forEach(function(d, i) { d.className = 'deck-dots__i' + (i === idx ? ' deck-dots__i--on' : ''); });
+    currentCardIdx = idx;
+  }
+
+  var currentCardIdx = 0;
+  var isDragging = false;
+  var dragStartX = 0;
+  var dragDx = 0;
+  var deckWidth = 0;
+
+  function initSwipe() {
+    var deck = document.getElementById('deck');
+    if (!deck) return;
+
+    function getX(e) {
+      if (e.touches && e.touches.length) return e.touches[0].clientX;
+      if (e.changedTouches && e.changedTouches.length) return e.changedTouches[0].clientX;
+      return e.clientX;
+    }
+
+    function getY(e) {
+      if (e.touches && e.touches.length) return e.touches[0].clientY;
+      if (e.changedTouches && e.changedTouches.length) return e.changedTouches[0].clientY;
+      return e.clientY;
+    }
+
+    function onDown(e) {
+      isDragging = true;
+      dragStartX = getX(e);
+      dragDx = 0;
+      deckWidth = deck.offsetWidth;
+      var cards = deck.querySelectorAll('.deck__card');
+      cards.forEach(function(c) {
+        c.style.transition = 'none';
+      });
+    }
+
+    function onMove(e) {
+      if (!isDragging) return;
+      dragDx = getX(e) - dragStartX;
+      if (Math.abs(dragDx) < 5) return;
+
+      var progress = dragDx / deckWidth;
+      var gap = 12;
+      var cards = deck.querySelectorAll('.deck__card');
+      cards.forEach(function(c, i) {
+        var base;
+        var opacity = 0;
+        var scale = 1;
+        if (i === currentCardIdx) {
+          base = dragDx;
+          opacity = 1 - Math.abs(progress) * 0.3;
+          scale = 1 - Math.abs(progress) * 0.05;
+        } else if (i === currentCardIdx + 1) {
+          base = deckWidth + gap + dragDx;
+          opacity = Math.max(0, 1 - Math.abs(progress) * 0.7);
+          if (dragDx < 0) opacity = Math.min(1, Math.abs(progress) + 0.3);
+          scale = 0.92 + Math.abs(progress) * 0.08;
+        } else if (i === currentCardIdx - 1) {
+          base = -(deckWidth + gap) + dragDx;
+          opacity = Math.max(0, 1 - Math.abs(progress) * 0.7);
+          if (dragDx > 0) opacity = Math.min(1, Math.abs(progress) + 0.3);
+          scale = 0.92 + Math.abs(progress) * 0.08;
+        } else if (i > currentCardIdx) {
+          base = deckWidth + gap;
+          opacity = 0;
+        } else {
+          base = -(deckWidth + gap);
+          opacity = 0;
+        }
+        c.style.transform = 'translateX(' + base + 'px) scale(' + scale + ')';
+        c.style.opacity = opacity;
+      });
+    }
+
+    function onUp(e) {
+      if (!isDragging) return;
+      isDragging = false;
+      var cards = deck.querySelectorAll('.deck__card');
+      cards.forEach(function(c) { c.style.transition = 'transform .3s ease, opacity .3s ease'; });
+
+      var threshold = deckWidth / 4;
+      if (dragDx < -threshold) {
+        showCard(currentCardIdx + 1);
+      } else if (dragDx > threshold) {
+        showCard(currentCardIdx - 1);
+      } else {
+        showCard(currentCardIdx);
+      }
+    }
+
+    deck.addEventListener('touchstart', onDown, { passive: true });
+    deck.addEventListener('touchmove', onMove, { passive: true });
+    deck.addEventListener('touchend', onUp, { passive: true });
+
+    deck.addEventListener('mousedown', function(e) { e.preventDefault(); onDown(e); });
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }
+
+  async function loadAnsweredCount(familyId) {
+    if (!familyId) return;
+    try {
+      var res = await fetch('/api/responses/stats?family_id=' + encodeURIComponent(familyId));
+      if (!res.ok) return;
+      var stats = await res.json();
+      var answered = stats.answered || 0;
+      if (answered > 0) {
+        document.getElementById('replyCount').textContent = answered;
+        document.getElementById('replySub').textContent = '부모님의 목소리가 왔어요';
+        var link = document.querySelector('.quick__btn--plain');
+        if (link) link.href = '/story-child';
+      }
+    } catch (e) {}
+  }
+
+  async function showNotifications() {
+    var modal = document.getElementById('notifModal');
+    modal.style.display = 'flex';
+    var list = document.getElementById('notifList');
+    list.innerHTML = '<div style="text-align:center;color:var(--c-text-3);font-size:0.9rem;padding:24px 0;">알림을 불러오는 중…</div>';
+
+    try {
+      var res = await fetch('/api/notifications');
+      if (!res.ok) { list.innerHTML = '<div style="text-align:center;color:var(--c-text-3);font-size:0.9rem;padding:24px 0;">알림을 불러올 수 없어요</div>'; return; }
+      var notifications = await res.json();
+      if (!notifications || notifications.length === 0) {
+        list.innerHTML = '<div style="text-align:center;color:var(--c-text-3);font-size:0.9rem;padding:24px 0;">알림이 없어요</div>';
+        return;
+      }
+      list.innerHTML = '';
+      notifications.forEach(function(n) {
+        var item = document.createElement('div');
+        item.style.cssText = 'padding:14px 16px;border-radius:12px;background:#fff;border:1px solid rgba(0,0,0,0.06);';
+        var title = document.createElement('div');
+        title.style.cssText = 'font-size:0.95rem;font-weight:600;color:var(--c-ink);margin-bottom:4px;';
+        title.textContent = n.title || '알림';
+        var body = document.createElement('div');
+        body.style.cssText = 'font-size:0.85rem;color:var(--c-text-3);line-height:1.5;';
+        body.textContent = n.body || n.message || '';
+        item.appendChild(title);
+        item.appendChild(body);
+        list.appendChild(item);
+      });
+
+      // 읽음 처리
+      fetch('/api/notifications/read-all', { method: 'POST' });
+      var badge = document.getElementById('bellBadge');
+      if (badge) badge.style.display = 'none';
+    } catch (e) {
+      list.innerHTML = '<div style="text-align:center;color:var(--c-text-3);font-size:0.9rem;padding:24px 0;">알림을 불러올 수 없어요</div>';
+    }
+  }
+
+  function closeNotifModal() {
+    document.getElementById('notifModal').style.display = 'none';
+  }
+
+  async function loadUnreadCount() {
+    try {
+      var res = await fetch('/api/notifications/unread-count');
+      if (!res.ok) return;
+      var data = await res.json();
+      var count = data.count || data.unread_count || 0;
+      var badge = document.getElementById('bellBadge');
+      if (badge && count > 0) badge.style.display = '';
+    } catch (e) {}
+  }
+</script>
+{% endblock %}

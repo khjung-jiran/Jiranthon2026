@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% block title %}이음{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="/css/eium.css?v={{ 'now'|date('U') }}">
+    <link rel="icon" href="/favicon.ico" />
+    {% block head %}{% endblock %}
+    <script>
+      function setAppHeight(){document.documentElement.style.setProperty('--app-height',window.innerHeight+'px')}
+      setAppHeight();
+      window.addEventListener('resize',setAppHeight);
+      window.addEventListener('orientationchange',function(){setTimeout(setAppHeight,200)});
+    </script>
+  </head>
+  <body>
+    <div id="root">
+      {% block content %}{% endblock %}
+      {% block scripts %}{% endblock %}
+    </div>
+  </body>
+</html>

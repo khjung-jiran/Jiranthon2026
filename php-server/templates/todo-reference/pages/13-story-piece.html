@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390,initial-scale=1">
+<title>이음 · 이야기 조각</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../css/eium.css">
+</head>
+<body>
+
+<!--
+  화면: 이야기 조각 (생성 결과) / 진입점: 12-processing.html 완료 직후
+  .player 는 재생 전 상태입니다. 재생 중에는 아이콘을 ⏸ 로 바꾸고
+  .player__wave i 에 animation:eiumWave 를 부여하세요.
+-->
+<main class="app piece">
+
+  <div class="piece__notice">
+    <span class="piece__notice-text">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2E5B4C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      답변이 도착해, 이야기가 남았어요
+    </span>
+  </div>
+
+  <article class="piece__card">
+    <div class="grain grain--fine"></div>
+
+    <span class="piece__tag">일대기 · '청년기' 챕터에 담겼어요</span>
+
+    <h1 class="piece__title">1974년, 아버지의<br>첫 출근날</h1>
+
+    <div class="piece__text">
+      <p>새벽 다섯 시, 어머니가 밤새 다려 주신 하얀 와이셔츠를 입고 집을 나섰다. 버스 정류장까지 걸어가는 십오 분이 그렇게 길게 느껴진 적이 없었다.</p>
+      <p>첫 월급으로 무얼 하겠다는 계획 같은 건 없었다. 다만 대문을 나설 때 아버지가 등 뒤에서 헛기침을 두 번 하셨다.</p>
+    </div>
+
+    <div class="piece__quote">
+      <div class="piece__quote-text">"버스 창문에 비친 내 얼굴이 꼭 어른 같아서, 괜히 한 번 웃었지."</div>
+      <div class="piece__quote-src">답변에서 아버지가 하신 말</div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <!-- 음성 재생 바 -->
+    <button type="button" class="player">
+      <span class="player__btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
+      </span>
+      <span class="player__label">이 날의 목소리 듣기</span>
+      <span class="player__wave">
+        <i style="height:6px"></i><i style="height:11px"></i><i style="height:16px"></i><i style="height:9px"></i>
+        <i style="height:14px"></i><i style="height:18px"></i><i style="height:8px"></i><i style="height:12px"></i>
+        <i style="height:17px"></i><i style="height:10px"></i><i style="height:15px"></i><i style="height:7px"></i>
+        <i style="height:13px"></i><i style="height:18px"></i><i style="height:9px"></i><i style="height:12px"></i>
+      </span>
+      <span class="player__time">0:00</span>
+    </button>
+  </article>
+
+  <div class="piece__actions">
+    <a class="btn btn--primary" href="05-story-child.html">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span class="btn__label">이야기책에 저장</span>
+    </a>
+    <button type="button" class="btn btn--ghost">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4M12 2v13"/></svg>
+      <span class="btn__label">부모님께 공유</span>
+    </button>
+  </div>
+
+</main>
+</body>
+</html>

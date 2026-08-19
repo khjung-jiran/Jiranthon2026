@@ -1,0 +1,24 @@
+{
+    "name": "eum/php-server",
+    "description": "이음 API - Apache + PHP + Slim 백엔드 서버",
+    "type": "project",
+    "require": {
+        "php": ">=8.1",
+        "ext-pdo": "*",
+        "ext-pdo_sqlite": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "slim/slim": "^4.0",
+        "slim/psr7": "^1.6",
+        "slim/twig-view": "^3.0",
+        "nyholm/psr7": "^1.8",
+        "nyholm/psr7-server": "^1.0",
+        "guzzlehttp/psr7": "^2.6",
+        "http-interop/http-factory-guzzle": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Eum\\": "src/"
+        }
+    }
+}

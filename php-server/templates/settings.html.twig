@@ -1,0 +1,317 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}이음 · 설정{% endblock %}
+
+{% block content %}
+<!-- 화면: 설정 / 탭: 설정 -->
+<main class="app app--status{% if is_parent %} app--parent{% endif %}">
+  <div class="set">
+
+    <header class="set__head">
+      <h1 class="set__title">설정</h1>
+    </header>
+
+    <div class="set__list">
+
+      <!-- 프로필 -->
+      <div class="srow">
+        <span class="avatar avatar--warm avatar--xl" id="profileAvatar"></span>
+        <div class="srow__body">
+          <div class="srow__name" id="profileName"></div>
+          <div class="srow__sub" id="profileSub"></div>
+        </div>
+      </div>
+
+      <!-- 가족 초대 코드 -->
+      <div class="srow">
+        <span class="srow__icon srow__icon--warm">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#C05430" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6M19 8v6"/></svg>
+        </span>
+        <div class="srow__body">
+          <div class="srow__title">가족 초대 코드</div>
+          <div class="srow__sub" id="inviteCodeSub">불러오는 중…</div>
+        </div>
+        <button type="button" class="srow__icon" id="copyInviteBtn" style="background:none;border:none;cursor:pointer;padding:4px;" onclick="copyInviteCode()" title="복사">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B4A99C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+      </div>
+
+      <!-- 가족 연결하기 -->
+      <a class="srow srow--link" href="#" onclick="showJoinFamilyModal(); return false;">
+        <span class="srow__icon">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+        </span>
+        <div class="srow__body">
+          <div class="srow__title">가족 연결하기</div>
+          <div class="srow__sub">초대 코드를 입력해 다른 가족에 참여해요</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B4A99C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
+
+      <!-- 프라이버시 -->
+      <div class="srow">
+        <span class="srow__icon srow__icon--green">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2E5B4C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </span>
+        <div class="srow__body">
+          <div class="srow__title">프라이버시</div>
+          <div class="srow__sub">목소리와 기억은 기기 안에서만 처리돼요.<br>가족 외에는 누구도 볼 수 없어요.</div>
+        </div>
+      </div>
+
+      <!-- 알림 -->
+      <div class="srow">
+        <span class="srow__icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </span>
+        <div class="srow__body">
+          <div class="srow__title">알림</div>
+          <div class="srow__sub">새 질문 · 이야기 완성 소식</div>
+        </div>
+        <span class="switch" id="notifySwitch" onclick="toggleSwitch('notifySwitch')"><span class="switch__knob"></span></span>
+      </div>
+
+      <!-- 로그아웃 / 탈퇴 그룹 -->
+      <div class="sgroup">
+        <a class="srow srow--link" href="#" onclick="doLogout(); return false;">
+          <span class="srow__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+          </span>
+          <div class="srow__body">
+            <div class="srow__title">로그아웃</div>
+            <div class="srow__sub">모아둔 이야기는 그대로 보관돼요</div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B4A99C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+
+        <div class="sgroup__divider"></div>
+
+        <a class="srow srow--link" href="#" onclick="doDeleteAccount(); return false;">
+          <span class="srow__icon srow__icon--danger">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C0392B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></svg>
+          </span>
+          <div class="srow__body">
+            <div class="srow__title srow__title--danger">계정 탈퇴</div>
+            <div class="srow__sub">모든 질문·답변과 이야기책이 삭제돼요</div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D9A9A2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 하단 탭바 (설정 활성) -->
+  <nav class="tabbar{% if is_parent %} tabbar--parent{% endif %}">
+    <a class="tabbar__item" href="/story-child">
+      <svg width="{% if is_parent %}26{% else %}21{% endif %}" height="{% if is_parent %}26{% else %}21{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span class="tabbar__label">이야기</span>
+    </a>
+    <a class="tabbar__item" href="/album">
+      <svg width="{% if is_parent %}26{% else %}21{% endif %}" height="{% if is_parent %}26{% else %}21{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span class="tabbar__label">앨범</span>
+    </a>
+    <a class="tabbar__item" href="/home">
+      {% if is_parent %}
+      <span class="tabbar__home tabbar__home--off">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+      </span>
+      {% else %}
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+      {% endif %}
+      <span class="tabbar__label">홈</span>
+    </a>
+    <a class="tabbar__item" href="/calendar">
+      <svg width="{% if is_parent %}26{% else %}21{% endif %}" height="{% if is_parent %}26{% else %}21{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+      <span class="tabbar__label">캘린더</span>
+    </a>
+    <a class="tabbar__item tabbar__item--on" href="/settings">
+      <svg width="{% if is_parent %}26{% else %}21{% endif %}" height="{% if is_parent %}26{% else %}21{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+      <span class="tabbar__label tabbar__label--on">설정</span>
+    </a>
+  </nav>
+
+  <!-- 가족 연결 모달 -->
+  <div id="joinFamilyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;">
+    <div style="background:var(--c-bg);border-radius:16px;padding:24px;width:86%;max-width:320px;">
+      <h2 style="font-size:1.15rem;font-weight:600;margin:0 0 8px;">가족 연결하기</h2>
+      <p style="font-size:0.85rem;color:var(--c-text-sub);margin:0 0 16px;">초대 코드를 입력하면 해당 가족에 참여해요.</p>
+      <input class="input" type="text" id="joinFamilyCode" placeholder="예: EIUM-4821" style="width:100%;margin-bottom:12px;">
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn btn--block" onclick="closeJoinFamilyModal()" style="flex:1;">
+          <span class="btn__label">취소</span>
+        </button>
+        <button type="button" class="btn btn--primary btn--block" onclick="doJoinFamily()" style="flex:1;">
+          <span class="btn__label">연결하기</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var authData = null;
+  var inviteCode = '';
+
+  // 로그인 체크 + 프로필 표시
+  (function checkAuth() {
+    var auth = localStorage.getItem('eum_auth') || sessionStorage.getItem('eum_auth');
+    if (!auth) {
+      window.location.href = '/login';
+      return;
+    }
+    try {
+      authData = JSON.parse(auth);
+      var member = authData.member || {};
+      var family = authData.family || {};
+      var name = member.name || '';
+      var subLabels = { mom: '어머니', dad: '아버지' };
+      var role = member.role === 'parent' ? (subLabels[member.sub_role] || '부모') + ' 모드' : '자녀 모드';
+
+      if (name) {
+        document.getElementById('profileName').textContent = name;
+        document.getElementById('profileAvatar').textContent = name.charAt(0);
+      }
+      document.getElementById('profileSub').textContent = role;
+
+      // 가족 멤버 수 확인해서 2명 이상이면 가족 연결하기 숨기기
+      var familyId = family.id || (member.family_id || '');
+      if (familyId) {
+        fetch('/api/families/' + encodeURIComponent(familyId) + '/members')
+          .then(function(r) { return r.json(); })
+          .then(function(members) {
+            if (members && members.length >= 2) {
+              var joinLink = document.querySelector('a.srow--link[onclick*="showJoinFamilyModal"]');
+              if (joinLink) joinLink.style.display = 'none';
+            }
+          })
+          .catch(function() {});
+
+        // 가족 초대 코드 불러오기
+        fetch('/api/families/' + encodeURIComponent(familyId) + '/invite-code')
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            inviteCode = d.invite_code || '';
+            var sub = document.getElementById('inviteCodeSub');
+            if (inviteCode) {
+              sub.textContent = inviteCode;
+            } else {
+              sub.textContent = '초대 코드를 불러오지 못했어요';
+            }
+          })
+          .catch(function() {
+            document.getElementById('inviteCodeSub').textContent = '초대 코드를 불러오지 못했어요';
+          });
+      } else {
+        document.getElementById('inviteCodeSub').textContent = '가족 정보가 없어요';
+      }
+    } catch (e) {}
+  })();
+
+  function copyInviteCode() {
+    if (!inviteCode) return;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(inviteCode).then(function() {
+        alert('초대 코드가 복사되었어요: ' + inviteCode);
+      });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = inviteCode;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      alert('초대 코드가 복사되었어요: ' + inviteCode);
+    }
+  }
+
+  function toggleSwitch(id) {
+    var sw = document.getElementById(id);
+    sw.classList.toggle('switch--off');
+  }
+
+  function showJoinFamilyModal() {
+    var modal = document.getElementById('joinFamilyModal');
+    modal.style.display = 'flex';
+    document.getElementById('joinFamilyCode').value = '';
+    document.getElementById('joinFamilyCode').focus();
+  }
+
+  function closeJoinFamilyModal() {
+    document.getElementById('joinFamilyModal').style.display = 'none';
+  }
+
+  async function doJoinFamily() {
+    var code = document.getElementById('joinFamilyCode').value.trim();
+    if (!code) { alert('초대 코드를 입력해 주세요'); return; }
+    if (!authData || !authData.member) { alert('로그인 정보가 없어요'); return; }
+
+    try {
+      var res = await fetch('/api/members/' + encodeURIComponent(authData.member.id) + '/join-family', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invite_code: code })
+      });
+      if (!res.ok) {
+        var err = await res.json().catch(function() { return {}; });
+        alert(err.detail || '가족 연결에 실패했어요');
+        return;
+      }
+      var data = await res.json();
+      authData.family = data.family;
+      var stored = localStorage.getItem('eum_auth') ? localStorage : sessionStorage;
+      stored.setItem('eum_auth', JSON.stringify(authData));
+
+      alert('가족에 연결되었어요!');
+      closeJoinFamilyModal();
+      window.location.reload();
+    } catch (e) {
+      alert('서버에 연결할 수 없어요');
+    }
+  }
+
+  function doLogout() {
+    localStorage.removeItem('eum_auth');
+    sessionStorage.removeItem('eum_auth');
+    document.cookie = 'eum_role=;path=/;max-age=0';
+    window.location.href = '/login';
+  }
+
+  async function doDeleteAccount() {
+    var step1 = confirm('정말 탈퇴하시겠어요?\n모든 질문·답변과 이야기책이 삭제되며 되돌릴 수 없어요.');
+    if (!step1) return;
+
+    var input = prompt('확인을 위해 "탈퇴합니다"를 입력해 주세요.');
+    if (input !== '탈퇴합니다') {
+      if (input !== null) alert('입력이 일치하지 않아요');
+      return;
+    }
+
+    if (!authData || !authData.member) {
+      alert('로그인 정보가 없어요');
+      return;
+    }
+
+    try {
+      var res = await fetch('/api/members/' + encodeURIComponent(authData.member.id), {
+        method: 'DELETE'
+      });
+      if (!res.ok) {
+        alert('탈퇴 처리에 실패했어요');
+        return;
+      }
+
+      localStorage.removeItem('eum_auth');
+      sessionStorage.removeItem('eum_auth');
+      document.cookie = 'eum_role=;path=/;max-age=0';
+      alert('탈퇴가 완료되었어요. 그동안 감사했습니다.');
+      window.location.href = '/login';
+    } catch (e) {
+      alert('서버에 연결할 수 없어요');
+    }
+  }
+</script>
+{% endblock %}

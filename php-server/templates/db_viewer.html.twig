@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>이음 DB 뷰어</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f5; color: #222; padding: 20px;
+    }
+    h1 { font-size: 22px; margin-bottom: 6px; }
+    .meta { color: #888; font-size: 13px; margin-bottom: 20px; }
+    .summary { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+    .summary a {
+      display: inline-block; padding: 8px 14px; background: #fff; border-radius: 8px;
+      text-decoration: none; color: #333; font-size: 13px; font-weight: 600; border: 1px solid #ddd;
+    }
+    .summary a:hover { background: #f0f0f0; }
+    .summary .count { color: #888; font-weight: 400; margin-left: 6px; }
+    .table-section {
+      background: #fff; border-radius: 10px; margin-bottom: 24px;
+      overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
+    }
+    .table-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 18px; border-bottom: 1px solid #eee;
+    }
+    .table-header h2 { font-size: 16px; }
+    .table-header .badge {
+      background: #E4643E; color: #fff; font-size: 12px;
+      font-weight: 700; padding: 3px 10px; border-radius: 12px;
+    }
+    .table-header .empty { color: #aaa; font-size: 13px; margin-left: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      background: #fafafa; padding: 10px 14px; text-align: left; font-weight: 700;
+      color: #555; border-bottom: 1px solid #eee; white-space: nowrap; position: sticky; top: 0;
+    }
+    td {
+      padding: 10px 14px; border-bottom: 1px solid #f0f0f0;
+      vertical-align: top; word-break: break-all; max-width: 300px;
+    }
+    tr:hover { background: #fafafa; }
+    .scroll { overflow-x: auto; max-height: 500px; overflow-y: auto; }
+    .null { color: #ccc; }
+    .redacted { color: #b0b0b0; font-style: italic; }
+  </style>
+</head>
+<body>
+  <h1>이음 DB 뷰어</h1>
+  <p class="meta">{{ db_path }} · 테이블당 최대 {{ row_limit }}행</p>
+
+  <div class="summary">
+    {% for name, info in tables %}
+      <a href="#{{ name }}">{{ name }}<span class="count">({{ info.count }})</span></a>
+    {% endfor %}
+  </div>
+
+  {% for name, info in tables %}
+    <div class="table-section" id="{{ name }}">
+      <div class="table-header">
+        <h2>{{ name }}</h2>
+        <span class="badge">{{ info.count }}</span>
+        {% if info.count == 0 %}<span class="empty">데이터 없음</span>{% endif %}
+      </div>
+
+      {% if info.rows is not empty %}
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                {% for column in info.columns %}<th>{{ column }}</th>{% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in info.rows %}
+                <tr>
+                  {% for column in info.columns %}
+                    {% set value = row[column] %}
+                    <td>
+                      {%- if column in redacted_columns -%}
+                        <span class="redacted">(숨김)</span>
+                      {%- elseif value is null -%}
+                        <span class="null">NULL</span>
+                      {%- else -%}
+                        {{ value }}
+                      {%- endif -%}
+                    </td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+</body>
+</html>

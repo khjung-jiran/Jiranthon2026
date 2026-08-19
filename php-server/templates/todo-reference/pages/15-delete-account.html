@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390,initial-scale=1">
+<title>이음 · 계정 탈퇴 확인</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../css/eium.css">
+</head>
+<body>
+
+<!--
+  화면: 계정 탈퇴 확인 (바텀시트) / 진입점: 설정 > 계정 탈퇴
+  ※ 단독 화면이 아니라 이전 화면 위에 올라오는 오버레이입니다.
+     .sheet-mask 는 position:absolute 이므로, 실제 구현 시 .app 안쪽 맨 끝에 붙이세요.
+     아래는 설정 화면 위에 올라온 상태를 재현한 것입니다.
+-->
+<main class="app app--status">
+
+  <!-- 배경 화면 (설정) -->
+  <div class="set">
+    <header class="set__head">
+      <h1 class="set__title">설정</h1>
+    </header>
+    <div class="set__list">
+      <div class="srow">
+        <span class="avatar avatar--warm avatar--xl">지</span>
+        <div class="srow__body">
+          <div class="srow__name">지훈</div>
+          <div class="srow__sub">자녀 모드 · 어머니, 아버지와 연결됨</div>
+        </div>
+      </div>
+      <div class="srow">
+        <span class="srow__icon srow__icon--danger">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C0392B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></svg>
+        </span>
+        <div class="srow__body">
+          <div class="srow__title srow__title--danger">계정 탈퇴</div>
+          <div class="srow__sub">모든 질문·답변과 이야기책이 삭제돼요</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ▼ 바텀시트 -->
+  <div class="sheet-mask">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <h2 class="sheet__title" id="sheetTitle">정말 탈퇴하시겠어요?</h2>
+      <p class="sheet__desc">지금까지 모은 질문과 답변, 이야기책이<br>모두 삭제되고 되돌릴 수 없어요.</p>
+      <div class="sheet__actions">
+        <a class="btn btn--outline" href="09-settings.html">
+          <span class="btn__label">머무를게요</span>
+        </a>
+        <button type="button" class="btn btn--danger">
+          <span class="btn__label">탈퇴하기</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</main>
+</body>
+</html>

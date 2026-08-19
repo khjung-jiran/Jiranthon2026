@@ -1,0 +1,859 @@
+@charset "UTF-8";
+/* ============================================================
+   이음 (EIUM) — 통합 스타일시트
+   원본: EIUM_프로토타입_단일파일.html 의 인라인 style 전체를 추출/정규화
+   모든 페이지(pages/*.html)가 이 파일 하나만 참조합니다.
+   ------------------------------------------------------------
+   [목차]
+   00. 디자인 토큰 (:root)
+   01. 리셋 / 베이스
+   02. 애니메이션 키프레임
+   03. 공통 컴포넌트 (버튼 / 카드 / 칩 / 아바타 / 아이콘버튼 / 토스트 / 탭바)
+   10. 로그인            (page: login)
+   11. 회원가입          (page: signup)
+   12. 홈 - 자녀 모드    (page: home-child)
+   13. 홈 - 부모 모드    (page: home-parent)
+   14. 이야기 - 자녀     (page: story-child)
+   15. 이야기 - 부모     (page: story-parent)
+   16. 앨범              (page: album)
+   17. 캘린더            (page: calendar)
+   18. 설정              (page: settings)
+   19. 질문 보내기       (page: send-question)
+   20. 이야기 상세       (page: story-detail)
+   21. 처리 중           (page: processing)
+   22. 이야기 조각       (page: story-piece)
+   23. 부모 음성 답변    (page: parent-answer)
+   24. 계정 탈퇴 시트    (page: delete-account)
+   ============================================================ */
+
+
+/* ==================== 00. 디자인 토큰 ==================== */
+:root{
+  /* Brand */
+  --c-primary:#E4643E;          /* 메인 주황 (CTA) */
+  --c-primary-dark:#C05430;     /* 진한 주황 (텍스트/링크) */
+  --c-primary-deep:#9C3F20;     /* 가장 진한 주황 (그라데이션 끝) */
+  --c-primary-soft:#FBEDE6;     /* 주황 배경 틴트 */
+  --c-green:#2E5B4C;            /* 서브 그린 (안심/보안/완료) */
+  --c-green-dark:#234639;
+  --c-danger:#C0392B;           /* 파괴적 액션 */
+  --c-rec:#E33B2E;              /* 녹음 중 인디케이터 */
+  --c-kakao:#FEE500;
+
+  /* Ink / Text */
+  --c-ink:#2B2622;              /* 기본 텍스트 (자녀 모드) */
+  --c-ink-parent:#201B16;       /* 기본 텍스트 (부모 모드, 더 진함) */
+  --c-text:#4A4238;
+  --c-text-2:#5C544A;
+  --c-text-3:#6B6156;
+  --c-muted:#8A8178;
+  --c-muted-2:#9A8F7E;
+  --c-muted-3:#B4A99C;
+  --c-muted-4:#D9CDBC;
+
+  /* Surface */
+  --c-bg:#FDFBF7;               /* 앱 기본 배경 */
+  --c-bg-outer:#F0EDE6;         /* 뷰어/문서 배경 */
+  --c-paper:#F8F3E7;            /* 이야기 지면 */
+  --c-paper-2:#F7F1E2;          /* 이야기 상세 지면 */
+  --c-paper-3:#F7F0E2;          /* 카드 뒷장 */
+  --c-paper-4:#F1E8D8;          /* 카드 맨 뒷장 */
+  --c-card:#FFFDF8;             /* 종이질감 카드 */
+  --c-white:#fff;
+
+  /* Line */
+  --line:rgba(43,38,34,.08);
+  --line-2:rgba(43,38,34,.12);
+  --line-strong:rgba(32,27,22,.14);
+
+  /* Radius */
+  --r-sm:12px; --r-md:16px; --r-lg:20px; --r-xl:24px; --r-2xl:26px; --r-pill:999px;
+
+  /* Shadow */
+  --sh-cta:0 8px 20px rgba(228,100,62,.25);
+  --sh-cta-strong:0 8px 20px rgba(228,100,62,.28);
+  --sh-card:0 10px 26px rgba(43,38,34,.08);
+  --sh-float:0 14px 34px rgba(43,38,34,.09);
+
+  /* Type */
+  --f-sans:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,sans-serif;
+  --f-serif:'Noto Serif KR',serif;
+
+  /* Layout */
+  --status-bar:62px;            /* 상단 상태바 여백 */
+  --tabbar-h:74px;
+}
+
+
+/* ==================== 01. 리셋 / 베이스 ==================== */
+*{box-sizing:border-box}
+html{height:100%}
+html,body{height:100%}
+body{
+  margin:0;padding:0;
+  display:flex;justify-content:center;
+  font-family:var(--f-sans);
+  color:var(--c-ink);
+  background:var(--c-bg-outer);
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--c-primary-dark);text-decoration:none}
+a:hover{color:#A5431F}
+p{margin:0}
+button{font:inherit}
+
+/* 루트 컨테이너 — 최대 390px, 작은 화면에서는 100% 대응 */
+#root{
+  width:100%;
+  max-width:390px;
+  flex:0 0 auto;
+  background:var(--c-bg);
+  position:relative;
+  min-height:100vh;
+  min-height:var(--app-height,100vh);
+}
+
+/* 앱 화면 루트 — 390×844 기준으로 설계됨 */
+.app{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  min-height:100vh;
+  min-height:var(--app-height,100vh);
+  background:var(--c-bg);
+}
+/* #root 안에서 전체 높이 채우기 */
+#root > .app{ min-height:inherit; }
+/* 상단 상태바 영역을 비워두는 화면 */
+.app--status{padding-top:var(--status-bar)}
+/* 부모 모드: 글자·버튼이 전체적으로 커짐 */
+.app--parent{color:var(--c-ink-parent)}
+/* 내부 스크롤 영역: 탭바 고정, 콘텐츠만 스크롤 */
+.app--scroll-fixed{height:var(--app-height,100vh);min-height:var(--app-height,100vh);overflow:hidden}
+
+.spacer{flex:1}   /* flex 컨테이너에서 아래 요소를 바닥으로 밀 때 */
+
+
+/* ==================== 02. 애니메이션 ==================== */
+@keyframes eiumPulse{0%,100%{opacity:1}50%{opacity:.25}}
+@keyframes eiumWave{from{transform:scaleY(.3)}to{transform:scaleY(1)}}
+@keyframes eiumRing{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.55);opacity:0}}
+@keyframes eiumDot{0%,80%,100%{transform:translateY(0);opacity:.35}40%{transform:translateY(-7px);opacity:1}}
+@keyframes eiumRise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes eiumFade{from{opacity:0}to{opacity:1}}
+
+
+/* ==================== 03. 공통 컴포넌트 ==================== */
+
+/* ---- 3.1 버튼 ---- */
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  height:54px;border-radius:var(--r-md);
+  font-size:16px;font-weight:700;
+  border:none;cursor:pointer;flex-shrink:0;
+  transition:transform .12s ease;
+}
+.btn:active{transform:scale(.97)}
+.btn--primary{background:var(--c-primary);color:#fff;box-shadow:var(--sh-cta)}
+.btn--green{background:var(--c-green);color:#fff;box-shadow:0 8px 18px rgba(46,91,76,.3)}
+.btn--danger{background:var(--c-danger);color:#fff}
+.btn--ghost{background:#fff;border:1.5px solid var(--line-2);color:var(--c-text)}
+.btn--outline{background:#fff;border:1.5px solid rgba(43,38,34,.14);color:var(--c-text)}
+/* 부모 모드 대형 버튼 */
+.btn--lg{height:62px;border-radius:18px;font-size:18px}
+.btn--block{width:100%}
+.btn__label{font-size:inherit;font-weight:inherit;color:inherit}
+
+/* 소셜 로그인 버튼 */
+.btn--social{background:#fff;border:1px solid rgba(43,38,34,.14);color:#3C3630;font-size:15px;font-weight:600;gap:10px}
+.btn--kakao{background:var(--c-kakao);color:#191600;font-size:15px;font-weight:600;gap:10px;border:none}
+
+/* ---- 3.2 아이콘 버튼(뒤로가기 등) ---- */
+.icon-btn{
+  width:38px;height:38px;border-radius:50%;
+  background:#fff;border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+}
+.icon-btn--lg{width:44px;height:44px;border:1.5px solid var(--line-strong)}
+.icon-btn--paper{background:rgba(255,253,248,.8);border-color:rgba(43,38,34,.09)}
+
+/* ---- 3.3 칩 / 배지 / 태그 ---- */
+.pill{
+  display:inline-flex;align-items:center;gap:6px;
+  border-radius:var(--r-pill);padding:4px 10px;
+  font-size:11px;font-weight:700;
+}
+.pill--primary{background:var(--c-primary);color:#fff;padding:2px 7px}
+.pill--tag{background:rgba(43,38,34,.06);color:var(--c-muted-2);padding:4px 10px}
+.pill--tag-warm{background:rgba(228,100,62,.1);color:var(--c-primary-dark);font-size:10.5px;padding:3px 9px}
+.pill--tag-green{background:rgba(46,91,76,.09);color:var(--c-green);font-size:10.5px;padding:3px 9px}
+.pill--dday{background:rgba(228,100,62,.1);color:var(--c-primary-dark);padding:4px 10px}
+.pill--soon{
+  padding:8px 13px;border:1px dashed rgba(43,38,34,.2);
+  color:var(--c-muted-3);font-size:12px;font-weight:500;cursor:pointer;background:none;
+}
+
+/* 세그먼트 탭 (단편집 / 일대기) */
+.seg{padding:8px 14px;border-radius:var(--r-pill);font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid transparent}
+.seg--on{background:var(--c-ink);color:var(--c-paper)}
+.seg--off{background:#fff;color:var(--c-text-2);border-color:var(--line-2)}
+
+/* ---- 3.4 아바타 ---- */
+.avatar{
+  display:flex;align-items:center;justify-content:center;
+  width:36px;height:36px;border-radius:50%;
+  font-family:var(--f-serif);font-size:15px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.avatar--warm{background:linear-gradient(135deg,#E8B48A,#C97D50)}
+.avatar--warm-2{background:linear-gradient(135deg,#E8B48A,#D98D5F)}
+.avatar--cool{background:linear-gradient(135deg,#9DB8A8,#5F8271)}
+.avatar--sm{width:32px;height:32px;font-size:14px}
+.avatar--lg{width:42px;height:42px;font-size:17px}
+.avatar--xl{width:52px;height:52px;font-size:20px;border-radius:var(--r-md)}
+
+/* ---- 3.5 연결 상태 점 ---- */
+.dot{width:7px;height:7px;border-radius:50%;background:var(--c-green);flex-shrink:0}
+.dot--lg{width:8px;height:8px}
+.dot--rec{width:10px;height:10px;background:var(--c-rec);animation:eiumPulse 1.2s ease-in-out infinite}
+
+/* ---- 3.6 다이아몬드 마커 (AI 표시) ---- */
+.diamond{width:8px;height:8px;border-radius:2px;background:var(--c-green);transform:rotate(45deg);flex-shrink:0}
+.diamond--sm{width:7px;height:7px}
+
+/* ---- 3.7 토스트 ---- */
+.toast{
+  position:absolute;top:66px;left:24px;right:24px;z-index:60;
+  display:flex;align-items:center;gap:9px;
+  padding:13px 17px;border-radius:var(--r-md);
+  background:rgba(32,27,22,.92);backdrop-filter:blur(10px);
+  box-shadow:0 10px 26px rgba(0,0,0,.25);
+  animation:eiumRise .3s ease;
+}
+.toast__text{font-size:13.5px;font-weight:600;color:#fff}
+
+/* ---- 3.8 하단 탭바 ---- */
+.tabbar{
+  display:flex;align-items:center;flex-shrink:0;
+  height:var(--tabbar-h);padding:0 6px 10px;
+  background:rgba(253,251,247,.94);backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);
+}
+.tabbar--parent{height:88px;padding-bottom:14px}
+.tabbar__item{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding-top:2px;cursor:pointer;background:none;border:none;
+  color:var(--c-muted-3);            /* SVG는 stroke="currentColor" 로 이 색을 상속 */
+}
+.tabbar__item--on{color:var(--c-primary)}
+.tabbar__label{font-size:10.5px;font-weight:600;color:var(--c-muted-3)}
+.tabbar__label--on{color:var(--c-primary);font-weight:700}
+.tabbar--parent .tabbar__label{font-size:13px;color:var(--c-text-3)}
+.tabbar--parent .tabbar__label--on{color:var(--c-primary)}
+/* 가운데 홈 버튼 */
+.tabbar__home{
+  width:52px;height:52px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  margin-top:-16px;background:var(--c-primary);color:#fff;
+  box-shadow:0 8px 18px rgba(228,100,62,.35);
+}
+.tabbar__home--off{background:#fff;border:1px solid var(--line);box-shadow:none;color:var(--c-muted-3)}
+
+/* ---- 3.9 종이 질감 오버레이 ---- */
+.grain{
+  position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:radial-gradient(rgba(43,38,34,.028) 1px,transparent 1px);
+  background-size:5px 5px;
+}
+.grain--fine{opacity:.6;background-image:radial-gradient(rgba(43,38,34,.03) 1px,transparent 1px);background-size:4px 4px}
+
+/* ---- 3.10 공통 헤더 ---- */
+.page-head{display:flex;align-items:center;gap:12px;padding-top:8px}
+.page-head__title{font-size:19px;font-weight:700}
+.app--parent .page-head__title{font-size:21px}
+.sec-title{font-size:14.5px;font-weight:700}
+.sec-label{font-size:13px;font-weight:700;color:var(--c-muted)}
+
+/* ---- 3.11 진행 바 ---- */
+.bar{height:5px;border-radius:var(--r-pill);background:rgba(43,38,34,.08)}
+.bar--lg{height:10px}
+.bar__fill{height:100%;border-radius:var(--r-pill);background:var(--c-green)}
+.bar__fill--warm{background:var(--c-primary)}
+.bar__fill--grad{background:linear-gradient(90deg,#E4643E,#C05430)}
+
+
+/* ==================== 10. 로그인 (login) ==================== */
+.login{padding:var(--status-bar) 28px 0;overflow-y:auto;animation:eiumFade .3s ease}
+.login__brand{padding-top:54px}
+.login__logo{font-family:var(--f-serif);font-size:38px;font-weight:600;letter-spacing:.08em;color:var(--c-ink)}
+.login__tagline{font-size:14px;color:var(--c-muted);margin-top:12px;line-height:1.65}
+.login__fields{display:flex;flex-direction:column;gap:10px;margin-top:38px}
+.input{
+  height:54px;border-radius:var(--r-md);border:1px solid var(--line-2);
+  background:#fff;padding:0 17px;font-size:15px;font-family:inherit;
+  color:var(--c-ink);outline:none;width:100%;
+}
+.input::placeholder{color:var(--c-muted-3)}
+.input:focus{border-color:var(--c-primary)}
+.login__row{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+.check{display:flex;align-items:center;gap:8px;cursor:pointer}
+.check__box{
+  width:18px;height:18px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  background:var(--c-primary);border:1.5px solid var(--c-primary);
+}
+.check__box--off{background:#fff;border-color:var(--line-2)}
+.check__box--off svg{display:none}
+.check__label{font-size:12.5px;color:var(--c-text-2);font-weight:500}
+.login__find{font-size:12.5px;color:var(--c-muted);cursor:pointer}
+.login__submit{margin-top:20px}
+.divider-row{display:flex;align-items:center;gap:12px;margin-top:26px}
+.divider-row__line{flex:1;height:1px;background:rgba(43,38,34,.1)}
+.divider-row__text{font-size:11.5px;color:var(--c-muted-3);font-weight:500}
+.login__social{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.login__foot{display:flex;align-items:center;justify-content:center;gap:6px;margin:26px 0 40px}
+.login__foot-text{font-size:12.5px;color:var(--c-muted)}
+.login__foot-link{font-size:12.5px;font-weight:700;color:var(--c-primary-dark);cursor:pointer;border-bottom:1px solid rgba(192,84,48,.4)}
+
+
+/* ==================== 11. 회원가입 (signup) ==================== */
+.signup{padding:var(--status-bar) 28px 0;overflow-y:auto;animation:eiumFade .3s ease}
+.signup__head{padding-top:8px}
+.signup__title{font-size:26px;font-weight:700;margin-top:16px;letter-spacing:-.01em}
+.signup__desc{font-size:13.5px;color:var(--c-muted);margin-top:8px;line-height:1.65}
+.field{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.field__label{font-size:12.5px;font-weight:700;color:var(--c-text-2)}
+.field__help{font-size:11.5px;color:var(--c-muted-3);line-height:1.5}
+/* 역할 선택 (자녀 / 부모) */
+.role-pick{display:flex;gap:10px;margin-top:12px}
+.role{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:18px 10px;border-radius:var(--r-lg);cursor:pointer;
+  background:#fff;border:1.5px solid var(--line-2);
+}
+.role--on{background:var(--c-primary-soft);border-color:var(--c-primary)}
+.role__name{font-size:14.5px;font-weight:700}
+.role__sub{font-size:11.5px;color:var(--c-muted);text-align:center;line-height:1.5}
+.agree{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+.agree__row{display:flex;align-items:center;gap:9px;cursor:pointer}
+.agree__text{font-size:12.5px;color:var(--c-text-2)}
+.agree__text b{font-weight:700;color:var(--c-primary-dark)}
+.signup__submit{margin:24px 0 40px}
+
+
+/* ==================== 12. 홈 - 자녀 모드 (home-child) ==================== */
+.home{flex:1;display:flex;flex-direction:column;min-height:0;animation:eiumFade .25s ease}
+.home__top{display:flex;align-items:flex-start;justify-content:space-between;padding:10px 22px 0}
+.home__date{font-size:12px;color:var(--c-muted);font-weight:500}
+.home__greet{font-size:23px;font-weight:700;letter-spacing:-.01em;margin-top:3px}
+.home__link{display:flex;align-items:center;gap:6px;margin-top:8px}
+.home__link-text{font-size:12.5px;color:var(--c-text-2);font-weight:500}
+/* 알림 벨 */
+.bell{position:relative;width:42px;height:42px;border-radius:50%;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+.bell__badge{position:absolute;top:9px;right:10px;width:7px;height:7px;border-radius:50%;background:var(--c-primary);border:1.5px solid #fff}
+/* 퀵 액션 2개 */
+.quick{display:flex;gap:12px;padding:18px 22px 0}
+.quick__btn{
+  flex:1;height:102px;border-radius:22px;
+  display:flex;flex-direction:column;justify-content:center;gap:7px;
+  padding:0 18px;cursor:pointer;border:none;text-align:left;
+}
+.quick__btn--primary{background:var(--c-primary);box-shadow:var(--sh-cta-strong);color:#fff}
+.quick__btn--plain{background:#fff;border:1.5px solid rgba(43,38,34,.09);color:var(--c-ink)}
+.quick__title{font-size:15.5px;font-weight:700}
+.quick__sub{font-size:11.5px;margin-top:2px;color:var(--c-muted)}
+.quick__btn--primary .quick__sub{color:rgba(255,255,255,.82)}
+.quick__count{color:var(--c-primary)}
+/* 질문 카드 덱 */
+.deck-wrap{flex:1;display:flex;flex-direction:column;padding:22px 22px 0;min-height:0}
+.deck-head{display:flex;align-items:center;justify-content:space-between}
+.deck-head__left{display:flex;align-items:center;gap:7px}
+.deck-head__hint{font-size:11.5px;color:var(--c-muted-3);font-weight:500}
+.deck{position:relative;flex:1;margin-top:14px;min-height:0}
+.deck__back-2{position:absolute;inset:0;border-radius:var(--r-xl);background:var(--c-paper-4);transform:translateY(16px) rotate(2.2deg) scale(.93)}
+.deck__back-1{
+  position:absolute;inset:0;border-radius:var(--r-xl);
+  background:var(--c-paper-3);border:1px solid rgba(43,38,34,.05);
+  transform:translateY(8px) rotate(-1.6deg) scale(.965);
+  display:flex;flex-direction:column;padding:20px;overflow:hidden;
+}
+.deck__back-title{font-size:17px;font-weight:700;line-height:1.5;margin-top:12px;color:var(--c-muted-2);white-space:pre-line}
+.deck__card{
+  position:absolute;inset:0;border-radius:var(--r-xl);background:#fff;
+  border:1px solid var(--line);box-shadow:var(--sh-card);
+  display:flex;flex-direction:column;padding:20px;
+  cursor:grab;touch-action:pan-y;user-select:none;
+  transition:transform .3s cubic-bezier(.2,.8,.3,1.1);
+}
+.deck__card-top{display:flex;align-items:center;justify-content:space-between}
+.deck__from{font-size:11px;font-weight:700;color:var(--c-green);background:rgba(46,91,76,.09);border-radius:var(--r-pill);padding:4px 10px}
+/* 상태: AI 제안이 아니라 가족이 보낸 질문일 때 */
+.deck__from--person{color:var(--c-muted-2);background:rgba(43,38,34,.06)}
+.deck__time{font-size:11px;color:var(--c-muted-3)}
+.deck__q{font-size:19px;font-weight:700;line-height:1.5;letter-spacing:-.01em;margin-top:14px;white-space:pre-line}
+.deck__sub{font-size:12.5px;color:var(--c-muted);margin-top:8px}
+.deck__cta{height:50px;border-radius:15px;font-size:15px}
+.deck-dots{display:flex;align-items:center;justify-content:center;gap:5px;padding:12px 0 8px}
+.deck-dots__i{width:5px;height:5px;border-radius:50%;background:var(--c-muted-4)}
+.deck-dots__i--on{width:16px;height:5px;border-radius:var(--r-pill);background:var(--c-primary)}
+
+
+/* ==================== 13. 홈 - 부모 모드 (home-parent) ==================== */
+.phome{flex:1;display:flex;flex-direction:column;min-height:0;color:var(--c-ink-parent);animation:eiumFade .25s ease}
+.phome__top{padding:12px 24px 0}
+.phome__date{font-size:15px;color:var(--c-text-3);font-weight:500}
+.phome__greet{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-top:4px}
+.phome__link{display:flex;align-items:center;gap:7px;margin-top:9px}
+.phome__link-text{font-size:15.5px;color:var(--c-text);font-weight:500}
+.phome__quick{display:flex;gap:12px;padding:22px 24px 0}
+.phome__quick-btn{
+  flex:1;height:122px;border-radius:var(--r-xl);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  cursor:pointer;border:none;font-size:19px;font-weight:700;
+}
+.phome__quick-btn--primary{background:var(--c-primary);color:#fff;box-shadow:var(--sh-cta-strong)}
+.phome__quick-btn--plain{background:#fff;border:2px solid var(--c-ink-parent);color:var(--c-ink-parent)}
+.phome__body{flex:1;display:flex;flex-direction:column;padding:24px 24px 0;min-height:0}
+.phome__sec{font-size:18px;font-weight:700}
+.phome__deck{position:relative;flex:1;margin-top:12px;min-height:0}
+.phome__deck-back{position:absolute;inset:0;border-radius:var(--r-2xl);background:var(--c-paper-3);transform:translateY(10px) rotate(-1.4deg) scale(.96)}
+.phome__card{
+  position:absolute;inset:0;border-radius:var(--r-2xl);background:#fff;
+  border:1.5px solid rgba(32,27,22,.12);box-shadow:var(--sh-card);
+  display:flex;flex-direction:column;padding:24px;
+}
+.phome__card-who{display:flex;align-items:center;gap:9px}
+.phome__card-who-text{font-size:15px;font-weight:600;color:var(--c-text)}
+.phome__card-q{font-size:24px;font-weight:700;line-height:1.5;margin-top:16px}
+.phome__card-sub{font-size:15px;color:var(--c-text-3);margin-top:10px;line-height:1.5}
+.phome__card-cta{height:64px;border-radius:18px;font-size:20px;gap:10px;box-shadow:0 8px 18px rgba(228,100,62,.28)}
+
+
+/* ==================== 14. 이야기 - 자녀 (story-child) ==================== */
+.story{
+  flex:1;display:flex;flex-direction:column;min-height:0;position:relative;
+  background:var(--c-paper);animation:eiumFade .25s ease;
+}
+.story__head{padding:10px 22px 0;position:relative}
+.story__kicker{font-size:12px;color:var(--c-muted-2);font-weight:500}
+.story__title{font-size:25px;font-weight:600;font-family:var(--f-serif);margin-top:3px}
+.story__tabs{display:flex;gap:8px;margin-top:16px;align-items:center;flex-wrap:wrap}
+.story__list{flex:1;overflow-y:auto;padding:18px 22px 20px;position:relative;display:flex;flex-direction:column;gap:12px}
+/* 단편 카드 */
+.scard{
+  border-radius:var(--r-lg);background:var(--c-card);
+  border:1px solid rgba(43,38,34,.07);box-shadow:0 2px 8px rgba(43,38,34,.05);
+  padding:18px 20px;cursor:pointer;flex-shrink:0;
+}
+.scard:active{transform:scale(.98)}
+.scard__meta-row{display:flex;align-items:center;gap:6px}
+.scard__meta{font-size:11.5px;color:var(--c-muted-3)}
+.scard__title{font-family:var(--f-serif);font-size:17.5px;font-weight:600;line-height:1.5;margin-top:10px}
+.scard__preview{
+  font-family:var(--f-serif);font-size:13px;color:var(--c-muted);
+  line-height:1.7;margin-top:6px;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;
+}
+/* 일대기 */
+.life{flex:1;overflow-y:auto;padding:16px 22px 20px;position:relative;display:flex;flex-direction:column;gap:9px}
+.life__banner{
+  border-radius:var(--r-lg);background:linear-gradient(135deg,#2E5B4C,#234639);
+  padding:18px 20px;position:relative;overflow:hidden;flex-shrink:0;
+}
+.life__banner::after{content:"";position:absolute;right:-12px;top:-14px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.06)}
+.life__banner-title{font-family:var(--f-serif);font-size:18px;font-weight:600;color:var(--c-paper);position:relative}
+.life__banner-sub{font-size:12px;color:rgba(248,243,231,.75);margin-top:5px;position:relative}
+/* 챕터 행 */
+.chapter{
+  border-radius:var(--r-md);background:var(--c-card);border:1px solid rgba(43,38,34,.07);
+  padding:14px 18px;display:flex;align-items:center;gap:14px;flex-shrink:0;
+}
+.chapter--current{border:1.5px solid var(--c-primary);box-shadow:0 4px 14px rgba(228,100,62,.12)}
+.chapter--empty{opacity:.65}
+.chapter__num{font-family:var(--f-serif);font-size:13px;font-weight:700;color:var(--c-muted-2);width:20px}
+.chapter--current .chapter__num{color:var(--c-primary-dark)}
+.chapter__body{flex:1}
+.chapter__name{font-size:15px;font-weight:700}
+.chapter__badge{font-size:10.5px;font-weight:700;color:var(--c-primary-dark);background:rgba(228,100,62,.1);border-radius:var(--r-pill);padding:2px 8px;margin-left:4px}
+.chapter__sub{font-size:11.5px;color:var(--c-muted);margin-top:3px}
+.chapter__prog{width:64px}
+.chapter__pct{font-size:10px;color:var(--c-muted);margin-top:4px;text-align:right}
+.chapter--current .chapter__pct{color:var(--c-primary-dark);font-weight:700}
+
+
+/* ==================== 15. 이야기 - 부모 (story-parent) ==================== */
+.pstory{
+  flex:1;display:flex;flex-direction:column;min-height:0;position:relative;
+  background:var(--c-paper);color:var(--c-ink-parent);animation:eiumFade .25s ease;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+.pstory__head{padding:12px 24px 0;position:relative}
+.pstory__kicker{font-size:15px;color:var(--c-text-3);font-weight:500}
+.pstory__title{font-size:29px;font-weight:600;font-family:var(--f-serif);margin-top:4px}
+.pstory__news{
+  margin:20px 24px 0;border-radius:var(--r-xl);background:#fff;
+  border:1.5px solid rgba(228,100,62,.35);box-shadow:0 10px 26px rgba(228,100,62,.1);
+  padding:22px;position:relative;
+}
+.pstory__news-who{display:flex;align-items:center;gap:10px}
+.pstory__news-label{font-size:14.5px;font-weight:700;color:var(--c-primary-dark)}
+.pstory__news-title{font-size:21px;font-weight:700;line-height:1.55;margin-top:14px}
+.pstory__news-sub{font-size:15px;color:var(--c-text-3);margin-top:10px;line-height:1.55}
+.pstory__books{flex:1;margin:18px 24px 0;position:relative;min-height:0}
+.pstory__books-title{font-size:17px;font-weight:700}
+.shelf{display:flex;align-items:flex-end;gap:10px;margin-top:16px}
+.book{
+  display:flex;align-items:center;justify-content:center;
+  border-radius:6px 12px 12px 6px;flex-shrink:0;
+}
+.book__spine{font-family:var(--f-serif);font-size:11px;writing-mode:vertical-rl;letter-spacing:.2em}
+.book--short{width:64px;height:88px;background:linear-gradient(105deg,#2E5B4C,#234639);box-shadow:inset 3px 0 0 rgba(255,255,255,.18),0 6px 14px rgba(43,38,34,.18)}
+.book--short .book__spine{color:var(--c-paper)}
+.book--life{width:72px;height:104px;background:linear-gradient(105deg,#C05430,#9C3F20);box-shadow:inset 3px 0 0 rgba(255,255,255,.2),0 6px 14px rgba(43,38,34,.2)}
+.book--life .book__spine{color:#FDF6EA}
+.shelf__meta{flex:1;padding-left:8px}
+.shelf__count{font-family:var(--f-serif);font-size:19px;font-weight:700}
+.shelf__desc{font-size:14px;color:var(--c-text-3);margin-top:5px;line-height:1.5}
+.progress-block{margin-top:18px}
+.progress-block__row{display:flex;justify-content:space-between;font-size:14px;font-weight:600;color:var(--c-text)}
+.progress-block__pct{color:var(--c-primary-dark);font-weight:700}
+.progress-block .bar{margin-top:8px}
+
+
+/* ==================== 16. 앨범 (album) ==================== */
+.album{flex:1;display:flex;flex-direction:column;min-height:0;animation:eiumFade .25s ease}
+.album__head{display:flex;align-items:flex-end;justify-content:space-between;padding:10px 22px 0}
+.album__kicker{font-size:12px;color:var(--c-muted);font-weight:500}
+.album__title{font-size:23px;font-weight:700;margin-top:3px}
+.album__upload{
+  display:flex;align-items:center;gap:7px;padding:10px 16px;border-radius:var(--r-pill);
+  background:var(--c-primary);color:#fff;font-size:13px;font-weight:700;
+  box-shadow:0 6px 14px rgba(228,100,62,.25);cursor:pointer;border:none;
+}
+.album__body{flex:1;overflow-y:auto;padding:18px 22px 20px}
+.album__grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.photo{position:relative;height:150px;border-radius:18px;overflow:hidden}
+.photo--hero{grid-column:1/3;height:200px;border-radius:var(--r-lg);background:linear-gradient(160deg,#E8C9A0,#C98F5F 55%,#9A6B45)}
+.photo--a{background:linear-gradient(150deg,#B9CDC0,#7E9C8C)}
+.photo--b{background:linear-gradient(150deg,#E3B7A6,#BE8271)}
+.photo--c{background:linear-gradient(150deg,#D6CBB8,#A99C82)}
+.photo--d{background:linear-gradient(150deg,#C9B8D6,#94829F)}
+.photo__scrim{position:absolute;left:0;right:0;bottom:0;height:70%;background:linear-gradient(transparent,rgba(30,20,12,.55))}
+.photo__flag{
+  position:absolute;left:14px;top:14px;display:flex;align-items:center;gap:6px;
+  padding:7px 12px;border-radius:var(--r-pill);background:rgba(253,251,247,.95);
+  box-shadow:0 3px 8px rgba(0,0,0,.12);
+}
+.photo__flag--sm{left:9px;top:9px;padding:5px 9px;box-shadow:none}
+.photo__flag-text{font-size:11px;font-weight:700;color:var(--c-green)}
+.photo__flag--sm .photo__flag-text{font-size:10px}
+.photo__caption{position:absolute;left:14px;bottom:12px;color:#fff}
+.photo__caption-title{font-size:13.5px;font-weight:700}
+.photo__caption-sub{font-size:11px;opacity:.85;margin-top:2px}
+.photo__reacts{position:absolute;right:12px;bottom:12px;display:flex;gap:5px}
+.react{
+  padding:5px 10px;border-radius:var(--r-pill);background:rgba(253,251,247,.92);
+  border:1.5px solid transparent;font-size:11.5px;font-weight:600;cursor:pointer;
+}
+.react--mine{background:var(--c-primary-soft);border-color:var(--c-primary)}
+.react--corner{position:absolute;right:9px;bottom:9px;padding:4px 9px;font-size:11px}
+.album__add{
+  grid-column:1/3;height:88px;border-radius:18px;
+  border:1.5px dashed rgba(43,38,34,.18);background:rgba(255,255,255,.5);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  color:var(--c-muted-2);cursor:pointer;
+}
+.album__add-text{font-size:12.5px;font-weight:600}
+
+
+/* ==================== 17. 캘린더 (calendar) ==================== */
+.cal{flex:1;display:flex;flex-direction:column;min-height:0;animation:eiumFade .25s ease}
+.cal__head{display:flex;align-items:flex-end;justify-content:space-between;padding:10px 22px 0}
+.cal__kicker{font-size:12px;color:var(--c-muted);font-weight:500}
+.cal__title{font-size:23px;font-weight:700;margin-top:3px}
+.cal__grid-wrap{padding:18px 22px 0}
+.cal__grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal__dow{text-align:center;font-size:11.5px;font-weight:700;color:var(--c-muted);padding-bottom:8px}
+.cal__dow--sun{color:var(--c-primary-dark)}
+.cal__day{
+  height:38px;display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:var(--c-text);border-radius:var(--r-sm);
+  position:relative;font-weight:500;
+}
+.cal__day--sun{color:var(--c-primary-dark)}
+.cal__day--today{background:var(--c-primary);color:#fff;font-weight:700;box-shadow:0 4px 10px rgba(228,100,62,.3)}
+.cal__day-dot{
+  position:absolute;bottom:3px;left:50%;transform:translateX(-50%);
+  width:4.5px;height:4.5px;border-radius:50%;background:var(--c-primary-dark);
+}
+.cal__day-dot--green{background:var(--c-green)}
+.cal__events{flex:1;padding:20px 22px 0;overflow-y:auto}
+.cal__events-head{display:flex;align-items:center;justify-content:space-between}
+.cal__add{
+  display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--r-pill);
+  background:#fff;border:1px solid rgba(43,38,34,.1);
+  font-size:12.5px;font-weight:700;color:var(--c-primary-dark);cursor:pointer;
+}
+.cal__list{display:flex;flex-direction:column;gap:9px;margin-top:12px;padding-bottom:16px}
+.event{
+  display:flex;align-items:center;gap:14px;padding:14px 16px;
+  border-radius:var(--r-md);background:#fff;border:1px solid rgba(43,38,34,.07);
+}
+.event__date{
+  width:46px;height:46px;border-radius:14px;flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(46,91,76,.08);
+}
+.event__date--warm{background:var(--c-primary-soft)}
+.event__mo{font-size:10px;font-weight:700;color:var(--c-green)}
+.event__day{font-size:16px;font-weight:800;color:var(--c-green);line-height:1}
+.event__date--warm .event__mo,.event__date--warm .event__day{color:var(--c-primary-dark)}
+.event__body{flex:1}
+.event__title{font-size:14.5px;font-weight:700}
+.event__sub{font-size:12px;color:var(--c-muted);margin-top:3px}
+
+
+/* ==================== 18. 설정 (settings) ==================== */
+.set{flex:1;display:flex;flex-direction:column;min-height:0;animation:eiumFade .25s ease}
+.set__head{padding:10px 22px 0}
+.set__title{font-size:23px;font-weight:700;margin-top:3px}
+.set__list{flex:1;min-height:0;overflow-y:auto;padding:18px 22px 0;display:flex;flex-direction:column;gap:12px}
+.srow{
+  display:flex;align-items:center;gap:14px;padding:16px;
+  border-radius:var(--r-lg);background:#fff;border:1px solid var(--line);flex-shrink:0;
+}
+.srow--link{cursor:pointer}
+.srow--link:active{transform:scale(.98)}
+.srow__icon{
+  width:40px;height:40px;border-radius:var(--r-sm);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;background:rgba(43,38,34,.05);
+}
+.srow__icon--warm{background:var(--c-primary-soft)}
+.srow__icon--green{background:rgba(46,91,76,.08)}
+.srow__icon--danger{background:rgba(192,57,43,.08)}
+.srow__body{flex:1}
+.srow__title{font-size:14.5px;font-weight:700}
+.srow__title--danger{color:var(--c-danger)}
+.srow__sub{font-size:12px;color:var(--c-muted);margin-top:3px;line-height:1.5}
+.srow__name{font-size:16px;font-weight:700}
+/* 토글 */
+.switch{width:44px;height:26px;border-radius:var(--r-pill);background:var(--c-green);position:relative;flex-shrink:0}
+.switch__knob{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#fff}
+.switch--off{background:rgba(43,38,34,.18)}
+.switch--off .switch__knob{right:auto;left:3px}
+/* 그룹 카드 */
+.sgroup{display:flex;flex-direction:column;border-radius:var(--r-lg);background:#fff;border:1px solid var(--line);overflow:hidden;flex-shrink:0}
+.sgroup .srow{border:none;border-radius:0;background:none}
+.sgroup__divider{height:1px;background:rgba(43,38,34,.07);margin:0 16px}
+
+
+/* ==================== 19. 질문 보내기 (send-question) ==================== */
+.send{padding:var(--status-bar) 22px 0;animation:eiumRise .3s ease}
+.send__label{font-size:13px;font-weight:700;color:var(--c-muted);margin-top:26px}
+.send__chips{display:flex;gap:10px;margin-top:12px}
+.chip{
+  display:flex;align-items:center;gap:9px;padding:9px 16px 9px 10px;
+  border-radius:var(--r-pill);cursor:pointer;
+  background:#fff;border:1.5px solid rgba(43,38,34,.1);
+}
+.chip--on{background:var(--c-primary-soft);border-color:var(--c-primary)}
+.chip__name{font-size:14px;font-weight:600;color:var(--c-text)}
+.chip--on .chip__name{font-weight:700;color:var(--c-primary-dark)}
+.send__ai{display:flex;align-items:center;gap:7px;margin-top:30px}
+.send__ai-text{font-size:13px;font-weight:700;color:var(--c-green)}
+.send__recs{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+.qopt{
+  padding:15px 18px;border-radius:var(--r-md);background:#fff;
+  border:1px solid rgba(43,38,34,.09);
+  font-size:14.5px;font-weight:500;line-height:1.5;color:var(--c-text);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;
+}
+.qopt--on{border:1.5px solid var(--c-primary);box-shadow:0 4px 12px rgba(228,100,62,.1);font-weight:600;color:var(--c-ink)}
+.send__free{
+  margin-top:10px;min-height:74px;border-radius:var(--r-md);
+  background:#fff;border:1px solid rgba(43,38,34,.09);
+  padding:14px 16px;font-size:14.5px;color:var(--c-muted-3);line-height:1.5;
+  font-family:inherit;resize:none;width:100%;outline:none;
+}
+.send__free:focus{border-color:var(--c-primary);color:var(--c-ink)}
+.send__submit{margin-bottom:34px}
+
+
+/* ==================== 20. 이야기 상세 (story-detail) ==================== */
+.detail{
+  position:relative;height:100%;background:var(--c-paper-2);
+  font-family:var(--f-serif);color:#3A332B;
+  display:flex;flex-direction:column;padding:var(--status-bar) 30px 0;
+  overflow:hidden;animation:eiumRise .3s ease;
+}
+.detail__rule{position:absolute;top:var(--status-bar);bottom:0;left:12px;width:1px;background:rgba(192,84,48,.18)}
+.detail__bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding-top:8px;position:relative;font-family:var(--f-sans);
+}
+.detail__booklet{
+  display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:var(--r-pill);
+  background:var(--c-ink);color:var(--c-paper);font-size:12.5px;font-weight:700;cursor:pointer;border:none;
+}
+.detail__body{position:relative;flex:1;display:flex;flex-direction:column;min-height:0}
+.detail__head{position:relative;margin-top:24px}
+.detail__kicker{font-family:var(--f-sans);font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--c-primary-dark)}
+.detail__title{font-size:23px;font-weight:700;line-height:1.45;margin-top:9px;letter-spacing:-.01em}
+.detail__meta{font-family:var(--f-sans);font-size:11.5px;color:var(--c-muted-2);margin-top:9px}
+.detail__page{position:relative;flex:1;margin-top:20px;font-size:15px;line-height:2;overflow:hidden;animation:eiumFade .3s ease;display:flex;flex-direction:column}
+.detail__page p+p{margin-top:14px}
+.detail__quote{
+  margin:6px 0 0;padding:0 0 0 16px;border-left:2.5px solid var(--c-primary);
+  font-size:15.5px;font-weight:600;line-height:1.9;color:var(--c-ink);
+}
+.detail__qr-row{display:flex;align-items:center;gap:14px;padding:16px 0 6px;border-top:1px solid rgba(43,38,34,.1)}
+.detail__qr{flex-shrink:0;background:#fff;border-radius:8px;padding:5px;border:1px solid rgba(43,38,34,.1)}
+.detail__qr-text{font-family:var(--f-sans)}
+.detail__qr-title{font-size:13px;font-weight:700;color:var(--c-ink)}
+.detail__qr-sub{font-size:11.5px;color:var(--c-muted-2);margin-top:4px;line-height:1.5}
+.detail__nav{
+  position:relative;display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0 20px;font-family:var(--f-sans);
+}
+.detail__nav-btn{
+  display:flex;align-items:center;gap:5px;padding:9px 14px;border-radius:var(--r-pill);
+  font-size:12.5px;font-weight:700;cursor:pointer;
+  background:#fff;border:1px solid var(--line);color:var(--c-text-2);
+}
+.detail__nav-btn[disabled]{opacity:.35;cursor:default}
+.detail__nav-label{font-size:12px;color:var(--c-muted-2)}
+
+
+/* ==================== 21. 처리 중 (processing) ==================== */
+.proc{
+  position:relative;height:100%;background:var(--c-bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:0 40px;overflow:hidden;text-align:center;animation:eiumFade .4s ease;
+}
+.proc__orb{position:relative;width:120px;height:120px;display:flex;align-items:center;justify-content:center}
+.proc__orb-glow{
+  position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle,rgba(228,100,62,.14),transparent 70%);
+  animation:eiumPulse 2.4s ease-in-out infinite;
+}
+.proc__title{font-family:var(--f-serif);font-size:21px;font-weight:600;line-height:1.6;margin-top:28px}
+.proc__dots{display:flex;gap:6px;margin-top:22px}
+.proc__dot{width:7px;height:7px;border-radius:50%;background:var(--c-primary);animation:eiumDot 1.3s ease-in-out infinite}
+.proc__dot:nth-child(2){animation-delay:.18s}
+.proc__dot:nth-child(3){animation-delay:.36s}
+.proc__line{margin-top:26px;height:22px;overflow:hidden;font-family:var(--f-serif);font-size:14px;color:var(--c-muted-2)}
+.privacy-pill{
+  display:flex;align-items:center;gap:7px;padding:9px 16px;
+  border-radius:var(--r-pill);background:rgba(46,91,76,.07);
+}
+.privacy-pill__text{font-size:12px;font-weight:600;color:var(--c-green)}
+.proc__privacy{position:absolute;bottom:64px}
+
+
+/* ==================== 22. 이야기 조각 (story-piece) ==================== */
+.piece{
+  position:relative;height:100%;background:var(--c-bg);
+  display:flex;flex-direction:column;padding:var(--status-bar) 20px 0;
+  overflow:hidden;animation:eiumRise .45s ease;
+}
+.piece__notice{text-align:center;padding-top:12px}
+.piece__notice-text{
+  font-size:13px;font-weight:700;color:var(--c-green);
+  display:inline-flex;align-items:center;gap:6px;
+}
+.piece__card{
+  flex:1;margin-top:16px;border-radius:var(--r-xl);background:var(--c-card);
+  border:1px solid var(--line);box-shadow:var(--sh-float);
+  padding:24px 22px;display:flex;flex-direction:column;overflow:hidden;position:relative;
+}
+.piece__tag{
+  font-size:11px;font-weight:700;color:var(--c-green);background:rgba(46,91,76,.09);
+  border-radius:var(--r-pill);padding:4px 11px;align-self:flex-start;position:relative;
+}
+.piece__title{font-family:var(--f-serif);font-size:22px;font-weight:700;line-height:1.45;margin-top:16px;position:relative}
+.piece__text{font-family:var(--f-serif);font-size:13.5px;line-height:1.95;color:var(--c-text);margin-top:14px;position:relative}
+.piece__text p+p{margin-top:10px}
+.piece__quote{
+  margin-top:14px;padding:13px 16px;border-radius:14px;
+  background:var(--c-paper);border-left:3px solid var(--c-primary);position:relative;
+}
+.piece__quote-text{font-family:var(--f-serif);font-size:14px;font-weight:600;line-height:1.7}
+.piece__quote-src{font-size:11px;color:var(--c-muted-2);margin-top:6px}
+/* 재생 바 */
+.player{
+  display:flex;align-items:center;gap:11px;padding:12px 15px;
+  border-radius:var(--r-pill);background:#fff;border:1.5px solid rgba(43,38,34,.1);
+  position:relative;cursor:pointer;
+}
+.player__btn{
+  width:34px;height:34px;border-radius:50%;background:var(--c-primary);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.player__label{font-size:14px;font-weight:700}
+.player__wave{flex:1;display:flex;align-items:center;gap:2.5px;height:20px;overflow:hidden}
+.player__wave i{width:3px;border-radius:2px;background:rgba(228,100,62,.45);display:inline-block}
+.player__time{font-size:12px;color:var(--c-muted-2);font-variant-numeric:tabular-nums}
+.piece__actions{display:flex;gap:10px;padding:16px 0 42px}
+.piece__actions .btn:first-child{flex:1.3}
+.piece__actions .btn:last-child{flex:1}
+
+
+/* ==================== 23. 부모 음성 답변 (parent-answer) ==================== */
+.answer{
+  position:relative;height:100%;background:var(--c-bg);color:var(--c-ink-parent);
+  display:flex;flex-direction:column;align-items:center;
+  padding:var(--status-bar) 24px 0;overflow:hidden;text-align:center;animation:eiumRise .3s ease;
+}
+.answer__bar{display:flex;align-items:center;gap:12px;width:100%;padding-top:8px;text-align:left}
+.answer__q-card{
+  width:100%;margin-top:22px;border-radius:var(--r-xl);background:#fff;
+  border:1.5px solid rgba(32,27,22,.1);padding:24px;
+}
+.answer__q-label{font-size:14px;font-weight:600;color:var(--c-text-3)}
+.answer__q{font-size:24px;font-weight:700;line-height:1.5;margin-top:10px}
+.answer__listen{
+  display:inline-flex;align-items:center;gap:9px;margin-top:16px;
+  padding:12px 20px;border-radius:var(--r-pill);
+  background:rgba(46,91,76,.08);border:1.5px solid rgba(46,91,76,.25);cursor:pointer;
+}
+.answer__listen-text{font-size:16px;font-weight:700;color:var(--c-green)}
+.answer__mic-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.mic-wrap{position:relative}
+.mic{
+  width:132px;height:132px;border-radius:50%;cursor:pointer;border:none;
+  background:var(--c-primary);box-shadow:0 16px 40px rgba(228,100,62,.4);
+  display:flex;align-items:center;justify-content:center;transition:background .3s ease;
+}
+/* 상태: 녹음 완료 */
+.mic--done{background:var(--c-green);box-shadow:0 16px 40px rgba(46,91,76,.35)}
+.mic-ring{
+  position:absolute;inset:-20px;border-radius:50%;
+  border:2px solid rgba(228,100,62,.3);animation:eiumRing 1.8s ease-out infinite;
+}
+.mic-ring--delay{animation-delay:.9s}
+.wave{display:flex;align-items:flex-end;gap:3.5px;height:44px;margin-top:30px}
+.wave i{
+  width:4px;border-radius:2px;background:var(--c-primary);
+  transform-origin:center bottom;animation:eiumWave .8s ease-in-out infinite alternate;
+}
+.answer__status{font-size:19px;font-weight:700;margin-top:18px;display:flex;align-items:center;gap:9px}
+.answer__status-sub{font-size:15px;color:var(--c-text-3);margin-top:8px}
+.answer__text-toggle{display:inline-flex;align-items:center;gap:6px;margin-top:20px;background:none;border:none;color:var(--c-text-3);font-size:14px;font-weight:500;cursor:pointer;padding:8px 4px;transition:color .2s}
+.answer__text-toggle:hover{color:var(--c-text)}
+.answer__actions{display:flex;gap:12px;width:100%;padding-bottom:44px;animation:eiumRise .3s ease}
+.answer__actions .btn{flex:1}
+
+
+/* ==================== 24. 계정 탈퇴 시트 (delete-account) ==================== */
+.sheet-mask{
+  position:absolute;inset:0;z-index:70;background:rgba(24,19,15,.45);
+  display:flex;align-items:flex-end;animation:eiumFade .2s ease;
+}
+.sheet{
+  width:100%;background:var(--c-bg);border-radius:var(--r-2xl) var(--r-2xl) 0 0;
+  padding:26px 24px 40px;animation:eiumRise .28s ease;
+}
+.sheet__title{font-size:19px;font-weight:700}
+.sheet__desc{font-size:13.5px;color:var(--c-text-3);margin-top:10px;line-height:1.65}
+.sheet__actions{display:flex;gap:10px;margin-top:24px}
+.sheet__actions .btn{flex:1;height:52px;font-size:15px}

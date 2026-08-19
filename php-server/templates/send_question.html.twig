@@ -1,0 +1,250 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}이음 · 질문 보내기{% endblock %}
+
+{% block content %}
+<!-- 화면: 질문 보내기 (자녀 모드 전용, 풀스크린 오버레이) -->
+<main class="app send">
+
+  <div class="page-head">
+    <a class="icon-btn" href="/home" aria-label="뒤로">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <span class="page-head__title">질문 보내기</span>
+  </div>
+
+  <!-- 받는 사람 -->
+  <div class="send__label">받는 사람</div>
+  <div class="send__chips" id="recipientChips">
+    <!-- JS로 부모 멤버 목록 로드 -->
+  </div>
+
+  <!-- AI 추천 질문 -->
+  <div class="send__ai">
+    <span class="diamond"></span>
+    <span class="send__ai-text">AI 이음이 추천해요</span>
+  </div>
+  <div class="send__recs" id="aiRecs">
+    <!-- JS로 AI 추천 질문 로드 -->
+  </div>
+
+  <!-- 직접 입력 -->
+  <div class="send__label">직접 물어보기</div>
+  <textarea class="send__free" id="freeText" placeholder="궁금했던 것을 편하게 적어보세요…"></textarea>
+
+  <div class="spacer"></div>
+
+  <button type="button" class="btn btn--primary send__submit" id="submitBtn" onclick="sendQuestion()">
+    <span class="btn__label">질문 보내기</span>
+  </button>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var authData = null;
+  var selectedRecipient = null;
+  var selectedQuestion = null;
+  var parentMembers = [];
+  var preselectedQ = null;
+
+  (function init() {
+    var auth = localStorage.getItem('eum_auth') || sessionStorage.getItem('eum_auth');
+    if (!auth) { window.location.href = '/login'; return; }
+    try {
+      authData = JSON.parse(auth);
+    } catch (e) { return; }
+
+    var params = new URLSearchParams(window.location.search);
+    var q = params.get('q');
+    var cat = params.get('cat');
+    if (q) {
+      preselectedQ = { content: q, category: cat || '' };
+      selectedQuestion = q;
+    }
+
+    loadParents();
+    loadAiSuggestions();
+  })();
+
+  async function loadParents() {
+    if (!authData || !authData.family) return;
+    try {
+      var res = await fetch('/api/families/' + encodeURIComponent(authData.family.id) + '/members');
+      if (!res.ok) return;
+      var members = await res.json();
+      parentMembers = members.filter(function(m) { return m.role === 'parent'; });
+      renderChips();
+    } catch (e) {}
+  }
+
+  function renderChips() {
+    var container = document.getElementById('recipientChips');
+    container.innerHTML = '';
+    parentMembers.forEach(function(m, i) {
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip' + (i === 0 ? ' chip--on' : '');
+      var subLabels = { mom: '어머니', dad: '아버지' };
+      var label = subLabels[m.sub_role] || m.name;
+      var avatar = document.createElement('span');
+      avatar.className = 'avatar avatar--warm avatar--sm';
+      avatar.textContent = label.charAt(0);
+      var name = document.createElement('span');
+      name.className = 'chip__name';
+      name.textContent = label;
+      chip.appendChild(avatar);
+      chip.appendChild(name);
+      chip.onclick = function() {
+        document.querySelectorAll('.chip').forEach(function(c) { c.className = 'chip'; });
+        chip.className = 'chip chip--on';
+        selectedRecipient = m;
+        updateSubmitLabel();
+      };
+      container.appendChild(chip);
+      if (i === 0) selectedRecipient = m;
+    });
+    updateSubmitLabel();
+  }
+
+  function updateSubmitLabel() {
+    var btn = document.getElementById('submitBtn');
+    var label = btn.querySelector('.btn__label');
+    if (selectedRecipient) {
+      var subLabels = { mom: '어머니', dad: '아버지' };
+      var display = subLabels[selectedRecipient.sub_role] || selectedRecipient.name;
+      label.textContent = display + '께 질문 보내기';
+    }
+  }
+
+  async function loadAiSuggestions() {
+    if (!authData || !authData.member) return;
+    try {
+      var url = '/api/questions/ai-suggestions?count=3&from_member_id=' + encodeURIComponent(authData.member.id);
+      if (selectedRecipient) {
+        url += '&to_member_id=' + encodeURIComponent(selectedRecipient.id);
+      }
+      var res = await fetch(url);
+      if (!res.ok) return;
+      var data = await res.json();
+      renderRecs(data.questions || []);
+    } catch (e) {}
+  }
+
+  function renderRecs(questions) {
+    var container = document.getElementById('aiRecs');
+    container.innerHTML = '';
+
+    if (preselectedQ) {
+      var preBtn = document.createElement('button');
+      preBtn.type = 'button';
+      preBtn.className = 'qopt qopt--on';
+      preBtn.textContent = preselectedQ.content;
+      preBtn.onclick = function() {
+        document.querySelectorAll('.qopt').forEach(function(b) {
+          b.className = 'qopt';
+          var check = b.querySelector('svg');
+          if (check) check.remove();
+        });
+        preBtn.className = 'qopt qopt--on';
+        addCheck(preBtn);
+        selectedQuestion = preselectedQ.content;
+        document.getElementById('freeText').value = '';
+      };
+      container.appendChild(preBtn);
+      addCheck(preBtn);
+    }
+
+    questions.forEach(function(q, i) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'qopt' + (!preselectedQ && i === 0 ? ' qopt--on' : '');
+      btn.textContent = q.content;
+      btn.onclick = function() {
+        document.querySelectorAll('.qopt').forEach(function(b) {
+          b.className = 'qopt';
+          var check = b.querySelector('svg');
+          if (check) check.remove();
+        });
+        btn.className = 'qopt qopt--on';
+        var check = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        check.setAttribute('width', '18');
+        check.setAttribute('height', '18');
+        check.setAttribute('viewBox', '0 0 24 24');
+        check.setAttribute('fill', 'none');
+        check.setAttribute('stroke', '#E4643E');
+        check.setAttribute('stroke-width', '2.6');
+        check.setAttribute('stroke-linecap', 'round');
+        check.setAttribute('stroke-linejoin', 'round');
+        check.innerHTML = '<path d="M20 6 9 17l-5-5"/>';
+        btn.appendChild(check);
+        selectedQuestion = q.content;
+        document.getElementById('freeText').value = '';
+      };
+      container.appendChild(btn);
+      if (!preselectedQ && i === 0) {
+        selectedQuestion = q.content;
+        addCheck(btn);
+      }
+    });
+  }
+
+  function addCheck(btn) {
+    var check = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    check.setAttribute('width', '18');
+    check.setAttribute('height', '18');
+    check.setAttribute('viewBox', '0 0 24 24');
+    check.setAttribute('fill', 'none');
+    check.setAttribute('stroke', '#E4643E');
+    check.setAttribute('stroke-width', '2.6');
+    check.setAttribute('stroke-linecap', 'round');
+    check.setAttribute('stroke-linejoin', 'round');
+    check.innerHTML = '<path d="M20 6 9 17l-5-5"/>';
+    btn.appendChild(check);
+  }
+
+  async function sendQuestion() {
+    if (!authData || !authData.member) { alert('로그인 정보가 없어요'); return; }
+    if (!selectedRecipient) { alert('받는 사람을 선택해 주세요'); return; }
+
+    var freeText = document.getElementById('freeText').value.trim();
+    var content = freeText || selectedQuestion;
+    if (!content) { alert('질문을 선택하거나 직접 입력해 주세요'); return; }
+
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.querySelector('.btn__label').textContent = '보내는 중…';
+
+    try {
+      var res = await fetch('/api/questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          family_id: authData.family.id,
+          content: content,
+          from_member_id: authData.member.id,
+          to_member_id: selectedRecipient.id,
+          source: 'child'
+        })
+      });
+      if (!res.ok) {
+        var err = await res.json().catch(function() { return {}; });
+        alert(err.detail || '질문 전송에 실패했어요');
+        return;
+      }
+
+      if (typeof AndroidBridge !== 'undefined' && AndroidBridge.showNotification) {
+        AndroidBridge.showNotification('이음', (subLabels[selectedRecipient.sub_role] || selectedRecipient.name) + '께 질문을 보냈어요');
+      }
+      window.location.href = '/home';
+    } catch (e) {
+      alert('서버에 연결할 수 없어요');
+    } finally {
+      btn.disabled = false;
+      var subLabels2 = { mom: '어머니', dad: '아버지' };
+      btn.querySelector('.btn__label').textContent = (subLabels2[selectedRecipient.sub_role] || selectedRecipient.name) + '께 질문 보내기';
+    }
+  }
+</script>
+{% endblock %}
