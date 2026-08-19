@@ -114,34 +114,66 @@ def transcribe(file_path: str, engine: str = "whisper", language: str = "ko") ->
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("사용법: python file_transcribe.py <오디오파일경로> [엔진]")
-        print()
-        print("엔진:")
-        print("  whisper  - OpenAI Whisper (오프라인, 높은 인식률)")
-        print("  google   - Google Web Speech API (온라인)")
-        print()
-        print("예시:")
-        print("  python file_transcribe.py recording.m4a whisper")
-        print("  python file_transcribe.py recording.m4a google")
+    import argparse
+    import json
+
+    parser = argparse.ArgumentParser(
+        description="오디오 파일 음성 인식 (파일 → 텍스트)",
+        epilog="예시: python file_transcribe.py recording.m4a --engine whisper",
+    )
+    # 위치 인자와 --file 을 모두 허용해 기존 사용법을 깨지 않는다.
+    parser.add_argument("audio", nargs="?", help="오디오 파일 경로")
+    parser.add_argument("engine_pos", nargs="?", help=argparse.SUPPRESS)
+    parser.add_argument("--file", dest="file", default=None, help="오디오 파일 경로")
+    parser.add_argument(
+        "--engine", default=None, help="whisper (오프라인) 또는 google (온라인)"
+    )
+    parser.add_argument("--language", default="ko", help="언어 코드 (기본: ko)")
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="결과를 마지막 줄에 JSON 한 줄로 출력 (서버 연동용)",
+    )
+    args = parser.parse_args()
+
+    file_path = args.file or args.audio
+    engine = (args.engine or args.engine_pos or "whisper").lower()
+
+    if not file_path:
+        parser.print_help()
         sys.exit(1)
 
-    file_path = sys.argv[1]
-    engine = sys.argv[2].lower() if len(sys.argv) > 2 else "whisper"
+    def fail(message: str) -> None:
+        if args.json:
+            # 진단 메시지는 stderr 로 보내 stdout 을 JSON 전용으로 남긴다.
+            print(message, file=sys.stderr)
+            print(json.dumps({"error": message}, ensure_ascii=False))
+        else:
+            print(f"[오류] {message}")
+        sys.exit(1)
 
-    print(f"파일: {file_path}")
-    print(f"엔진: {engine}")
-    print("변환 중...\n")
+    if not args.json:
+        print(f"파일: {file_path}")
+        print(f"엔진: {engine}")
+        print("변환 중...\n")
 
     try:
-        text = transcribe(file_path, engine=engine)
-        if text:
-            print(f"[결과] {text}")
-        else:
-            print("[결과] 음성을 인식하지 못했습니다.")
+        text = transcribe(file_path, engine=engine, language=args.language)
     except Exception as e:
-        print(f"[오류] {e}")
-        sys.exit(1)
+        fail(str(e))
+        return
+
+    if args.json:
+        print(
+            json.dumps(
+                {"text": text or "", "engine": engine, "language": args.language},
+                ensure_ascii=False,
+            )
+        )
+    elif text:
+        print(f"[결과] {text}")
+    else:
+        print("[결과] 음성을 인식하지 못했습니다.")
 
 
 if __name__ == "__main__":
