@@ -1,0 +1,140 @@
+#!/bin/bash
+#
+# plog — 이음 서버 로그를 이쁘게 출력
+#
+# 사용법:
+#   ./tools/plog              최신 로그 tail -f
+#   ./tools/plog -l           로그 파일 목록
+#   ./tools/plog -d 3         최근 3일 로그
+#   ./tools/plog -e           ERROR/WARNING만 필터
+#   ./tools/plog -t 2026-08-11 특정 날짜 로그
+#   ./tools/plog --all        전체 로그
+#   ./tools/plog -n 50        최근 50줄만 (기본 30)
+#
+
+set -euo pipefail
+
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+LOG_DIR="$PROJECT_ROOT/logs"
+
+# 색상
+RED=$(printf '\033[0;31m')
+YELLOW=$(printf '\033[0;33m')
+GREEN=$(printf '\033[0;32m')
+CYAN=$(printf '\033[0;36m')
+GRAY=$(printf '\033[0;90m')
+BOLD=$(printf '\033[1m')
+RESET=$(printf '\033[0m')
+
+# 기본값
+FOLLOW=true
+LINES=30
+FILTER=""
+DATE=""
+ALL=false
+LIST=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -l|--list)    LIST=true; shift ;;
+        -f|--follow)  FOLLOW=true; shift ;;
+        --no-follow)  FOLLOW=false; shift ;;
+        -e|--errors)  FILTER="ERROR|WARNING"; shift ;;
+        -d|--days)    DATE="days:$2"; shift 2 ;;
+        -t|--date)    DATE="$2"; shift 2 ;;
+        --all)        ALL=true; shift ;;
+        -n|--lines)   LINES="$2"; shift 2 ;;
+        -h|--help)
+            head -16 "$0" | tail -14
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            exit 1
+            ;;
+    esac
+done
+
+# 로그 파일 목록
+if $LIST; then
+    echo -e "${BOLD}로그 파일 목록${RESET}"
+    echo "---"
+    for f in "$LOG_DIR"/server_*.log; do
+        [ -f "$f" ] || continue
+        size=$(wc -c < "$f" | tr -d ' ')
+        lines=$(wc -l < "$f" | tr -d ' ')
+        name=$(basename "$f")
+        printf "  %-30s  %6s 줄  %6s bytes\n" "$name" "$lines" "$size"
+    done
+    exit 0
+fi
+
+# 대상 파일 결정
+if $ALL; then
+    FILES=$(ls "$LOG_DIR"/server_*.log 2>/dev/null || true)
+elif [ -n "$DATE" ]; then
+    if [[ "$DATE" == days:* ]]; then
+        DAYS="${DATE#days:}"
+        FILES=""
+        for i in $(seq 0 $((DAYS - 1))); do
+            d=$(date -v-${i}d '+%Y-%m-%d' 2>/dev/null || date -d "$i days ago" '+%Y-%m-%d' 2>/dev/null || true)
+            [ -n "$d" ] && [ -f "$LOG_DIR/server_$d.log" ] && FILES="$FILES $LOG_DIR/server_$d.log"
+        done
+    else
+        FILES="$LOG_DIR/server_$DATE.log"
+    fi
+else
+    # 최신 로그 파일
+    FILES=$(ls -t "$LOG_DIR"/server_*.log 2>/dev/null | head -1 || true)
+fi
+
+if [ -z "$FILES" ] || [ ! -f "$(echo $FILES | awk '{print $1}')" ]; then
+    echo -e "${GRAY}로그 파일이 없습니다.${RESET}"
+    exit 0
+fi
+
+# 색상화 함수
+colorize() {
+    while IFS= read -r line; do
+        # 타임스탬프
+        line=$(echo "$line" | sed -E "s/^(\[[0-9-]+ [0-9:]+\])/${GRAY}\1${RESET}/")
+        # 레벨
+        line=$(echo "$line" | sed -E "s/\[INFO\]/${GREEN}[INFO]${RESET}/")
+        line=$(echo "$line" | sed -E "s/\[WARNING\]/${YELLOW}[WARNING]${RESET}/")
+        line=$(echo "$line" | sed -E "s/\[ERROR\]/${RED}[ERROR]${RESET}/")
+        # 채널
+        line=$(echo "$line" | sed -E "s/(eum\.server:)/${CYAN}\1${RESET}/")
+        printf "%b\n" "$line"
+    done
+}
+
+# 필터 적용
+apply_filter() {
+    if [ -n "$FILTER" ]; then
+        grep -E "$FILTER"
+    else
+        cat
+    fi
+}
+
+# 출력
+if $FOLLOW && [ "$(echo $FILES | wc -w | tr -d ' ')" -eq 1 ]; then
+    # 단일 파일이면 tail -f
+    echo -e "${BOLD}$(basename $(echo $FILES | awk '{print $NF}'))${RESET} — 최근 ${LINES}줄 + follow (Ctrl-C 종료)"
+    echo "---"
+    tail -n "$LINES" "$FILES" | apply_filter | colorize
+    tail -f "$FILES" 2>/dev/null | apply_filter | colorize
+else
+    # 여러 파일이거나 no-follow
+    for f in $FILES; do
+        [ -f "$f" ] || continue
+        echo -e "${BOLD}$(basename $f)${RESET}"
+        echo "---"
+        if $FOLLOW; then
+            tail -n "$LINES" "$f" | apply_filter | colorize
+        else
+            cat "$f" | apply_filter | colorize
+        fi
+        echo ""
+    done
+fi
