@@ -5,7 +5,24 @@ import sys
 import ollama
 
 DEFAULT_MODEL = "qwen2.5"
-DEFAULT_SYSTEM = "당신은 도움이 되는 한국어 AI 어시스턴트입니다."
+
+# Ollama 기본 num_ctx(2048)로는 긴 답변을 넣으면 컨텍스트가 잘려 출력이
+# 불안정해진다(문장 중간 끊김, 중국어 혼입, 머리말 반복). 창을 넓히고
+# 온도를 낮춰 결정적으로 뽑는다.
+DEFAULT_OPTIONS = {
+    "num_ctx": 4096,
+    "num_predict": 1024,
+    "temperature": 0.3,
+    "top_p": 0.9,
+    "repeat_penalty": 1.1,
+}
+
+DEFAULT_SYSTEM = (
+    "당신은 한국어로만 응답하는 AI 어시스턴트입니다. "
+    "절대 영어, 중국어, 일본어 등 다른 언어를 섞지 마세요. "
+    "사고 과정, 추론, 메타 텍스트, <think> 태그 등을 출력에 포함하지 마세요. "
+    "오직 최종 결과물만 출력하세요."
+)
 
 
 def list_models() -> list[str]:
@@ -77,6 +94,26 @@ def chat(model: str, system: str) -> None:
         messages.append({"role": "assistant", "content": reply_content})
 
 
+def generate(model: str, system: str, prompt: str) -> str:
+    """단발성 프롬프트로 텍스트 생성 (비대화형)."""
+    ensure_model(model)
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": prompt},
+    ]
+    try:
+        resp = ollama.chat(
+            model=model,
+            messages=messages,
+            stream=False,
+            options=DEFAULT_OPTIONS,
+        )
+        return resp.message.content.strip()
+    except Exception as e:
+        print(f"오류: {e}", file=sys.stderr)
+        return ""
+
+
 def main() -> None:
     import argparse
 
@@ -90,6 +127,9 @@ def main() -> None:
     parser.add_argument(
         "--list", action="store_true", help="설치된 모델 목록만 출력"
     )
+    parser.add_argument(
+        "--prompt", default=None, help="단발성 프롬프트 (비대화형 모드)"
+    )
     args = parser.parse_args()
 
     if args.list:
@@ -100,6 +140,12 @@ def main() -> None:
                 print(f"  - {m}")
         else:
             print("설치된 모델이 없습니다.")
+        return
+
+    if args.prompt is not None:
+        output = generate(args.model, args.system, args.prompt)
+        if output:
+            print(output)
         return
 
     ensure_model(args.model)

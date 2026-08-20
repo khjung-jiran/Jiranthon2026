@@ -1,0 +1,229 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}이음 · 이야기 상세{% endblock %}
+
+{% block content %}
+{#
+  화면: 이야기 상세 (책 지면 뷰)
+  진입: /story-detail?type=life&era=youth  (일대기 챕터)
+        /story-detail?type=response&id=<응답 id>  (단편집 답변)
+  본문은 화면 높이에 맞춰 JS가 여러 장으로 나눈다.
+#}
+<main class="app detail">
+  <div class="grain grain--fine"></div>
+  <div class="detail__rule"></div>
+
+  <div class="detail__bar">
+    <a class="icon-btn icon-btn--paper" href="/story-child" aria-label="뒤로">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <button type="button" class="detail__booklet" onclick="showToast('소책자 만들기는 준비 중이에요')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F8F3E7" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      이 이야기로 소책자 만들기
+    </button>
+  </div>
+
+  <div class="detail__body">
+    <header class="detail__head">
+      <div class="detail__kicker" id="kicker">이야기</div>
+      <h1 class="detail__title" id="title">불러오는 중…</h1>
+      <div class="detail__meta" id="meta"></div>
+    </header>
+
+    <article class="detail__page" id="page"></article>
+
+    <nav class="detail__nav" id="nav" style="visibility:hidden;">
+      <button type="button" class="detail__nav-btn" id="prevBtn" onclick="goPage(currentPage - 1)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        이전 장
+      </button>
+      <span class="detail__nav-label" id="navLabel">1 / 1</span>
+      <button type="button" class="detail__nav-btn" id="nextBtn" onclick="goPage(currentPage + 1)">
+        다음 장
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </nav>
+  </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var CAT_LABELS = { childhood: '유년기', youth: '청년시절', twilight: '황혼기' };
+
+  var authData = null;
+  var pages = [];
+  var currentPage = 0;
+
+  var pageEl = document.getElementById('page');
+
+  (function init() {
+    var auth = localStorage.getItem('eum_auth') || sessionStorage.getItem('eum_auth');
+    if (!auth) { window.location.href = '/login'; return; }
+    try { authData = JSON.parse(auth); } catch (e) { window.location.href = '/login'; return; }
+
+    var params = new URLSearchParams(window.location.search);
+    var type = params.get('type') || 'response';
+
+    if (type === 'life') {
+      loadChapter(params.get('era') || '');
+    } else {
+      loadResponse(params.get('id') || '');
+    }
+  })();
+
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : s;
+    return d.innerHTML;
+  }
+
+  function familyId() {
+    return (authData && authData.family && authData.family.id) || '';
+  }
+
+  function showEmpty(message) {
+    document.getElementById('title').textContent = message;
+    document.getElementById('meta').textContent = '';
+    pageEl.innerHTML = '';
+  }
+
+  function showToast(text) {
+    var existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+    var toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = '<span class="toast__text"></span>';
+    toast.querySelector('.toast__text').textContent = text;
+    document.querySelector('.detail').appendChild(toast);
+    setTimeout(function() { toast.remove(); }, 2200);
+  }
+
+  /* ── 데이터 로드 ── */
+
+  async function loadChapter(era) {
+    if (!familyId() || !era) { showEmpty('이야기를 찾을 수 없어요'); return; }
+    try {
+      var res = await fetch('/api/storybook?family_id=' + encodeURIComponent(familyId()));
+      if (!res.ok) { showEmpty('불러올 수 없어요'); return; }
+      var data = await res.json();
+      var ch = (data.chapters || []).find(function(c) { return c.category === era; });
+      if (!ch || !ch.body) { showEmpty('아직 엮이지 않은 이야기예요'); return; }
+
+      document.getElementById('kicker').textContent = '일대기 · ' + (CAT_LABELS[ch.category] || '기억');
+      document.getElementById('title').textContent = ch.title;
+      document.getElementById('meta').textContent =
+        '답변 ' + ch.count + '개로 엮은 이야기 · ' + (ch.body_length || ch.body.length) + '자';
+
+      render(ch.body, '');
+    } catch (e) { showEmpty('불러올 수 없어요'); }
+  }
+
+  async function loadResponse(respId) {
+    if (!familyId() || !respId) { showEmpty('답변을 찾을 수 없어요'); return; }
+    try {
+      var res = await fetch('/api/responses?family_id=' + encodeURIComponent(familyId()));
+      if (!res.ok) { showEmpty('불러올 수 없어요'); return; }
+      var responses = await res.json();
+      var r = (responses || []).find(function(x) { return x.id === respId; });
+      if (!r) { showEmpty('답변을 찾을 수 없어요'); return; }
+
+      var isVoice = r.input_method === 'voice';
+      document.getElementById('kicker').textContent =
+        '단편집 · ' + (CAT_LABELS[r.question_category] || '기억');
+      document.getElementById('title').textContent = r.question_content || '';
+      var date = r.created_at ? r.created_at.substring(5, 10).replace('-', '월 ') + '일' : '';
+      document.getElementById('meta').textContent =
+        [date, isVoice ? '음성 답변에서' : '질문 답변에서'].filter(Boolean).join(' ');
+
+      var extra = '';
+      if (isVoice && r.audio_url) {
+        extra =
+          '<div class="detail__qr-row">' +
+            '<div class="detail__qr-text">' +
+              '<div class="detail__qr-title">이 날의 목소리 다시 듣기</div>' +
+              '<audio controls preload="metadata" src="' + escapeHtml(r.audio_url) + '"' +
+                ' class="detail__audio"></audio>' +
+            '</div>' +
+          '</div>';
+      }
+
+      render(r.content || r.transcript || '', extra);
+    } catch (e) { showEmpty('불러올 수 없어요'); }
+  }
+
+  /* ── 지면 나누기 ── */
+
+  function render(body, extraHtml) {
+    var chunks = [];
+    body.split(/\n{1,}/).forEach(function(para) {
+      var text = para.trim();
+      if (text === '') return;
+      fitParagraph(text).forEach(function(part) {
+        chunks.push('<p>' + escapeHtml(part) + '</p>');
+      });
+    });
+    if (extraHtml) chunks.push(extraHtml);
+
+    pages = paginate(chunks);
+    if (pages.length === 0) pages = [''];
+    document.getElementById('nav').style.visibility = pages.length > 1 ? 'visible' : 'hidden';
+    goPage(0);
+  }
+
+  function fits() {
+    return pageEl.scrollHeight <= pageEl.clientHeight + 1;
+  }
+
+  /** 한 문단이 한 지면을 넘으면 문장 단위로 쪼갠다. */
+  function fitParagraph(text) {
+    pageEl.innerHTML = '<p>' + escapeHtml(text) + '</p>';
+    if (fits()) return [text];
+
+    var sentences = text.match(/[^.!?…]+[.!?…]*\s*/g) || [text];
+    var parts = [];
+    var current = '';
+
+    sentences.forEach(function(sentence) {
+      pageEl.innerHTML = '<p>' + escapeHtml(current + sentence) + '</p>';
+      if (!fits() && current !== '') {
+        parts.push(current.trim());
+        current = sentence;
+      } else {
+        current += sentence;
+      }
+    });
+    if (current.trim() !== '') parts.push(current.trim());
+
+    return parts;
+  }
+
+  /** 지면에 들어가는 만큼 순서대로 채운다. */
+  function paginate(chunks) {
+    var result = [];
+    var buffer = [];
+
+    chunks.forEach(function(chunk) {
+      buffer.push(chunk);
+      pageEl.innerHTML = buffer.join('');
+      if (!fits() && buffer.length > 1) {
+        buffer.pop();
+        result.push(buffer.join(''));
+        buffer = [chunk];
+      }
+    });
+    if (buffer.length > 0) result.push(buffer.join(''));
+
+    return result;
+  }
+
+  function goPage(index) {
+    if (index < 0 || index >= pages.length) return;
+    currentPage = index;
+    pageEl.innerHTML = pages[index];
+    document.getElementById('navLabel').textContent = (index + 1) + ' / ' + pages.length;
+    document.getElementById('prevBtn').disabled = index === 0;
+    document.getElementById('nextBtn').disabled = index === pages.length - 1;
+  }
+</script>
+{% endblock %}

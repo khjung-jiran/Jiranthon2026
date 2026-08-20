@@ -38,7 +38,7 @@
         </div>
         <span class="deck-head__hint">← 카드를 밀어보세요</span>
       </div>
-      <div class="deck" id="questionDeck" style="position:relative;overflow:hidden;"></div>
+      <div class="deck deck-container" id="questionDeck"></div>
       <div class="deck-dots" id="questionDots"></div>
     </section>
 
@@ -120,20 +120,8 @@
       var questions = await res.json();
       var pending = questions.filter(function(q) { return q.status === 'pending'; });
 
-      if (!pending || pending.length === 0) {
-        var seedRes = await fetch('/api/questions/seed', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ family_id: familyId, parent_member_id: memberId })
-        });
-        if (seedRes.ok) {
-          res = await fetch('/api/questions?family_id=' + encodeURIComponent(familyId) + '&to_member_id=' + encodeURIComponent(memberId));
-          if (res.ok) {
-            questions = await res.json();
-            pending = questions.filter(function(q) { return q.status === 'pending'; });
-          }
-        }
-      }
+      // 질문 자동 채우기(seed) 호출 제거 —
+      // 질문은 자녀가 직접 보내거나 꼬리 질문으로만 생성된다.
 
       if (pending && pending.length > 0) {
         pending.sort(function(a, b) {
@@ -167,6 +155,7 @@
     questions.forEach(function(q, i) {
       var isAuto = q.source === 'auto' || !q.from_member_id;
       var fromName = isAuto ? 'AI 이음이' : (q.from_member_name || '가족');
+      var origin = q.origin || null;
 
       var card = document.createElement('article');
       card.className = 'deck__card';
@@ -188,9 +177,21 @@
 
       var sub = document.createElement('div');
       sub.className = 'deck__sub';
-      sub.textContent = isAuto
-        ? "일대기 '" + (catLabels[q.category] || '기억') + "' 챕터를 채울 수 있는 질문이에요"
-        : '천천히, 편하실 때 답해 주세요.';
+      if (origin && origin.answer_preview) {
+        sub.textContent = '‘' + (origin.question_content || '이전 질문') + '’ 답변에서 이어진 질문이에요';
+      } else {
+        sub.textContent = isAuto
+          ? "일대기 '" + (catLabels[q.category] || '기억') + "' 챕터를 채울 수 있는 질문이에요"
+          : '천천히, 편하실 때 답해 주세요.';
+      }
+
+      // 꼬리 질문이면 근거가 된 답변을 함께 보여준다.
+      var originBox = null;
+      if (origin && origin.answer_preview) {
+        originBox = document.createElement('div');
+        originBox.className = 'deck__origin';
+        originBox.textContent = '내가 한 답변: “' + origin.answer_preview + '”';
+      }
 
       var spacer = document.createElement('div');
       spacer.className = 'spacer';
@@ -206,6 +207,7 @@
       card.appendChild(top);
       card.appendChild(qText);
       card.appendChild(sub);
+      if (originBox) card.appendChild(originBox);
       card.appendChild(spacer);
       card.appendChild(cta);
 

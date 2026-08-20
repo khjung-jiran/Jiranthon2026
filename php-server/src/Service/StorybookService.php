@@ -101,9 +101,8 @@ final class StorybookService
             $chapters[] = $this->presentChapter($era, $items, $story);
         }
 
-        // 꼬리 질문 자동 생성 비활성화 — 질문이 너무 많아지는 문제 방지
-        // 필요 시 별도 API 엔드포인트에서 명시적으로 호출하도록 변경
-        // $this->generateFollowUpsIfNeeded($familyId, $grouped, $stored);
+        // 스토리 본문이 1500자 미만인 시기에 꼬리 질문 자동 생성
+        $this->generateFollowUpsIfNeeded($familyId, $grouped, $stored);
 
         // 새 스토리가 생성되었으면 가족 전원에게 푸시
         if ($newStoryTitles !== []) {
@@ -138,21 +137,24 @@ final class StorybookService
     /**
      * 부족한 시기를 찾아 꼬리 질문을 생성한다.
      *
-     * @param array<string, list<array{question: string, answer: string, question_id: string}>> $grouped
-     * @param array<string, array<string, mixed>>                                                $stored
+     * @param array<string, list<array{question: string, answer: string, question_id: string, response_id: string}>> $grouped
+     * @param array<string, array<string, mixed>>                                                                    $stored
      */
     private function generateFollowUpsIfNeeded(string $familyId, array $grouped, array $stored): void
     {
-        // 각 시기의 대표 질문 ID (가장 최근 답변의 질문)
-        $representativeIds = [];
+        // 각 시기의 대표 답변 (가장 최근 답변) — 꼬리 질문의 근거가 된다.
+        $representatives = [];
         foreach ($grouped as $eraValue => $items) {
             $last = end($items);
             if ($last !== false) {
-                $representativeIds[$eraValue] = $last['question_id'];
+                $representatives[$eraValue] = [
+                    'question_id' => $last['question_id'],
+                    'response_id' => $last['response_id'],
+                ];
             }
         }
 
-        $deficient = $this->qualityEvaluator->findDeficientEras($grouped, $stored, $representativeIds);
+        $deficient = $this->qualityEvaluator->findDeficientEras($grouped, $stored, $representatives);
 
         if ($deficient === []) {
             return;
@@ -183,7 +185,7 @@ final class StorybookService
      * 질문에 시기가 지정되지 않은 답변은 이 자리에서 분류한다 —
      * 표시를 위한 임시 분류이며 DB 를 수정하지는 않는다.
      *
-     * @return array<string, list<array{question: string, answer: string, question_id: string}>>
+     * @return array<string, list<array{question: string, answer: string, question_id: string, response_id: string}>>
      */
     private function groupAnswersByEra(string $familyId): array
     {
@@ -197,13 +199,19 @@ final class StorybookService
                 continue;
             }
 
-            $era = Era::tryFromValue($row['era'] ?? null)
-                ?? $this->classifier->classify($question, $answer);
+            $era = Era::tryFromValue($row['era'] ?? null);
+
+            if ($era === null) {
+                // DB에 era가 없으면 LLM으로 분류한 뒤 캐싱 — 다음 요청부터는 LLM 호출을 건너뛴다.
+                $era = $this->classifier->classify($question, $answer);
+                $this->responses->updateEra((string) $row['response_id'], $era->value);
+            }
 
             $grouped[$era->value][] = [
                 'question' => $question,
                 'answer' => $answer,
                 'question_id' => (string) $row['question_id'],
+                'response_id' => (string) $row['response_id'],
             ];
         }
 
@@ -255,15 +263,19 @@ final class StorybookService
     private function presentChapter(Era $era, array $items, ?array $story): array
     {
         $isStale = $this->isStale($items, $story);
+        $body = $isStale ? '' : (string) $story['body'];
 
         return [
             'category' => $era->value,
             'label' => $era->label(),
             'title' => $isStale ? $era->defaultTitle() : (string) $story['title'],
-            'body' => $isStale ? '' : (string) $story['body'],
+            'body' => $body,
             'count' => $isStale ? 0 : (int) $story['response_count'],
             'answer_count' => \count($items),
             'has_new' => $isStale,
+            // 진행률 표시용 — 설정된 목표 글자수 대비 현재 본문 길이
+            'body_length' => \mb_strlen($body),
+            'target_length' => StoryQualityEvaluator::MIN_BODY_LENGTH,
         ];
     }
 

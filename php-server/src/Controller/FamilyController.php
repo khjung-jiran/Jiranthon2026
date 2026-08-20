@@ -110,10 +110,11 @@ final class FamilyController
             $familyId,
         ));
 
-        // 부모에게는 답할 질문을 미리 채워 줌 (이미 질문이 있으면 스킵 — 중복 방지)
-        if ($role->isParent()) {
-            $this->questions->seedDefaultsIfEmpty($familyId, $memberId);
-        }
+        // 자동 기본 질문 생성(seed) 비활성화 —
+        // 질문은 자녀가 직접 보내거나 꼬리 질문(follow_up)으로만 생성된다.
+        // if ($role->isParent()) {
+        //     $this->questions->seedDefaultsIfEmpty($familyId, $memberId);
+        // }
 
         $member = $this->members->find($memberId)
             ?? throw new NotFoundException('회원을 찾을 수 없습니다');

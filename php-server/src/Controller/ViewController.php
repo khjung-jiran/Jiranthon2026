@@ -34,6 +34,7 @@ final class ViewController
         '/send-question' => ['template' => 'send_question'],
         '/home' => ['byRole' => ['parent' => 'home_parent', 'child' => 'home_child']],
         '/story-child' => ['byRole' => ['parent' => 'story_parent', 'child' => 'story_child']],
+        '/story-detail' => ['template' => 'story_detail'],
         '/settings' => ['template' => 'settings', 'withRole' => true],
         '/album' => ['template' => 'album', 'withRole' => true],
         '/calendar' => ['template' => 'calendar', 'withRole' => true],

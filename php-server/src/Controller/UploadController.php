@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace Eum\Controller;
 
+use Eum\Domain\InputMethod;
 use Eum\Exception\ValidationException;
 use Eum\Http\ApiResponse;
 use Eum\Http\Input;
+use Eum\Presenter\ResponsePresenter;
 use Eum\Repository\MemberRepository;
 use Eum\Repository\PhotoRepository;
 use Eum\Service\FileUploadService;
 use Eum\Service\NotificationService;
+use Eum\Service\QuestionService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\UploadedFileInterface;
@@ -22,12 +25,36 @@ final class UploadController
         private readonly PhotoRepository $photos,
         private readonly MemberRepository $members,
         private readonly NotificationService $notificationService,
+        private readonly QuestionService $questions,
     ) {
     }
 
     public function audio(Request $req, Response $res): Response
     {
+        $input = Input::from($req);
         $stored = $this->uploads->storeAudio($this->requireFile($req));
+
+        $questionId = $input->optional('question_id');
+        $memberId = $input->optional('member_id');
+
+        // 질문/멤버가 같이 오면 STT → 답변 저장까지 한 번에 처리한다.
+        if ($questionId !== null && $memberId !== null) {
+            $response = $this->questions->recordAnswer(
+                questionId: $questionId,
+                memberId: $memberId,
+                content: (string) $input->optional('content', ''),
+                inputMethod: InputMethod::fromValue($input->optional('input_method')),
+                audioFilePath: $stored['path'],
+                transcript: $input->optional('transcript'),
+                era: $input->optional('era'),
+                duration: $input->optional('duration'),
+            );
+
+            return ApiResponse::created($res, [
+                'upload' => $stored,
+                'response' => ResponsePresenter::one($response),
+            ]);
+        }
 
         return ApiResponse::ok($res, [
             'file_path' => $stored['path'],

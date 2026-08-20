@@ -81,10 +81,11 @@ final class QuestionController
             status: QuestionStatus::tryFrom((string) $input->query('status')),
         );
 
-        // 이름을 한 번에 조회한다 (행마다 조회하면 N+1 이 된다).
+        // 이름과 꼬리 질문 근거를 한 번에 조회한다 (행마다 조회하면 N+1 이 된다).
         $names = $this->members->nameMap(QuestionPresenter::memberIdsIn($rows));
+        $origins = $this->questions->followUpOrigins(QuestionPresenter::followUpIdsIn($rows));
 
-        return ApiResponse::json($res, QuestionPresenter::collection($rows, $names));
+        return ApiResponse::json($res, QuestionPresenter::collection($rows, $names, $origins));
     }
 
     public function show(Request $req, Response $res): Response
@@ -174,7 +175,8 @@ final class QuestionController
 
         return QuestionPresenter::one(
             $row,
-            $this->members->nameMap(QuestionPresenter::memberIdsIn([$row]))
+            $this->members->nameMap(QuestionPresenter::memberIdsIn([$row])),
+            $this->questions->followUpOrigins(QuestionPresenter::followUpIdsIn([$row])),
         );
     }
 }

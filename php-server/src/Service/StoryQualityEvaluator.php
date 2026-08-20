@@ -17,10 +17,10 @@ use Eum\Domain\Era;
 final class StoryQualityEvaluator
 {
     /** 시기별 최소 답변 수 */
-    public const MIN_ANSWERS = 3;
+    public const MIN_ANSWERS = 1;
 
-    /** 스토리 본문 최소 길이 (자) */
-    public const MIN_BODY_LENGTH = 200;
+    /** 스토리 본문 최소 길이 (자) — 이 값 미만이면 꼬리 질문 생성 */
+    public const MIN_BODY_LENGTH = 1500;
 
     /** 시기당 최대 꼬리 질문 라운드 */
     public const MAX_FOLLOW_UP_ROUNDS = 3;
@@ -50,12 +50,12 @@ final class StoryQualityEvaluator
     /**
      * 부족한 시기와 그 시기의 대표 질문 ID를 반환한다.
      *
-     * @param array<string, list<array{question: string, answer: string}>> $grouped
-     * @param array<string, array<string, mixed>>                          $stored
-     * @param array<string, string>                                        $representativeQuestionIds era->value => question_id
-     * @return list<array{era: Era, question_id: string}>
+     * @param array<string, list<array{question: string, answer: string}>>            $grouped
+     * @param array<string, array<string, mixed>>                                     $stored
+     * @param array<string, array{question_id: string, response_id: string}>          $representatives era->value => 대표 답변
+     * @return list<array{era: Era, question_id: string, response_id: string}>
      */
-    public function findDeficientEras(array $grouped, array $stored, array $representativeQuestionIds): array
+    public function findDeficientEras(array $grouped, array $stored, array $representatives): array
     {
         $deficient = [];
 
@@ -70,13 +70,17 @@ final class StoryQualityEvaluator
                 continue;
             }
 
-            $questionId = $representativeQuestionIds[$era->value] ?? null;
+            $representative = $representatives[$era->value] ?? null;
 
-            if ($questionId === null) {
+            if ($representative === null || ($representative['question_id'] ?? '') === '') {
                 continue;
             }
 
-            $deficient[] = ['era' => $era, 'question_id' => $questionId];
+            $deficient[] = [
+                'era' => $era,
+                'question_id' => (string) $representative['question_id'],
+                'response_id' => (string) ($representative['response_id'] ?? ''),
+            ];
         }
 
         return $deficient;

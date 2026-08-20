@@ -66,6 +66,18 @@
 
     loadParents();
     loadAiSuggestions();
+
+    // 직접 입력 중이면 AI 추천 질문 선택을 해제한다
+    document.getElementById('freeText').addEventListener('input', function(e) {
+      if (e.target.value.trim() !== '') {
+        document.querySelectorAll('.qopt').forEach(function(b) {
+          b.className = 'qopt';
+          var check = b.querySelector('svg');
+          if (check) check.remove();
+        });
+        selectedQuestion = null;
+      }
+    });
   })();
 
   async function loadParents() {
