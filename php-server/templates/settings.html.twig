@@ -31,7 +31,7 @@
           <div class="srow__title">가족 초대 코드</div>
           <div class="srow__sub" id="inviteCodeSub">불러오는 중…</div>
         </div>
-        <button type="button" class="srow__icon" id="copyInviteBtn" style="background:none;border:none;cursor:pointer;padding:4px;" onclick="copyInviteCode()" title="복사">
+        <button type="button" class="srow__icon modal__close" id="copyInviteBtn" onclick="copyInviteCode()" title="복사">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B4A99C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         </button>
       </div>
@@ -132,16 +132,16 @@
   </nav>
 
   <!-- 가족 연결 모달 -->
-  <div id="joinFamilyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;">
-    <div style="background:var(--c-bg);border-radius:16px;padding:24px;width:86%;max-width:320px;">
-      <h2 style="font-size:1.15rem;font-weight:600;margin:0 0 8px;">가족 연결하기</h2>
-      <p style="font-size:0.85rem;color:var(--c-text-sub);margin:0 0 16px;">초대 코드를 입력하면 해당 가족에 참여해요.</p>
-      <input class="input" type="text" id="joinFamilyCode" placeholder="예: EIUM-4821" style="width:100%;margin-bottom:12px;">
-      <div style="display:flex;gap:8px;">
-        <button type="button" class="btn btn--block" onclick="closeJoinFamilyModal()" style="flex:1;">
+  <div id="joinFamilyModal" class="join-modal">
+    <div class="join-modal__body">
+      <h2 class="join-modal__title">가족 연결하기</h2>
+      <p class="join-modal__desc">초대 코드를 입력하면 해당 가족에 참여해요.</p>
+      <input class="input join-modal__input" type="text" id="joinFamilyCode" placeholder="예: EIUM-4821">
+      <div class="join-modal__btn-row">
+        <button type="button" class="btn btn--block" onclick="closeJoinFamilyModal()">
           <span class="btn__label">취소</span>
         </button>
-        <button type="button" class="btn btn--primary btn--block" onclick="doJoinFamily()" style="flex:1;">
+        <button type="button" class="btn btn--primary btn--block" onclick="doJoinFamily()">
           <span class="btn__label">연결하기</span>
         </button>
       </div>

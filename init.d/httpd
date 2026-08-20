@@ -1,13 +1,19 @@
 #!/bin/bash
 #
 # httpd — 이음 PHP 서버 시작/중지/재시작 스크립트
+# PHP 내장 서버(8000) + stunnel(443 HTTPS) 함께 구동
 #
 
 PROJECT_ROOT="/Users/changseopyeum/Jiransecurity/Jiranthon2026"
 PHP_SERVER_DIR="$PROJECT_ROOT/php-server"
 PORT=8000
+HTTPS_PORT=443
 PID_FILE="$PROJECT_ROOT/init.d/httpd.pid"
 LOG_FILE="$PROJECT_ROOT/init.d/httpd.log"
+STUNNEL_CONF="$PROJECT_ROOT/init.d/stunnel.conf"
+STUNNEL_PID="$PROJECT_ROOT/init.d/stunnel.pid"
+STUNNEL_LOG="$PROJECT_ROOT/init.d/stunnel.log"
+STUNNEL_BIN="/opt/homebrew/bin/stunnel"
 
 start() {
     if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
@@ -26,9 +32,38 @@ start() {
         rm -f "$PID_FILE"
         return 1
     fi
+
+    # stunnel HTTPS 래퍼 시작
+    if [ -x "$STUNNEL_BIN" ] && [ -f "$STUNNEL_CONF" ]; then
+        echo "Starting stunnel (HTTPS $HTTPS_PORT → $PORT) ..."
+        "$STUNNEL_BIN" "$STUNNEL_CONF"
+        sleep 1
+        if [ -f "$STUNNEL_PID" ] && kill -0 "$(cat "$STUNNEL_PID")" 2>/dev/null; then
+            echo "stunnel started (PID $(cat "$STUNNEL_PID")) — https://0.0.0.0:$HTTPS_PORT"
+        else
+            echo "stunnel failed to start — check $STUNNEL_LOG"
+        fi
+    else
+        echo "stunnel not found — HTTPS disabled (HTTP only on port $PORT)"
+    fi
 }
 
 stop() {
+    # stunnel 먼저 중지
+    if [ -f "$STUNNEL_PID" ]; then
+        SPID=$(cat "$STUNNEL_PID")
+        if kill -0 "$SPID" 2>/dev/null; then
+            echo "Stopping stunnel (PID $SPID) ..."
+            kill "$SPID"
+            sleep 1
+            if kill -0 "$SPID" 2>/dev/null; then
+                kill -9 "$SPID"
+            fi
+            echo "stunnel stopped"
+        fi
+        rm -f "$STUNNEL_PID"
+    fi
+
     if [ ! -f "$PID_FILE" ]; then
         echo "httpd not running"
         return 0
@@ -58,6 +93,11 @@ status() {
         echo "httpd running (PID $(cat "$PID_FILE")) on port $PORT"
     else
         echo "httpd not running"
+    fi
+    if [ -f "$STUNNEL_PID" ] && kill -0 "$(cat "$STUNNEL_PID")" 2>/dev/null; then
+        echo "stunnel running (PID $(cat "$STUNNEL_PID")) on port $HTTPS_PORT (HTTPS)"
+    else
+        echo "stunnel not running"
     fi
 }
 

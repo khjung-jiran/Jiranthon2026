@@ -10,7 +10,7 @@ import tempfile
 
 import whisper
 
-MODEL_SIZE = "small"
+MODEL_SIZE = "medium"
 SAMPLE_RATE = 16000
 
 _whisper_model = None
@@ -89,8 +89,8 @@ def transcribe_google(file_path: str, language: str = "ko-KR") -> str:
         except sr.RequestError as e:
             raise RuntimeError(f"Google Speech API 요청 실패: {e}")
     finally:
-        if tmp_wav and os.path.exists(tmp_wav):
-            os.unlink(tmp_wav)
+        if tmp_wav and os.path.exists(tmp_wav.name):
+            os.unlink(tmp_wav.name)
 
 
 def transcribe(file_path: str, engine: str = "whisper", language: str = "ko") -> str:

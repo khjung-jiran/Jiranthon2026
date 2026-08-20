@@ -392,6 +392,12 @@ button{font:inherit}
 .deck__time{font-size:11px;color:var(--c-muted-3)}
 .deck__q{font-size:19px;font-weight:700;line-height:1.5;letter-spacing:-.01em;margin-top:14px;white-space:pre-line}
 .deck__sub{font-size:12.5px;color:var(--c-muted);margin-top:8px}
+/* 꼬리 질문의 근거가 된 이전 답변 */
+.deck__origin{
+  font-size:12px;line-height:1.6;color:var(--c-muted-2);margin-top:10px;
+  padding:10px 12px;border-radius:12px;background:rgba(43,38,34,.05);
+  border-left:3px solid rgba(46,91,76,.35);
+}
 .deck__cta{height:50px;border-radius:15px;font-size:15px}
 .deck-dots{display:flex;align-items:center;justify-content:center;gap:5px;padding:12px 0 8px}
 .deck-dots__i{width:5px;height:5px;border-radius:50%;background:var(--c-muted-4)}
@@ -461,8 +467,15 @@ button{font:inherit}
   padding:18px 20px;position:relative;overflow:hidden;flex-shrink:0;
 }
 .life__banner::after{content:"";position:absolute;right:-12px;top:-14px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.06)}
-.life__banner-title{font-family:var(--f-serif);font-size:18px;font-weight:600;color:var(--c-paper);position:relative}
+.life__banner-kicker{font-size:11px;font-weight:700;letter-spacing:.12em;color:rgba(248,243,231,.7);position:relative}
+.life__banner-title{font-family:var(--f-serif);font-size:18px;font-weight:600;color:var(--c-paper);position:relative;margin-top:6px}
 .life__banner-sub{font-size:12px;color:rgba(248,243,231,.75);margin-top:5px;position:relative}
+/* 일대기 진행률 — 설정된 목표 글자수 대비 */
+.life__progress{position:relative;margin-top:14px}
+.life__progress-row{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;font-weight:600;color:rgba(248,243,231,.75)}
+.life__progress-pct{font-size:12.5px;font-weight:700;color:var(--c-paper)}
+.life__progress .bar{margin-top:7px;background:rgba(255,255,255,.16)}
+.life__progress .bar__fill{background:linear-gradient(90deg,#F0A57A,#E4643E)}
 /* 챕터 행 */
 .chapter{
   border-radius:var(--r-md);background:var(--c-card);border:1px solid rgba(43,38,34,.07);
@@ -518,6 +531,7 @@ button{font:inherit}
 .progress-block__row{display:flex;justify-content:space-between;font-size:14px;font-weight:600;color:var(--c-text)}
 .progress-block__pct{color:var(--c-primary-dark);font-weight:700}
 .progress-block .bar{margin-top:8px}
+.progress-block__chars{font-size:12.5px;color:var(--c-text-3);margin-top:7px}
 
 
 /* ==================== 16. 앨범 (album) ==================== */
@@ -681,7 +695,8 @@ button{font:inherit}
 
 /* ==================== 20. 이야기 상세 (story-detail) ==================== */
 .detail{
-  position:relative;height:100%;background:var(--c-paper-2);
+  position:relative;background:var(--c-paper-2);
+  height:var(--app-height,100vh);min-height:var(--app-height,100vh);
   font-family:var(--f-serif);color:#3A332B;
   display:flex;flex-direction:column;padding:var(--status-bar) 30px 0;
   overflow:hidden;animation:eiumRise .3s ease;
@@ -811,6 +826,13 @@ button{font:inherit}
 }
 .answer__q-label{font-size:14px;font-weight:600;color:var(--c-text-3)}
 .answer__q{font-size:24px;font-weight:700;line-height:1.5;margin-top:10px}
+/* 꼬리 질문의 근거가 된 내 이전 답변 */
+.answer__origin{
+  margin-top:16px;padding:14px 16px;border-radius:14px;
+  background:rgba(43,38,34,.05);border-left:3px solid rgba(46,91,76,.35);
+}
+.answer__origin-label{font-size:13px;font-weight:600;color:var(--c-muted-2);line-height:1.6}
+.answer__origin-answer{font-size:14px;color:var(--c-muted);line-height:1.7;margin-top:6px}
 .answer__listen{
   display:inline-flex;align-items:center;gap:9px;margin-top:16px;
   padding:12px 20px;border-radius:var(--r-pill);
@@ -829,6 +851,7 @@ button{font:inherit}
 .mic-ring{
   position:absolute;inset:-20px;border-radius:50%;
   border:2px solid rgba(228,100,62,.3);animation:eiumRing 1.8s ease-out infinite;
+  pointer-events:none;
 }
 .mic-ring--delay{animation-delay:.9s}
 .wave{display:flex;align-items:flex-end;gap:3.5px;height:44px;margin-top:30px}
@@ -857,3 +880,226 @@ button{font:inherit}
 .sheet__desc{font-size:13.5px;color:var(--c-text-3);margin-top:10px;line-height:1.65}
 .sheet__actions{display:flex;gap:10px;margin-top:24px}
 .sheet__actions .btn{flex:1;height:52px;font-size:15px}
+
+
+/* ============================================================
+   25. 공통 유틸리티 (인라인 스타일에서 추출)
+   여러 페이지에서 반복되던 style="" 속성을 클래스로 모은 것.
+   ============================================================ */
+
+/* ---- 모달 오버레이 / 본체 ---- */
+.modal{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;
+  align-items:center;justify-content:center;padding:16px;
+}
+.modal--bottom{align-items:flex-end;padding:0}
+.modal__body{
+  background:var(--c-bg);border-radius:20px;padding:24px 20px 28px;
+  width:100%;max-width:390px;max-height:calc(var(--app-height,100vh) - 32px);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+.modal--bottom .modal__body{
+  border-radius:20px 20px 0 0;max-width:390px;max-height:70vh;
+  padding:24px 20px 32px;
+}
+.modal__head{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:16px;position:sticky;top:0;background:var(--c-bg);
+  padding-bottom:8px;z-index:1;
+}
+.modal__title{font-size:1.15rem;font-weight:600;margin:0}
+.modal__close{
+  background:none;border:none;cursor:pointer;padding:4px;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* ---- 모달 입력 필드 (앨범 등) ---- */
+.modal__field{margin-bottom:14px}
+.modal__field--last{margin-bottom:20px}
+.modal__field-label{
+  display:block;font-size:13px;font-weight:600;
+  color:var(--c-text-2);margin-bottom:6px;
+}
+.modal__input{
+  width:100%;padding:12px 14px;border:1px solid rgba(0,0,0,.1);
+  border-radius:10px;font-size:15px;background:var(--c-bg);
+  color:var(--c-ink);box-sizing:border-box;
+}
+.modal__select-btn{
+  width:100%;padding:14px;border:2px dashed rgba(0,0,0,.15);
+  border-radius:12px;background:none;font-size:15px;
+  color:var(--c-text-2);cursor:pointer;margin-bottom:16px;
+}
+.modal__submit-btn{
+  width:100%;padding:14px;border:none;border-radius:12px;
+  background:var(--c-primary);color:#fff;font-size:16px;
+  font-weight:600;cursor:pointer;opacity:.5;
+}
+.modal__submit-btn:not(:disabled){opacity:1}
+.modal__danger-btn{
+  width:100%;padding:12px;border:1px solid rgba(0,0,0,.1);
+  border-radius:10px;background:none;color:#c0392b;
+  font-size:15px;cursor:pointer;
+}
+
+/* ---- 미리보기 (앨범 업로드) ---- */
+.modal__preview{
+  display:none;width:100%;aspect-ratio:1;border-radius:12px;
+  overflow:hidden;margin-bottom:16px;background:rgba(0,0,0,.05);
+}
+.modal__preview img{width:100%;height:100%;object-fit:cover}
+
+/* ---- 모달 버튼 행 (취소/확인) ---- */
+.modal__btn-row{display:flex;gap:10px;margin-top:22px}
+.modal__btn-row .btn{flex:1}
+
+/* ---- 캘린더 일정 추가 모달 ---- */
+.cal-modal{
+  display:none;position:fixed;inset:0;z-index:100;
+  background:rgba(0,0,0,.4);align-items:center;justify-content:center;
+}
+.cal-modal__body{
+  width:340px;background:#fff;border-radius:20px;
+  padding:24px 22px;box-shadow:0 20px 50px rgba(0,0,0,.2);
+}
+.cal-modal__title{font-size:18px;font-weight:700;margin-bottom:18px}
+.cal-modal__fields{display:flex;flex-direction:column;gap:14px}
+.cal-modal__field-label{
+  font-size:12.5px;font-weight:700;color:#5C544A;margin-bottom:6px;
+}
+.cal-modal__field-label--opt{font-weight:400;color:#B4A99C}
+.cal-modal__input{width:100%}
+.cal-modal__btn-row{display:flex;gap:10px;margin-top:22px}
+.cal-modal__btn-row .btn{flex:1}
+
+/* ---- 설정 가족 연결 모달 ---- */
+.join-modal{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);
+  z-index:100;align-items:center;justify-content:center;
+}
+.join-modal__body{
+  background:var(--c-bg);border-radius:16px;padding:24px;
+  width:86%;max-width:320px;
+}
+.join-modal__title{font-size:1.15rem;font-weight:600;margin:0 0 8px}
+.join-modal__desc{font-size:.85rem;color:var(--c-text-sub);margin:0 0 16px}
+.join-modal__input{width:100%;margin-bottom:12px}
+.join-modal__btn-row{display:flex;gap:8px}
+.join-modal__btn-row .btn{flex:1}
+
+/* ---- 빈 상태 메시지 ---- */
+.empty-state{
+  text-align:center;color:var(--c-text-3);font-size:14px;
+  padding:24px 0;
+}
+.empty-state--lg{padding:40px 20px}
+.empty-state--muted{color:var(--c-muted)}
+.empty-state--grid{grid-column:1/-1}
+
+/* ---- flex 컨테이너 유틸 ---- */
+.stack{display:flex;flex-direction:column;gap:9px}
+.stack--sm{gap:12px}
+
+/* ---- 알림 목록 아이템 ---- */
+.notif-item{
+  padding:14px 16px;border-radius:12px;background:#fff;
+  border:1px solid rgba(0,0,0,.06);
+}
+.notif-item__title{
+  font-size:.95rem;font-weight:600;color:var(--c-ink);margin-bottom:4px;
+}
+.notif-item__body{
+  font-size:.85rem;color:var(--c-text-3);line-height:1.5;
+}
+
+/* ---- 사진 그리드 아이템 (앨범) ---- */
+.photo-tile{
+  position:relative;border-radius:12px;overflow:hidden;
+  cursor:pointer;aspect-ratio:1;
+}
+.photo-tile img{width:100%;height:100%;object-fit:cover}
+.photo-tile__caption{
+  position:absolute;bottom:0;left:0;right:0;padding:8px 10px;
+  background:linear-gradient(transparent,rgba(0,0,0,.6));
+  color:#fff;font-size:12px;
+}
+.photo-tile__title{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.photo-tile__sub{opacity:.8;font-size:11px}
+
+/* ---- 사진 상세 (앨범 모달 본문) ---- */
+.photo-detail__img-wrap{
+  width:100%;border-radius:12px;overflow:hidden;
+  margin-bottom:16px;background:rgba(0,0,0,.05);
+}
+.photo-detail__img{width:100%;display:block}
+.photo-detail__title{font-size:18px;font-weight:700;color:var(--c-ink);margin-bottom:6px}
+.photo-detail__meta{font-size:14px;color:var(--c-text-3);margin-bottom:20px}
+
+/* ---- 덱 컨테이너 (홈 카드 덱) ---- */
+.deck-container{position:relative;overflow:hidden}
+
+/* ---- 텍스트 입력 모드 (부모 답변) ---- */
+.text-mode{
+  display:none;flex:1;flex-direction:column;width:100%;padding-bottom:24px;
+}
+.text-mode__card{flex:1;display:flex;flex-direction:column}
+.text-mode__textarea{
+  flex:1;border:none;background:transparent;font-size:17px;
+  line-height:1.7;color:var(--c-ink-parent);font-family:inherit;
+  outline:none;resize:none;min-height:160px;margin-top:10px;
+}
+.text-mode__btn-row{display:flex;gap:10px;margin-top:16px}
+.text-mode__btn-row .btn{flex:1}
+
+/* ---- 부모 스토리 섹션 ---- */
+.pstory__section{padding:0 24px;margin-top:24px}
+.pstory__section-title{font-size:18px;font-weight:700;margin:0 0 12px}
+
+/* ---- 캘린더 일정 삭제 버튼 ---- */
+.event__del-btn{
+  flex-shrink:0;width:28px;height:28px;border:none;background:transparent;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:#B4A99C;margin-left:4px;
+}
+
+/* ---- 서버 정보 페이지 (home.html.twig, error.html.twig) ---- */
+.info-page{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  max-width:800px;margin:0 auto;padding:40px 20px;
+}
+.info-page__title{font-size:2rem;margin-bottom:8px}
+.info-page__sub{color:#666;margin-bottom:32px}
+.info-page__card{
+  background:#f5f5f5;border-radius:12px;padding:24px;margin-bottom:24px;
+}
+.info-page__card--green{background:#e8f5e9}
+.info-page__card-title{font-size:1.2rem;margin-bottom:16px}
+.info-page__dl{display:grid;grid-template-columns:120px 1fr;gap:8px;margin:0}
+.info-page__dt{font-weight:600}
+.info-page__dd{margin:0}
+.info-page__code{background:#fff;padding:2px 6px;border-radius:4px}
+.info-page__list{margin:0;padding-left:20px;line-height:1.8}
+.info-page__note{margin:0 0 8px}
+.info-page__link{color:#2e7d32;text-decoration:none}
+
+.error-page{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  text-align:center;padding:80px 20px;
+}
+.error-page__code{font-size:3rem;color:#e53935;margin-bottom:8px}
+.error-page__msg{font-size:1.2rem;color:#555;margin-bottom:24px}
+.error-page__link{color:#1976d2;text-decoration:none;font-weight:600}
+
+/* ---- 인덱스 로딩 페이지 ---- */
+.loading-page{
+  display:flex;align-items:center;justify-content:center;
+  min-height:var(--app-height,100vh);
+}
+.loading-page__text{color:var(--c-text-sub,#999);font-size:14px}
+
+/* ---- 히든 유틸 ---- */
+.is-hidden{display:none}
+
+/* ---- 스토리 상세 오디오 ---- */
+.detail__audio{width:100%;margin-top:8px}
+.detail__qr-text{flex:1}

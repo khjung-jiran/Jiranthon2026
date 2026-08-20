@@ -22,10 +22,10 @@
     </section>
 
     <!-- 내 답변 리스트 -->
-    <section style="padding:0 24px;margin-top:24px;">
-      <h2 style="font-size:18px;font-weight:700;margin:0 0 12px;">내가 답한 이야기</h2>
-      <div id="respList" style="display:flex;flex-direction:column;gap:9px;">
-        <div style="text-align:center;color:var(--c-text-3);font-size:14px;padding:24px 0;">불러오는 중…</div>
+    <section class="pstory__section">
+      <h2 class="pstory__section-title">내가 답한 이야기</h2>
+      <div id="respList" class="stack">
+        <div class="empty-state">불러오는 중…</div>
       </div>
     </section>
 
@@ -48,22 +48,10 @@
           <span class="progress-block__pct" id="progressPct">0%</span>
         </div>
         <div class="bar bar--lg"><div class="bar__fill bar__fill--grad" id="progressBar" style="width:0%"></div></div>
+        <div class="progress-block__chars" id="progressChars">0자 / 0자</div>
       </div>
     </section>
 
-  </div>
-
-  <!-- 답변 상세 모달 -->
-  <div id="detailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;padding:16px;">
-    <div style="background:var(--c-bg);border-radius:20px;padding:24px 20px 32px;width:100%;max-width:390px;max-height:calc(var(--app-height, 100vh) - 32px);overflow-y:auto;-webkit-overflow-scrolling:touch;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;position:sticky;top:0;background:var(--c-bg);padding-bottom:8px;z-index:1;">
-        <h2 style="font-size:1.15rem;font-weight:600;margin:0;">답변 보기</h2>
-        <button type="button" onclick="closeDetailModal()" style="background:none;border:none;cursor:pointer;padding:4px;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div id="detailBody"></div>
-    </div>
   </div>
 
   <!-- 하단 탭바 (어머니/아버지 · 이야기 활성) -->
@@ -98,7 +86,6 @@
 {% block scripts %}
 <script>
   var authData = null;
-  var responsesCache = [];
 
   (function checkAuth() {
     var auth = localStorage.getItem('eum_auth') || sessionStorage.getItem('eum_auth');
@@ -127,7 +114,6 @@
       var res = await fetch('/api/responses?family_id=' + encodeURIComponent(familyId) + '&member_id=' + encodeURIComponent(memberId));
       if (!res.ok) return;
       var responses = await res.json();
-      responsesCache = responses;
       renderResponses(responses);
     } catch (e) {}
   }
@@ -135,7 +121,7 @@
   function renderResponses(responses) {
     var list = document.getElementById('respList');
     if (!responses || responses.length === 0) {
-      list.innerHTML = '<div style="text-align:center;color:var(--c-text-3);font-size:14px;padding:24px 0;">아직 답한 이야기가 없어요.<br>질문에 답하면서 하나씩 쌓아가요!</div>';
+      list.innerHTML = '<div class="empty-state">아직 답한 이야기가 없어요.<br>질문에 답하면서 하나씩 쌓아가요!</div>';
       document.getElementById('storyCount').textContent = '이야기 0편';
       return;
     }
@@ -152,7 +138,7 @@
       var date = r.created_at ? r.created_at.substring(5, 10).replace('-', '월 ') + '일' : '';
       var preview = aContent.substring(0, 80) + (aContent.length > 80 ? '…' : '');
 
-      html += '<a class="scard" href="#detail-' + r.id + '" onclick="showDetail(\'' + r.id + '\');return false;">';
+      html += '<a class="scard" href="/story-detail?type=response&id=' + encodeURIComponent(r.id) + '">';
       html += '<div class="scard__meta-row">';
       html += '<span class="pill ' + pillClass + '">' + pillText + '</span>';
       html += '<span class="scard__meta">' + date + '</span>';
@@ -170,33 +156,6 @@
     return d.innerHTML;
   }
 
-  function showDetail(respId) {
-    var modal = document.getElementById('detailModal');
-    var body = document.getElementById('detailBody');
-    modal.style.display = 'flex';
-
-    var r = responsesCache.find(function(x) { return x.id === respId; });
-    if (!r) { body.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--c-text-3);font-size:14px;">답변을 찾을 수 없어요</div>'; return; }
-
-    var catLabels = { childhood: '유년기', youth: '청년시절', twilight: '황혼기' };
-    var cat = catLabels[r.question_category] || '기억';
-    var html = '';
-    html += '<div style="margin-bottom:20px;">';
-    html += '<div style="font-size:13px;color:var(--c-text-3);font-weight:600;margin-bottom:8px;">' + cat + ' · 질문</div>';
-    html += '<div style="font-size:20px;font-weight:700;line-height:1.5;color:var(--c-ink);">' + escapeHtml(r.question_content || '') + '</div>';
-    html += '</div>';
-    html += '<div style="height:1px;background:rgba(0,0,0,0.08);margin:20px 0;"></div>';
-    html += '<div>';
-    html += '<div style="font-size:13px;color:var(--c-text-3);font-weight:600;margin-bottom:8px;">답변</div>';
-    html += '<div style="font-size:17px;line-height:1.7;color:var(--c-ink);white-space:pre-wrap;">' + escapeHtml(r.content || r.transcript || '') + '</div>';
-    html += '</div>';
-    body.innerHTML = html;
-  }
-
-  function closeDetailModal() {
-    document.getElementById('detailModal').style.display = 'none';
-  }
-
   async function loadStorybook(familyId) {
     if (!familyId) return;
     try {
@@ -204,15 +163,19 @@
       if (!res.ok) return;
       var data = await res.json();
       var chapters = data.chapters || [];
-      var total = 0;
-      var filled = 0;
+
+      // 설정된 목표 글자수 대비 실제 본문 길이로 진행률을 계산한다.
+      var written = 0;
+      var target = 0;
       chapters.forEach(function(ch) {
-        total++;
-        if (ch.count > 0 && ch.body) filled++;
+        written += ch.body_length || 0;
+        target += ch.target_length || 0;
       });
-      var pct = total > 0 ? Math.round(filled / total * 100) : 0;
+      var pct = target > 0 ? Math.min(100, Math.round(written / target * 100)) : 0;
       document.getElementById('progressPct').textContent = pct + '%';
       document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('progressChars').textContent =
+        written.toLocaleString() + '자 / ' + target.toLocaleString() + '자';
 
       // 백그라운드 생성 중인 경우 폴링
       var hasPending = chapters.some(function(ch) { return ch.has_new; });

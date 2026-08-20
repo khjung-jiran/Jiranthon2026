@@ -36,6 +36,7 @@ use Eum\Service\AuthService;
 use Eum\Service\EraClassifier;
 use Eum\Service\FileUploadService;
 use Eum\Service\FcmService;
+use Eum\Service\FollowUpQuestionGenerator;
 use Eum\Service\FollowUpService;
 use Eum\Service\NotificationService;
 use Eum\Service\PasswordHasher;
@@ -212,7 +213,10 @@ final class Container
 
     public function eraClassifier(): EraClassifier
     {
-        return $this->once(EraClassifier::class, static fn (): EraClassifier => new EraClassifier());
+        return $this->once(
+            EraClassifier::class,
+            fn (): EraClassifier => new EraClassifier($this->processes(), $this->logger())
+        );
     }
 
     public function auth(): AuthService
@@ -257,12 +261,24 @@ final class Container
         return $this->once(StoryQualityEvaluator::class, static fn (): StoryQualityEvaluator => new StoryQualityEvaluator());
     }
 
+    public function followUpQuestionGenerator(): FollowUpQuestionGenerator
+    {
+        return $this->once(
+            FollowUpQuestionGenerator::class,
+            fn (): FollowUpQuestionGenerator => new FollowUpQuestionGenerator(
+                $this->processes(),
+                $this->logger(),
+            )
+        );
+    }
+
     public function followUpService(): FollowUpService
     {
         return $this->once(FollowUpService::class, fn (): FollowUpService => new FollowUpService(
             $this->questions(),
             $this->responses(),
             $this->storyQualityEvaluator(),
+            $this->followUpQuestionGenerator(),
             $this->logger(),
         ));
     }
@@ -434,6 +450,7 @@ final class Container
             $this->photos(),
             $this->members(),
             $this->notificationService(),
+            $this->questionService(),
         ));
     }
 

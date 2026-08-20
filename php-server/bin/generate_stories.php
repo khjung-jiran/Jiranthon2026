@@ -34,5 +34,11 @@ $container = new Container(
 
 $container->storybook()->regenerate($familyId);
 
+// 잠금 파일 삭제
+$lockFile = \sys_get_temp_dir() . '/eum_story_worker_' . $familyId . '.lock';
+if (\is_file($lockFile)) {
+    \unlink($lockFile);
+}
+
 fwrite(\STDOUT, "Story generation completed for family: {$familyId}\n");
 exit(0);

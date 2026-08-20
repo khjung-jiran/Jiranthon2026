@@ -32,12 +32,14 @@ CREATE TABLE IF NOT EXISTS questions (
     from_member_id TEXT,
     to_member_id TEXT NOT NULL,
     parent_question_id TEXT,
+    parent_response_id TEXT,
     status TEXT DEFAULT 'pending',
     created_at DATETIME DEFAULT (datetime('now')),
     FOREIGN KEY (family_id) REFERENCES families(id),
     FOREIGN KEY (from_member_id) REFERENCES members(id),
     FOREIGN KEY (to_member_id) REFERENCES members(id),
-    FOREIGN KEY (parent_question_id) REFERENCES questions(id)
+    FOREIGN KEY (parent_question_id) REFERENCES questions(id),
+    FOREIGN KEY (parent_response_id) REFERENCES responses(id)
 );
 
 CREATE TABLE IF NOT EXISTS responses (

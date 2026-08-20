@@ -58,7 +58,7 @@ final class SpeechService
         $text = $result->lastLineAsJson()['text'] ?? null;
 
         if (!\is_string($text) || \trim($text) === '') {
-            $this->logger->error('STT 변환 실패: ' . ($result->stderr ?: '출력 없음'));
+            $this->logger->error('STT 변환 실패 (engine=' . $engine . '): ' . ($result->stderr ?: '출력 없음'));
 
             return null;
         }

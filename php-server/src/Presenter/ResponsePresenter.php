@@ -12,6 +12,12 @@ final class ResponsePresenter
      */
     public static function one(array $row): array
     {
+        $audioPath = $row['audio_file_path'] ?? null;
+        $audioUrl = null;
+        if (\is_string($audioPath) && $audioPath !== '') {
+            $audioUrl = '/api/audio/' . \basename($audioPath);
+        }
+
         $payload = [
             'id' => $row['id'],
             'question_id' => $row['question_id'],
@@ -19,6 +25,7 @@ final class ResponsePresenter
             'content' => $row['content'],
             'input_method' => $row['input_method'],
             'audio_file_path' => $row['audio_file_path'],
+            'audio_url' => $audioUrl,
             'transcript' => $row['transcript'],
             'era' => $row['era'],
             'duration' => $row['duration'],

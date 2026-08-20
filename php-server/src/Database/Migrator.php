@@ -42,6 +42,7 @@ final class Migrator
         $this->runOnce('2026_08_remap_legacy_eras', $this->remapLegacyEras(...));
         $this->runOnce('2026_08_add_parent_question_id', $this->addParentQuestionId(...));
         $this->runOnce('2026_08_add_member_fcm_token', $this->addMemberFcmToken(...));
+        $this->runOnce('2026_08_add_parent_response_id', $this->addParentResponseId(...));
     }
 
     private function createSchema(): void
@@ -129,6 +130,27 @@ final class Migrator
         }
 
         $this->db->exec('ALTER TABLE questions ADD COLUMN parent_question_id TEXT REFERENCES questions(id)');
+
+        return 1;
+    }
+
+    /**
+     * questions 테이블에 parent_response_id 컬럼을 추가한다.
+     *
+     * parent_question_id 만으로는 "어느 질문에서 나왔는지" 까지만 알 수 있다.
+     * 한 질문에 답변이 여러 개 달릴 수 있으므로, 꼬리 질문을 만든 근거가 된
+     * 답변 자체를 가리켜 둔다.
+     */
+    private function addParentResponseId(): int
+    {
+        $columns = $this->db->query('PRAGMA table_info(questions)')->fetchAll(\PDO::FETCH_ASSOC);
+        $hasColumn = \in_array('parent_response_id', \array_column($columns, 'name'), true);
+
+        if ($hasColumn) {
+            return 0;
+        }
+
+        $this->db->exec('ALTER TABLE questions ADD COLUMN parent_response_id TEXT REFERENCES responses(id)');
 
         return 1;
     }

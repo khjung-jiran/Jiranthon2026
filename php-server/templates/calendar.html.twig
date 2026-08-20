@@ -34,30 +34,30 @@
   </div>
 
   <!-- 일정 추가 모달 -->
-  <div id="addModal" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.4);align-items:center;justify-content:center;">
-    <div style="width:340px;background:#fff;border-radius:20px;padding:24px 22px;box-shadow:0 20px 50px rgba(0,0,0,.2);">
-      <div style="font-size:18px;font-weight:700;margin-bottom:18px;">일정 추가</div>
+  <div id="addModal" class="cal-modal">
+    <div class="cal-modal__body">
+      <div class="cal-modal__title">일정 추가</div>
 
-      <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="cal-modal__fields">
         <div>
-          <div style="font-size:12.5px;font-weight:700;color:#5C544A;margin-bottom:6px;">날짜</div>
-          <input class="input" type="date" id="entryDate" style="width:100%;">
+          <div class="cal-modal__field-label">날짜</div>
+          <input class="input cal-modal__input" type="date" id="entryDate">
         </div>
         <div>
-          <div style="font-size:12.5px;font-weight:700;color:#5C544A;margin-bottom:6px;">제목</div>
-          <input class="input" type="text" id="entryTitle" placeholder="예: 아버지 생신" style="width:100%;">
+          <div class="cal-modal__field-label">제목</div>
+          <input class="input cal-modal__input" type="text" id="entryTitle" placeholder="예: 아버지 생신">
         </div>
         <div>
-          <div style="font-size:12.5px;font-weight:700;color:#5C544A;margin-bottom:6px;">태그 <span style="font-weight:400;color:#B4A99C;">(선택)</span></div>
-          <input class="input" type="text" id="entryTag" placeholder="예: 가족 기념일" style="width:100%;">
+          <div class="cal-modal__field-label">태그 <span class="cal-modal__field-label--opt">(선택)</span></div>
+          <input class="input cal-modal__input" type="text" id="entryTag" placeholder="예: 가족 기념일">
         </div>
       </div>
 
-      <div style="display:flex;gap:10px;margin-top:22px;">
-        <button type="button" class="btn btn--ghost" style="flex:1;" onclick="closeAddModal()">
+      <div class="cal-modal__btn-row">
+        <button type="button" class="btn btn--ghost" onclick="closeAddModal()">
           <span class="btn__label">취소</span>
         </button>
-        <button type="button" class="btn btn--primary" style="flex:1;" id="saveEntryBtn" onclick="saveEntry()">
+        <button type="button" class="btn btn--primary" id="saveEntryBtn" onclick="saveEntry()">
           <span class="btn__label">추가</span>
         </button>
       </div>
@@ -168,7 +168,7 @@
   function renderEntryList() {
     var list = document.getElementById('calList');
     if (entries.length === 0) {
-      list.innerHTML = '<div style="text-align:center;color:#B4A99C;font-size:13px;padding:24px 0;">다가오는 일정이 없어요</div>';
+      list.innerHTML = '<div class="empty-state">다가오는 일정이 없어요</div>';
       return;
     }
 
@@ -203,7 +203,7 @@
         html += '<span class="pill pill--dday">오늘</span>';
       }
       if (isOwner) {
-        html += '<button type="button" onclick="deleteEntry(\'' + e.id + '\',\'' + escapeHtml(e.title).replace(/'/g,"\\'") + '\')" style="flex-shrink:0;width:28px;height:28px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#B4A99C;margin-left:4px;">';
+        html += '<button type="button" class="event__del-btn" onclick="deleteEntry(\'' + e.id + '\',\'' + escapeHtml(e.title).replace(/'/g,"\\'") + ')">';
         html += '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></svg>';
         html += '</button>';
       }

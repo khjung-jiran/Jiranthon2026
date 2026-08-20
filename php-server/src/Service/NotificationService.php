@@ -112,6 +112,12 @@ final class NotificationService
 
         $data = $navTarget !== null ? ['nav_target' => $navTarget] : [];
 
-        $this->fcm->send($token, $title, $body, $data);
+        $sent = $this->fcm->send($token, $title, $body, $data);
+
+        // 전송 실패 (만료된 토큰 등) 시 토큰 정리
+        if (!$sent) {
+            $this->members->updateFcmToken($memberId, null);
+            $this->logger->info("FCM 토큰 정리: 멤버={$memberId} (전송 실패로 무효화)");
+        }
     }
 }

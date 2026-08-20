@@ -181,7 +181,10 @@ final class QuestionRepository extends Repository
     }
 
     /**
-     * 꼬리 질문을 생성한다. parent_question_id로 원 질문과 연결한다.
+     * 꼬리 질문을 생성한다.
+     *
+     * parent_question_id 로 원 질문과, parent_response_id 로 생성 근거가 된
+     * 답변과 연결한다. 근거 답변을 알 수 없으면 후자는 NULL 로 남는다.
      *
      * @param list<string> $contents
      * @return int 생성된 질문 수
@@ -191,16 +194,17 @@ final class QuestionRepository extends Repository
         string $toMemberId,
         array $contents,
         string $parentQuestionId,
+        ?string $parentResponseId = null,
     ): int {
         if ($contents === []) {
             return 0;
         }
 
-        return $this->transaction(function () use ($familyId, $toMemberId, $contents, $parentQuestionId): int {
+        return $this->transaction(function () use ($familyId, $toMemberId, $contents, $parentQuestionId, $parentResponseId): int {
             $stmt = $this->db->prepare(
                 'INSERT INTO questions
-                    (id, family_id, content, category, source, from_member_id, to_member_id, parent_question_id, status, created_at)
-                 VALUES (?, ?, ?, NULL, ?, NULL, ?, ?, ?, ?)'
+                    (id, family_id, content, category, source, from_member_id, to_member_id, parent_question_id, parent_response_id, status, created_at)
+                 VALUES (?, ?, ?, NULL, ?, NULL, ?, ?, ?, ?, ?)'
             );
 
             $now = $this->clock->now();
@@ -213,6 +217,7 @@ final class QuestionRepository extends Repository
                     QuestionSource::FollowUp->value,
                     $toMemberId,
                     $parentQuestionId,
+                    $parentResponseId,
                     QuestionStatus::Pending->value,
                     $now,
                 ]);
@@ -220,6 +225,53 @@ final class QuestionRepository extends Repository
 
             return \count($contents);
         });
+    }
+
+    /**
+     * 꼬리 질문들의 생성 근거(원 질문 + 그 답변)를 한 번에 조회한다.
+     *
+     * parent_response_id 가 비어 있는 예전 데이터는 원 질문의 최신 답변으로
+     * 보정한다. 목록 화면에서 행마다 조회하면 N+1 이 되므로 한 번에 받는다.
+     *
+     * @param  list<string> $questionIds 꼬리 질문 ID
+     * @return array<string, array<string, mixed>> 꼬리 질문 ID => 근거 정보
+     */
+    public function followUpOrigins(array $questionIds): array
+    {
+        $questionIds = \array_values(\array_unique(\array_filter($questionIds)));
+
+        if ($questionIds === []) {
+            return [];
+        }
+
+        $placeholders = \implode(', ', \array_fill(0, \count($questionIds), '?'));
+
+        $rows = $this->fetchAllRows(
+            "SELECT f.id                                        AS follow_up_id,
+                    p.id                                        AS question_id,
+                    p.content                                   AS question_content,
+                    r.id                                        AS response_id,
+                    COALESCE(NULLIF(TRIM(r.content), ''), r.transcript) AS answer,
+                    r.created_at                                AS answered_at
+             FROM questions f
+             JOIN questions p ON f.parent_question_id = p.id
+             LEFT JOIN responses r ON r.id = COALESCE(
+                 f.parent_response_id,
+                 (SELECT r2.id FROM responses r2
+                   WHERE r2.question_id = p.id
+                   ORDER BY r2.created_at DESC LIMIT 1)
+             )
+             WHERE f.id IN ({$placeholders})",
+            $questionIds
+        );
+
+        $origins = [];
+
+        foreach ($rows as $row) {
+            $origins[(string) $row['follow_up_id']] = $row;
+        }
+
+        return $origins;
     }
 
     /**

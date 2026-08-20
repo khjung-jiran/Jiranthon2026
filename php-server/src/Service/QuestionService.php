@@ -114,12 +114,16 @@ final class QuestionService
         if ($content === '' && $audioFilePath !== null) {
             $transcribed = $this->speech->transcribe($audioFilePath);
 
-            if ($transcribed !== null) {
+            if ($transcribed !== null && \trim($transcribed) !== '') {
                 $content = $transcribed;
                 $transcript ??= $transcribed;
                 $this->logger->info('서버 STT 완료: ' . \mb_substr($transcribed, 0, 50));
             } else {
-                $content = '음성 답변이 전달되었어요.';
+                // 서버 STT 실패: 클라이언트가 보낸 transcript 가 있으면 그것을 답변으로 쓴다.
+                // 클라이언트 transcript 도 없으면 placeholder.
+                $content = ($transcript !== null && \trim($transcript) !== '')
+                    ? $transcript
+                    : '음성 답변이 전달되었어요.';
                 $transcript ??= $content;
             }
         }

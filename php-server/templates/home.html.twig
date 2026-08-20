@@ -3,25 +3,25 @@
 {% block title %}이음 — 서버 상태{% endblock %}
 
 {% block content %}
-<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px 20px;">
-  <h1 style="font-size: 2rem; margin-bottom: 8px;">이음 API 서버</h1>
-  <p style="color: #666; margin-bottom: 32px;">Slim Framework + Twig + PHP {{ php_version }}</p>
+<div class="info-page">
+  <h1 class="info-page__title">이음 API 서버</h1>
+  <p class="info-page__sub">Slim Framework + Twig + PHP {{ php_version }}</p>
 
-  <div style="background: #f5f5f5; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
-    <h2 style="font-size: 1.2rem; margin-bottom: 16px;">서비스 정보</h2>
-    <dl style="display: grid; grid-template-columns: 120px 1fr; gap: 8px; margin: 0;">
-      <dt style="font-weight: 600;">서비스명</dt><dd style="margin: 0;">{{ service_name }}</dd>
-      <dt style="font-weight: 600;">프레임워크</dt><dd style="margin: 0;">Slim 4 + Twig 3</dd>
-      <dt style="font-weight: 600;">서버 포트</dt><dd style="margin: 0;">:{{ server_port }}</dd>
-      <dt style="font-weight: 600;">DB</dt><dd style="margin: 0;">SQLite ({{ db_path }})</dd>
+  <div class="info-page__card">
+    <h2 class="info-page__card-title">서비스 정보</h2>
+    <dl class="info-page__dl">
+      <dt class="info-page__dt">서비스명</dt><dd class="info-page__dd">{{ service_name }}</dd>
+      <dt class="info-page__dt">프레임워크</dt><dd class="info-page__dd">Slim 4 + Twig 3</dd>
+      <dt class="info-page__dt">서버 포트</dt><dd class="info-page__dd">:{{ server_port }}</dd>
+      <dt class="info-page__dt">DB</dt><dd class="info-page__dd">SQLite ({{ db_path }})</dd>
     </dl>
   </div>
 
-  <div style="background: #e8f5e9; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
-    <h2 style="font-size: 1.2rem; margin-bottom: 16px;">API 엔드포인트</h2>
-    <p style="margin: 0 0 8px;">모든 API는 <code style="background: #fff; padding: 2px 6px; border-radius: 4px;">/api</code> 경로 하위에서 동작합니다.</p>
-    <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
-      <li><a href="/api" style="color: #2e7d32; text-decoration: none;">GET /api</a> — 서비스 정보 (JSON)</li>
+  <div class="info-page__card info-page__card--green">
+    <h2 class="info-page__card-title">API 엔드포인트</h2>
+    <p class="info-page__note">모든 API는 <code class="info-page__code">/api</code> 경로 하위에서 동작합니다.</p>
+    <ul class="info-page__list">
+      <li><a href="/api" class="info-page__link">GET /api</a> — 서비스 정보 (JSON)</li>
       <li><strong>가족:</strong> /api/families, /api/families/{id}, /api/families/join</li>
       <li><strong>멤버:</strong> /api/members, /api/auth/login</li>
       <li><strong>질문:</strong> /api/questions, /api/questions/ai-suggestions</li>

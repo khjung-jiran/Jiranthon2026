@@ -16,6 +16,51 @@
       setAppHeight();
       window.addEventListener('resize',setAppHeight);
       window.addEventListener('orientationchange',function(){setTimeout(setAppHeight,200)});
+
+      // === 앱 하드웨어 뒤로가기 처리 ===
+      // 안드로이드에서 뒤로가기 버튼을 눌렀을 때
+      // webView.evaluateJavascript("window.onAppBackPressed()", null)
+      // 로 호출해주면, 홈에서는 2번 눌러 종료, 나머지에서는 history.back() 합니다.
+      (function() {
+        var backOnce = false;
+        var homePaths = ['/home','/home-child','/home-parent','/'];
+
+        function isHome() {
+          var p = window.location.pathname;
+          for (var i = 0; i < homePaths.length; i++) {
+            if (homePaths[i] === p) return true;
+          }
+          return false;
+        }
+
+        function showBackToast(text) {
+          var existing = document.querySelector('.toast');
+          if (existing) existing.remove();
+          var toast = document.createElement('div');
+          toast.className = 'toast';
+          toast.innerHTML = '<span class="toast__text"></span>';
+          toast.querySelector('.toast__text').textContent = text;
+          document.body.appendChild(toast);
+          setTimeout(function() { toast.remove(); }, 1800);
+        }
+
+        window.onAppBackPressed = function() {
+          if (isHome()) {
+            if (backOnce) {
+              // 두 번째 누름: 앱 종료
+              if (typeof AndroidBridge !== 'undefined' && AndroidBridge.exitApp) {
+                AndroidBridge.exitApp();
+              }
+              return;
+            }
+            backOnce = true;
+            showBackToast('뒤로 버튼을 한 번 더 누르면 종료됩니다');
+            setTimeout(function() { backOnce = false; }, 2000);
+          } else {
+            history.back();
+          }
+        };
+      })();
     </script>
   </head>
   <body>

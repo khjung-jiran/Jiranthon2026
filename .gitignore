@@ -19,6 +19,16 @@ app/dist/
 .env
 .env.local
 
+# Firebase 서비스 계정 키 (FCM 푸시 전송용, 절대 커밋 금지)
+php-server/config/firebase-service-account.json
+
+# PHP composer 의존성 (composer install 로 복원)
+php-server/vendor/
+
+# PHP 런타임 캐시/데이터
+php-server/cache/
+php-server/data/
+
 # AI/ML 모델 파일 (용량이 크므로 커밋 제외)
 models/stt/*
 models/tts/*
@@ -35,10 +45,16 @@ media/
 
 # 데이터베이스
 *.db
+*.db-shm
+*.db-wal
 *.sqlite3
 
 # 로그
 logs/
+*.log
+
+# 런타임 PID
+*.pid
 
 # OS
 .DS_Store
