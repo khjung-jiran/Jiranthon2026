@@ -56,6 +56,9 @@ logs/
 # 런타임 PID
 *.pid
 
+# 배포용 아카이브
+*.tar
+
 # OS
 .DS_Store
 Thumbs.db
