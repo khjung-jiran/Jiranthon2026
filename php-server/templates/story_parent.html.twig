@@ -4,51 +4,30 @@
 
 {% block content %}
 <main class="app app--status app--parent app--scroll-fixed">
-  <div class="pstory">
+  <div class="story">
+    <div class="grain"></div>
 
-    <header class="pstory__head">
-      <div class="pstory__kicker">차곡차곡 쌓이는</div>
-      <h1 class="pstory__title" id="storyTitle">나의 이야기</h1>
+    <header class="story__head">
+      <div class="story__kicker">우리 가족의 서재</div>
+      <h1 class="story__title" id="storyTitle">나의 이야기</h1>
+      <div class="story__tabs">
+        <button type="button" class="seg seg--on" onclick="switchTab('fragments')">단편집</button>
+        <button type="button" class="seg seg--off" onclick="switchTab('life')">일대기</button>
+        <button type="button" class="pill--soon">회고록 · 준비 중</button>
+      </div>
     </header>
 
-    <!-- 자녀 소식 카드 -->
-    <section class="pstory__news">
-      <div class="pstory__news-who">
-        <span class="avatar avatar--warm avatar--lg" id="childAvatar"></span>
-        <span class="pstory__news-label" id="childLabel">가족의 소식</span>
-      </div>
-      <div class="pstory__news-title" id="newsTitle">아직 쌓인 이야기가 없어요</div>
-      <div class="pstory__news-sub">질문에 답하면서 하나씩 쌓아가요.</div>
-    </section>
-
-    <!-- 내 답변 리스트 -->
-    <section class="pstory__section">
-      <h2 class="pstory__section-title">내가 답한 이야기</h2>
-      <div id="respList" class="stack">
-        <div class="empty-state">불러오는 중…</div>
+    <!-- 단편집 -->
+    <section class="story__list" id="tab-fragments">
+      <div id="fragmentsList" class="stack">
+        <!-- 데이터 로드 후 JS로 채움 -->
       </div>
     </section>
 
-    <!-- 책장 + 진행률 -->
-    <section class="pstory__books">
-      <h2 class="pstory__books-title">내 이야기가 책이 되고 있어요</h2>
-
-      <div class="shelf">
-        <div class="book book--short"><span class="book__spine">단편집</span></div>
-        <div class="book book--life"><span class="book__spine">일대기</span></div>
-        <div class="shelf__meta">
-          <div class="shelf__count" id="storyCount">이야기 0편</div>
-          <div class="shelf__desc">천천히, 하나씩<br>쌓여가고 있어요</div>
-        </div>
-      </div>
-
-      <div class="progress-block">
-        <div class="progress-block__row">
-          <span>일대기 채워짐</span>
-          <span class="progress-block__pct" id="progressPct">0%</span>
-        </div>
-        <div class="bar bar--lg"><div class="bar__fill bar__fill--grad" id="progressBar" style="width:0%"></div></div>
-        <div class="progress-block__chars" id="progressChars">0자 / 0자</div>
+    <!-- 일대기 -->
+    <section class="life" id="tab-life" style="display:none;">
+      <div id="lifeList" class="stack">
+        <!-- 데이터 로드 후 JS로 채움 -->
       </div>
     </section>
 
@@ -93,25 +72,39 @@
     try {
       authData = JSON.parse(auth);
       var member = authData.member || {};
-      var family = authData.family || {};
       var name = member.name || '';
-
       if (name) {
         document.getElementById('storyTitle').textContent = name + '님의 이야기';
       }
-      if (family.id) {
-        document.getElementById('newsTitle').innerHTML = '가족과 연결되어 있어요<br>질문에 답하면서 이야기를 쌓아가요';
-      }
-
-      loadResponses(member.id, family.id);
-      loadStorybook(family.id);
+      loadResponses(member.id);
+      loadStorybook();
     } catch (e) {}
   })();
 
-  async function loadResponses(memberId, familyId) {
-    if (!familyId) return;
+  function switchTab(tab) {
+    var f = document.getElementById('tab-fragments');
+    var l = document.getElementById('tab-life');
+    var segs = document.querySelectorAll('.seg');
+    if (tab === 'fragments') {
+      f.style.display = '';
+      l.style.display = 'none';
+      segs[0].className = 'seg seg--on';
+      segs[1].className = 'seg seg--off';
+    } else {
+      f.style.display = 'none';
+      l.style.display = '';
+      segs[0].className = 'seg seg--off';
+      segs[1].className = 'seg seg--on';
+    }
+  }
+
+  // 부모는 자신이 답한 이야기만 가져온다.
+  async function loadResponses(memberId) {
+    if (!authData || !authData.family) return;
     try {
-      var res = await fetch('/api/responses?family_id=' + encodeURIComponent(familyId) + '&member_id=' + encodeURIComponent(memberId));
+      var url = '/api/responses?family_id=' + encodeURIComponent(authData.family.id);
+      if (memberId) url += '&member_id=' + encodeURIComponent(memberId);
+      var res = await fetch(url);
       if (!res.ok) return;
       var responses = await res.json();
       renderResponses(responses);
@@ -119,20 +112,18 @@
   }
 
   function renderResponses(responses) {
-    var list = document.getElementById('respList');
+    var fragList = document.getElementById('fragmentsList');
+    if (!fragList) return;
     if (!responses || responses.length === 0) {
-      list.innerHTML = '<div class="empty-state">아직 답한 이야기가 없어요.<br>질문에 답하면서 하나씩 쌓아가요!</div>';
-      document.getElementById('storyCount').textContent = '이야기 0편';
+      fragList.innerHTML = '<div class="empty-state empty-state--lg">아직 답한 이야기가 없어요.<br>질문에 답하면서 하나씩 쌓아가요!</div>';
       return;
     }
-
-    document.getElementById('storyCount').textContent = '이야기 ' + responses.length + '편';
-
     var catLabels = { childhood: '유년기', youth: '청년시절', twilight: '황혼기' };
     var html = '';
     responses.forEach(function(r) {
       var qContent = r.question_content || '';
       var aContent = r.content || r.transcript || '';
+      var cat = catLabels[r.question_category] || '기억';
       var pillClass = r.input_method === 'voice' ? 'pill--tag-warm' : 'pill--tag-green';
       var pillText = r.input_method === 'voice' ? '음성 답변' : '질문 답변';
       var date = r.created_at ? r.created_at.substring(5, 10).replace('-', '월 ') + '일' : '';
@@ -147,7 +138,7 @@
       html += '<p class="scard__preview">' + escapeHtml(preview) + '</p>';
       html += '</a>';
     });
-    list.innerHTML = html;
+    fragList.innerHTML = html;
   }
 
   function escapeHtml(s) {
@@ -156,33 +147,124 @@
     return d.innerHTML;
   }
 
-  async function loadStorybook(familyId) {
-    if (!familyId) return;
+  async function loadStorybook() {
+    if (!authData || !authData.family) return;
     try {
-      var res = await fetch('/api/storybook?family_id=' + encodeURIComponent(familyId));
+      var res = await fetch('/api/storybook?family_id=' + encodeURIComponent(authData.family.id));
       if (!res.ok) return;
       var data = await res.json();
       var chapters = data.chapters || [];
-
-      // 설정된 목표 글자수 대비 실제 본문 길이로 진행률을 계산한다.
-      var written = 0;
-      var target = 0;
-      chapters.forEach(function(ch) {
-        written += ch.body_length || 0;
-        target += ch.target_length || 0;
-      });
-      var pct = target > 0 ? Math.min(100, Math.round(written / target * 100)) : 0;
-      document.getElementById('progressPct').textContent = pct + '%';
-      document.getElementById('progressBar').style.width = pct + '%';
-      document.getElementById('progressChars').textContent =
-        written.toLocaleString() + '자 / ' + target.toLocaleString() + '자';
+      renderChapters(chapters);
 
       // 백그라운드 생성 중인 경우 폴링
+      var hasGenerating = chapters.some(function(ch) { return ch.has_new && ch.count > 0 && !ch.body; });
       var hasPending = chapters.some(function(ch) { return ch.has_new; });
       if (hasPending) {
-        setTimeout(function() { loadStorybook(familyId); }, 5000);
+        setTimeout(function() { loadStorybook(); }, 5000);
       }
     } catch (e) {}
+  }
+
+  function renderChapters(chapters) {
+    var lifeList = document.getElementById('lifeList');
+    lifeList.innerHTML = '';
+
+    if (chapters.length === 0) {
+      lifeList.innerHTML = '<div class="empty-state empty-state--lg empty-state--muted">아직 답변된 이야기가 없어요.<br>질문에 답하면서 하나씩 쌓아가요!</div>';
+      return;
+    }
+
+    var catLabels = { childhood: '유년기', youth: '청년시절', twilight: '황혼기' };
+    var hasLife = false;
+
+    chapters.forEach(function(ch, idx) {
+      if (ch.count > 0 && ch.body) {
+        hasLife = true;
+        var banner = document.createElement('a');
+        banner.className = 'life__banner';
+        banner.style.cursor = 'pointer';
+        banner.href = '/story-detail?type=life&era=' + encodeURIComponent(ch.category);
+        var kicker = document.createElement('div');
+        kicker.className = 'life__banner-kicker';
+        kicker.textContent = catLabels[ch.category] || '기억';
+        var btitle = document.createElement('div');
+        btitle.className = 'life__banner-title';
+        btitle.textContent = ch.title;
+        banner.appendChild(kicker);
+        banner.appendChild(btitle);
+
+        var preview = document.createElement('p');
+        preview.className = 'scard__preview';
+        preview.style.marginTop = '12px';
+        preview.style.color = 'rgba(248,243,231,.8)';
+        preview.textContent = ch.body.substring(0, 120) + '…';
+        banner.appendChild(preview);
+
+        var meta = document.createElement('span');
+        meta.className = 'scard__meta';
+        meta.style.marginTop = '8px';
+        meta.style.display = 'block';
+        meta.style.color = 'rgba(248,243,231,.6)';
+        meta.textContent = '답변 ' + ch.count + '개로 엮은 이야기';
+        banner.appendChild(meta);
+
+        banner.appendChild(buildProgress(ch));
+
+        lifeList.appendChild(banner);
+      } else if (ch.has_new) {
+        hasLife = true;
+        var placeholder = document.createElement('div');
+        placeholder.className = 'life__banner';
+        var pk = document.createElement('div');
+        pk.className = 'life__banner-kicker';
+        pk.textContent = catLabels[ch.category] || '기억';
+        var pt = document.createElement('div');
+        pt.className = 'life__banner-title';
+        pt.textContent = '이야기를 엮고 있어요…';
+        placeholder.appendChild(pk);
+        placeholder.appendChild(pt);
+        lifeList.appendChild(placeholder);
+      }
+    });
+
+    if (!hasLife) {
+      lifeList.innerHTML = '<div class="empty-state empty-state--lg empty-state--muted">일대기가 아직 시작되지 않았어요.</div>';
+    }
+  }
+
+  /**
+   * 설정된 목표 글자수(target_length) 대비 본문 길이로 진행률을 그린다.
+   * 목표에 닿으면 더 이상 꼬리 질문이 만들어지지 않는다.
+   */
+  function buildProgress(ch) {
+    var target = ch.target_length || 0;
+    var length = ch.body_length != null ? ch.body_length : (ch.body || '').length;
+    var pct = target > 0 ? Math.min(100, Math.round(length / target * 100)) : 0;
+
+    var wrap = document.createElement('div');
+    wrap.className = 'life__progress';
+
+    var row = document.createElement('div');
+    row.className = 'life__progress-row';
+    var label = document.createElement('span');
+    label.textContent = length.toLocaleString() + '자 / ' + target.toLocaleString() + '자';
+    var pctEl = document.createElement('span');
+    pctEl.className = 'life__progress-pct';
+    pctEl.textContent = pct + '%';
+    row.appendChild(label);
+    row.appendChild(pctEl);
+
+    var bar = document.createElement('div');
+    bar.className = 'bar';
+    var fill = document.createElement('div');
+    fill.className = 'bar__fill';
+    fill.style.width = pct + '%';
+    bar.appendChild(fill);
+
+    wrap.appendChild(row);
+    wrap.appendChild(bar);
+
+    return wrap;
   }
 </script>
 {% endblock %}

@@ -17,10 +17,21 @@
     <a class="icon-btn icon-btn--paper" href="/story-child" aria-label="뒤로">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
     </a>
-    <button type="button" class="detail__booklet" onclick="showToast('소책자 만들기는 준비 중이에요')">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F8F3E7" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-      이 이야기로 소책자 만들기
-    </button>
+    <div class="detail__bar-right" id="barRight">
+      <div class="detail__font-fab" id="fontCtl" role="group" aria-label="글자 크기">
+        <button type="button" class="detail__font-fab-btn" id="fontMinus" onclick="adjustFont(-1)" aria-label="글자 작게">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/></svg>
+        </button>
+        <span class="detail__font-fab-label" id="fontLabel">15px</span>
+        <button type="button" class="detail__font-fab-btn" id="fontPlus" onclick="adjustFont(1)" aria-label="글자 크게">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+      <button type="button" class="detail__booklet detail__booklet--collapsed" id="bookletBtn" onclick="toggleBooklet()" aria-expanded="false">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F8F3E7" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span class="detail__booklet-text">이 이야기로 소책자 만들기</span>
+      </button>
+    </div>
   </div>
 
   <div class="detail__body">
@@ -55,6 +66,16 @@
   var pages = [];
   var currentPage = 0;
 
+  // 글자 크기 조정 — 본문(.detail__page) 폰트 사이즈를 단계별로 변경.
+  // 기본 15px, 12px~24px 범위. 변경 시 지면 분할을 다시 한다.
+  var FONT_BASE = 15;
+  var FONT_MIN = 12;
+  var FONT_MAX = 24;
+  var FONT_STEP = 1.5;
+  var fontScale = 1.0;
+  var lastBody = '';
+  var lastExtra = '';
+
   var pageEl = document.getElementById('page');
 
   (function init() {
@@ -70,6 +91,8 @@
     } else {
       loadResponse(params.get('id') || '');
     }
+
+    updateFontLabel();
   })();
 
   function escapeHtml(s) {
@@ -98,6 +121,48 @@
     document.querySelector('.detail').appendChild(toast);
     setTimeout(function() { toast.remove(); }, 2200);
   }
+
+  /* ── 소책자 버튼 토글 ──
+     기본: 책 아이콘만. 클릭하면 텍스트가 옆으로 펼쳐지고 글자 크기 조정은 줄어든다.
+     펼쳐진 상태에서 다시 버튼 클릭 → 토스트 표시.
+     펼쳐진 상태에서 다른 곳 클릭 → 접힘 (토스트 없음). */
+  var bookletExpanded = false;
+  function toggleBooklet(e) {
+    if (e) e.stopPropagation();
+    var btn = document.getElementById('bookletBtn');
+    var fontCtl = document.getElementById('fontCtl');
+
+    if (!bookletExpanded) {
+      // 접힌 상태 → 펼침
+      bookletExpanded = true;
+      btn.classList.remove('detail__booklet--collapsed');
+      btn.classList.add('detail__booklet--expanded');
+      btn.setAttribute('aria-expanded', 'true');
+      fontCtl.classList.add('detail__font-fab--compact');
+    } else {
+      // 펼쳐진 상태 → 다시 클릭 → 토스트 + 접힘
+      showToast('소책자 만들기는 준비 중이에요');
+      collapseBooklet();
+    }
+  }
+
+  function collapseBooklet() {
+    var btn = document.getElementById('bookletBtn');
+    var fontCtl = document.getElementById('fontCtl');
+    bookletExpanded = false;
+    btn.classList.add('detail__booklet--collapsed');
+    btn.classList.remove('detail__booklet--expanded');
+    btn.setAttribute('aria-expanded', 'false');
+    fontCtl.classList.remove('detail__font-fab--compact');
+  }
+
+  // 펼쳐진 상태에서 다른 곳 클릭 시 자동 접힘
+  document.addEventListener('click', function(e) {
+    if (!bookletExpanded) return;
+    var btn = document.getElementById('bookletBtn');
+    if (btn && btn.contains(e.target)) return;
+    collapseBooklet();
+  });
 
   /* ── 데이터 로드 ── */
 
@@ -155,6 +220,10 @@
   /* ── 지면 나누기 ── */
 
   function render(body, extraHtml) {
+    lastBody = body;
+    lastExtra = extraHtml || '';
+    applyFontSize();
+
     var chunks = [];
     body.split(/\n{1,}/).forEach(function(para) {
       var text = para.trim();
@@ -169,6 +238,36 @@
     if (pages.length === 0) pages = [''];
     document.getElementById('nav').style.visibility = pages.length > 1 ? 'visible' : 'hidden';
     goPage(0);
+  }
+
+  function applyFontSize() {
+    var px = (FONT_BASE * fontScale).toFixed(1);
+    pageEl.style.fontSize = px + 'px';
+  }
+
+  function adjustFont(delta) {
+    var newPx = FONT_BASE * fontScale + delta * FONT_STEP;
+    if (newPx < FONT_MIN) newPx = FONT_MIN;
+    if (newPx > FONT_MAX) newPx = FONT_MAX;
+    fontScale = newPx / FONT_BASE;
+    applyFontSize();
+    updateFontLabel();
+
+    // 폰트 크기가 바뀌면 지면 분할을 다시 한다.
+    // 현재 페이지 인덱스를 가능한 유지.
+    var prevPage = currentPage;
+    render(lastBody, lastExtra);
+    if (pages.length > prevPage) goPage(prevPage);
+  }
+
+  function updateFontLabel() {
+    var px = Math.round(FONT_BASE * fontScale);
+    var label = document.getElementById('fontLabel');
+    if (label) label.textContent = px + 'px';
+    var minus = document.getElementById('fontMinus');
+    var plus = document.getElementById('fontPlus');
+    if (minus) minus.disabled = (FONT_BASE * fontScale) <= FONT_MIN + 0.01;
+    if (plus) plus.disabled = (FONT_BASE * fontScale) >= FONT_MAX - 0.01;
   }
 
   function fits() {
