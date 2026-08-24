@@ -212,4 +212,24 @@ php -S 0.0.0.0:8000 -t public public/router.php
 | POST | `/api/families` | 가족 생성 |
 | POST | `/api/families/join?invite_code=XXX` | 초대코드로 가족 참여 |
 | POST | `/api/members` | 멤버 생성 |
-| POST | `/api/auth/login` | 로그인 |
+| POST | `/api/auth/login` | 로그인 (아이디·비밀번호) |
+| GET | `/auth/kakao` | 카카오 인가 페이지로 리다이렉트 |
+| GET | `/auth/kakao/callback` | 카카오 콜백 — 로그인 후 `/home` 이동 |
+
+## 카카오 로그인 설정
+
+1. [카카오 개발자 콘솔](https://developers.kakao.com)에서 앱을 만들고 **카카오 로그인**을 켠다.
+2. **Redirect URI** 에 `https://<서버주소>/auth/kakao/callback` 을 등록한다.
+3. 동의 항목에서 `profile_nickname`, `profile_image` 를 활성화한다.
+4. `config/kakao.example.json` 을 `config/kakao.json` 으로 복사하고 REST API 키를 채운다.
+   (`redirect_uri` 를 비워 두면 요청 주소에서 자동으로 만든다. 프록시·포트포워딩
+   환경에서는 콘솔에 등록한 값을 그대로 적어야 한다.)
+
+`config/kakao.json` 은 `.gitignore` 대상이다. 파일이 없으면 카카오 버튼을 눌렀을 때
+"아직 설정되지 않았어요" 안내 화면이 뜬다.
+
+처음 로그인한 카카오 계정은 **회원가입 페이지로 유도**된다 — 카카오 닉네임이 이름에
+자동으로 채워지고, 아이디/비밀번호 입력 없이 역할과 가족 코드만 입력하면 가입된다.
+가입 시 `members.provider='kakao'` / `provider_id=<카카오 회원번호>` 로 식별 정보가
+저장되고, 가입 완료 즉시 로그인 처리되어 `/home` 으로 이동한다.
+이후 같은 카카오 계정으로 로그인하면 가입 절차 없이 바로 `/home` 으로 들어간다.

@@ -118,6 +118,11 @@
   }
 
   function socialLogin(provider) {
+    if (provider === 'kakao') {
+      // 서버가 카카오 인가 페이지로 리다이렉트하고, 콜백에서 로그인까지 마친다.
+      window.location.href = '/auth/kakao';
+      return;
+    }
     alert('준비중입니다');
   }
 </script>

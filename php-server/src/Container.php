@@ -9,6 +9,7 @@ use Eum\Controller\CalendarController;
 use Eum\Controller\CapsuleController;
 use Eum\Controller\DbViewerController;
 use Eum\Controller\FamilyController;
+use Eum\Controller\KakaoAuthController;
 use Eum\Controller\MediaController;
 use Eum\Controller\NotificationController;
 use Eum\Controller\PollController;
@@ -37,6 +38,7 @@ use Eum\Service\EraClassifier;
 use Eum\Service\FileUploadService;
 use Eum\Service\FcmService;
 use Eum\Service\FollowUpQuestionGenerator;
+use Eum\Service\KakaoOAuthService;
 use Eum\Service\FollowUpService;
 use Eum\Service\NotificationService;
 use Eum\Service\PasswordHasher;
@@ -229,6 +231,14 @@ final class Container
         ));
     }
 
+    public function kakaoOAuth(): KakaoOAuthService
+    {
+        return $this->once(
+            KakaoOAuthService::class,
+            fn (): KakaoOAuthService => new KakaoOAuthService($this->logger())
+        );
+    }
+
     public function speech(): SpeechService
     {
         return $this->once(SpeechService::class, fn (): SpeechService => new SpeechService(
@@ -340,6 +350,16 @@ final class Container
             $this->questionService(),
             $this->logger(),
             $this->notificationService(),
+        ));
+    }
+
+    public function kakaoAuthController(): KakaoAuthController
+    {
+        return $this->once(KakaoAuthController::class, fn (): KakaoAuthController => new KakaoAuthController(
+            $this->kakaoOAuth(),
+            $this->auth(),
+            $this->twig(),
+            $this->logger(),
         ));
     }
 

@@ -11,6 +11,8 @@ use Eum\Support\Logger;
 
 final class AuthService
 {
+    public const PROVIDER_KAKAO = 'kakao';
+
     public function __construct(
         private readonly MemberRepository $members,
         private readonly FamilyRepository $families,
@@ -49,6 +51,30 @@ final class AuthService
         }
 
         $this->logger->info("로그인: {$username} / 멤버={$member['id']}");
+
+        return [
+            'member' => $member,
+            'family' => $this->families->find((string) $member['family_id']),
+        ];
+    }
+
+    /**
+     * 카카오 계정으로 로그인한다. 이미 가입된 카카오 계정만 처리한다.
+     *
+     * 최초 로그인 사용자는 회원가입 페이지로 유도한다 (KakaoAuthController).
+     * 여기서는 자동 가입하지 않는다.
+     *
+     * @return array{member: array<string, mixed>, family: array<string, mixed>|null}|null
+     */
+    public function loginWithKakao(string $kakaoId): ?array
+    {
+        $member = $this->members->findByProvider(self::PROVIDER_KAKAO, $kakaoId);
+
+        if ($member === null) {
+            return null;
+        }
+
+        $this->logger->info("카카오 로그인: 멤버={$member['id']}");
 
         return [
             'member' => $member,

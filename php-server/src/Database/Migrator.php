@@ -43,6 +43,7 @@ final class Migrator
         $this->runOnce('2026_08_add_parent_question_id', $this->addParentQuestionId(...));
         $this->runOnce('2026_08_add_member_fcm_token', $this->addMemberFcmToken(...));
         $this->runOnce('2026_08_add_parent_response_id', $this->addParentResponseId(...));
+        $this->runOnce('2026_08_add_member_social_provider', $this->addMemberSocialProvider(...));
     }
 
     private function createSchema(): void
@@ -171,5 +172,35 @@ final class Migrator
         $this->db->exec('ALTER TABLE members ADD COLUMN fcm_token TEXT');
 
         return 1;
+    }
+
+    /**
+     * members 테이블에 소셜 로그인 식별자(provider, provider_id) 를 추가한다.
+     *
+     * 카카오로 가입한 멤버는 아이디·비밀번호가 없다. 대신 `kakao` + 카카오
+     * 회원번호 조합으로 사람을 찾는다. UNIQUE 인덱스로 같은 카카오 계정이
+     * 두 멤버로 갈라지는 것을 막는다.
+     */
+    private function addMemberSocialProvider(): int
+    {
+        $columns = \array_column(
+            $this->db->query('PRAGMA table_info(members)')->fetchAll(\PDO::FETCH_ASSOC),
+            'name'
+        );
+
+        $added = 0;
+
+        foreach (['provider', 'provider_id'] as $column) {
+            if (\in_array($column, $columns, true)) {
+                continue;
+            }
+
+            $this->db->exec("ALTER TABLE members ADD COLUMN {$column} TEXT");
+            $added++;
+        }
+
+        $this->db->exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_members_provider ON members(provider, provider_id)');
+
+        return $added;
     }
 }

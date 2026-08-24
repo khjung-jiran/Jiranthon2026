@@ -52,6 +52,13 @@ $views = $container->viewController();
 
 $app->get('/', [$views, 'home']);
 $app->get('/auth', [$views, 'auth']);
+
+// 카카오 로그인 (OAuth 인가 코드 흐름)
+$kakao = $container->kakaoAuthController();
+$app->get('/auth/kakao', [$kakao, 'start']);
+$app->get('/auth/kakao/callback', [$kakao, 'callback']);
+
+
 $app->get('/db', [$container->dbViewerController(), 'index']);
 
 // 표에 정의된 페이지들

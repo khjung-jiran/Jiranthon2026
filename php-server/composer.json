@@ -8,6 +8,7 @@
         "ext-pdo_sqlite": "*",
         "ext-json": "*",
         "ext-mbstring": "*",
+        "ext-curl": "*",
         "slim/slim": "^4.0",
         "slim/psr7": "^1.6",
         "slim/twig-view": "^3.0",

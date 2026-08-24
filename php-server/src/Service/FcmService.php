@@ -244,7 +244,6 @@ final class FcmService
         $result = \curl_exec($ch);
         $status = (int) \curl_getinfo($ch, \CURLINFO_HTTP_CODE);
         $error = \curl_error($ch);
-        \curl_close($ch);
 
         if ($error !== '') {
             $this->logger->error("FCM: HTTP 오류 — {$error}");
@@ -282,7 +281,6 @@ final class FcmService
         $result = \curl_exec($ch);
         $status = (int) \curl_getinfo($ch, \CURLINFO_HTTP_CODE);
         $error = \curl_error($ch);
-        \curl_close($ch);
 
         if ($error !== '') {
             $this->logger->error("FCM OAuth: HTTP 오류 — {$error}");

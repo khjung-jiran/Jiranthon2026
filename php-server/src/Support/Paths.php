@@ -43,6 +43,12 @@ final class Paths
         return self::server() . '/config/firebase-service-account.json';
     }
 
+    /** 카카오 로그인 설정 (REST API 키 등). config/ 아래에 배치. */
+    public static function kakaoConfig(): string
+    {
+        return self::server() . '/config/kakao.json';
+    }
+
     public static function templates(): string
     {
         return self::server() . '/templates';

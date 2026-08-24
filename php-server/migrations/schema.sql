@@ -19,9 +19,16 @@ CREATE TABLE IF NOT EXISTS members (
     birth_date DATE,
     profile_image TEXT,
     fcm_token TEXT,
+    provider TEXT,
+    provider_id TEXT,
     created_at DATETIME DEFAULT (datetime('now')),
     FOREIGN KEY (family_id) REFERENCES families(id)
 );
+
+-- 소셜 계정(카카오 등)의 provider + provider_id UNIQUE 인덱스는
+-- Migrator 의 2026_08_add_member_social_provider 에서 만든다.
+-- 이 파일은 기존 DB 에도 매번 실행되는데, 컬럼이 아직 없는 상태에서
+-- 인덱스를 만들려 하면 실패하기 때문이다.
 
 CREATE TABLE IF NOT EXISTS questions (
     id TEXT PRIMARY KEY,

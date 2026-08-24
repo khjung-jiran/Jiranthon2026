@@ -19,6 +19,13 @@
   <h1 class="signup__title">가족을 이어볼까요</h1>
   <p class="signup__desc">가입 후 가족 코드를 주고받으면<br>서로의 질문과 답변이 연결돼요.</p>
 
+  <!-- 카카오 계정 안내 배너 (카카오 모드에서만 노출) -->
+  <div id="kakaoBanner" class="field" style="display:none;">
+    <p class="signup__desc" style="margin:0;color:#C05430;">
+      카카오 계정으로 가입해요. 가입 후에는 카카오로 바로 로그인돼요.
+    </p>
+  </div>
+
   <!-- 역할 선택 -->
   <div class="field">
     <span class="field__label">어떤 역할로 사용하시나요?</span>
@@ -57,21 +64,23 @@
       <input class="input" type="text" id="name" name="name" placeholder="지훈">
     </label>
 
-    <label class="field">
-      <span class="field__label">아이디</span>
-      <input class="input" type="text" id="userId" name="userId" placeholder="영문 · 숫자 4~20자">
-    </label>
+    <div id="credentialFields">
+      <label class="field">
+        <span class="field__label">아이디</span>
+        <input class="input" type="text" id="userId" name="userId" placeholder="영문 · 숫자 4~20자">
+      </label>
 
-    <label class="field">
-      <span class="field__label">비밀번호</span>
-      <input class="input" type="password" id="password" name="password" placeholder="8자 이상, 숫자 포함">
-      <span class="field__help">영문 · 숫자를 섞어 8자 이상 입력해 주세요.</span>
-    </label>
+      <label class="field">
+        <span class="field__label">비밀번호</span>
+        <input class="input" type="password" id="password" name="password" placeholder="8자 이상, 숫자 포함">
+        <span class="field__help">영문 · 숫자를 섞어 8자 이상 입력해 주세요.</span>
+      </label>
 
-    <label class="field">
-      <span class="field__label">비밀번호 확인</span>
-      <input class="input" type="password" id="passwordConfirm" name="passwordConfirm" placeholder="한 번 더 입력해 주세요">
-    </label>
+      <label class="field">
+        <span class="field__label">비밀번호 확인</span>
+        <input class="input" type="password" id="passwordConfirm" name="passwordConfirm" placeholder="한 번 더 입력해 주세요">
+      </label>
+    </div>
 
     <label class="field">
       <span class="field__label">가족 코드 <span class="field__help">(선택)</span></span>
@@ -114,6 +123,22 @@
   var selectedRole = 'child';
   var selectedSubRole = 'mom';
 
+  // ── 카카오 최초 로그인 가입 모드 ──
+  // 카카오 콜백이 localStorage 에 심어둔 pending 정보를 읽는다.
+  var kakaoPending = null;
+  try {
+    kakaoPending = JSON.parse(localStorage.getItem('eum_kakao_pending') || 'null');
+  } catch (e) { kakaoPending = null; }
+
+  if (kakaoPending && kakaoPending.provider === 'kakao' && kakaoPending.provider_id) {
+    // 카카오 모드: 안내 배너 노출, 아이디/비밀번호 필드 숨김, 닉네임 자동 채움
+    document.getElementById('kakaoBanner').style.display = '';
+    document.getElementById('credentialFields').style.display = 'none';
+    if (kakaoPending.nickname) {
+      document.getElementById('name').value = kakaoPending.nickname;
+    }
+  }
+
   function selectRole(role) {
     selectedRole = role;
     var child = document.getElementById('role-child');
@@ -153,19 +178,27 @@
 
   async function doSignup() {
     var name = document.getElementById('name').value.trim();
-    var userId = document.getElementById('userId').value.trim();
-    var password = document.getElementById('password').value;
-    var passwordConfirm = document.getElementById('passwordConfirm').value;
     var familyCode = document.getElementById('familyCode').value.trim();
     var agreeTerms = !document.getElementById('agree-terms').classList.contains('check__box--off');
     var agreePrivacy = !document.getElementById('agree-privacy').classList.contains('check__box--off');
 
+    var isKakao = !!(kakaoPending && kakaoPending.provider === 'kakao' && kakaoPending.provider_id);
+
+    var userId, password, passwordConfirm;
+    if (!isKakao) {
+      userId = document.getElementById('userId').value.trim();
+      password = document.getElementById('password').value;
+      passwordConfirm = document.getElementById('passwordConfirm').value;
+    }
+
     if (!name) { alert('이름을 입력해 주세요'); return; }
-    if (!userId) { alert('아이디를 입력해 주세요'); return; }
-    if (userId.length < 4 || userId.length > 20) { alert('아이디는 4~20자로 입력해 주세요'); return; }
-    if (!password) { alert('비밀번호를 입력해 주세요'); return; }
-    if (password.length < 8) { alert('비밀번호는 8자 이상 입력해 주세요'); return; }
-    if (password !== passwordConfirm) { alert('비밀번호가 일치하지 않아요'); return; }
+    if (!isKakao) {
+      if (!userId) { alert('아이디를 입력해 주세요'); return; }
+      if (userId.length < 4 || userId.length > 20) { alert('아이디는 4~20자로 입력해 주세요'); return; }
+      if (!password) { alert('비밀번호를 입력해 주세요'); return; }
+      if (password.length < 8) { alert('비밀번호는 8자 이상 입력해 주세요'); return; }
+      if (password !== passwordConfirm) { alert('비밀번호가 일치하지 않아요'); return; }
+    }
     if (!agreeTerms) { alert('이용약관에 동의해 주세요'); return; }
     if (!agreePrivacy) { alert('개인정보 처리방침에 동의해 주세요'); return; }
 
@@ -176,6 +209,7 @@
     try {
       // 1. 가족 처리: 가족 코드가 있으면 참여, 없으면 새로 생성
       var familyId;
+      var family;
       if (familyCode) {
         // 초대코드로 가족 찾기
         var joinRes = await fetch('/api/families/join?invite_code=' + encodeURIComponent(familyCode), {
@@ -186,7 +220,7 @@
           alert(joinErr.detail || '가족 코드를 찾을 수 없어요');
           return;
         }
-        var family = await joinRes.json();
+        family = await joinRes.json();
         familyId = family.id;
       } else {
         // 새 가족 생성
@@ -204,17 +238,28 @@
       }
 
       // 2. 멤버 생성
+      var memberPayload = {
+        family_id: familyId,
+        name: name,
+        role: selectedRole,
+        sub_role: selectedRole === 'parent' ? selectedSubRole : null
+      };
+      if (isKakao) {
+        // 카카오 가입: 아이디/비밀번호 대신 provider 식별자를 저장
+        memberPayload.provider = kakaoPending.provider;
+        memberPayload.provider_id = kakaoPending.provider_id;
+        if (kakaoPending.profile_image) {
+          memberPayload.profile_image = kakaoPending.profile_image;
+        }
+      } else {
+        memberPayload.username = userId;
+        memberPayload.password = password;
+      }
+
       var memberRes = await fetch('/api/members', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          family_id: familyId,
-          name: name,
-          role: selectedRole,
-          sub_role: selectedRole === 'parent' ? selectedSubRole : null,
-          username: userId,
-          password: password
-        })
+        body: JSON.stringify(memberPayload)
       });
 
       if (!memberRes.ok) {
@@ -228,8 +273,26 @@
       }
 
       var member = await memberRes.json();
-      alert('가입이 완료되었어요! 로그인 페이지로 이동합니다.');
-      window.location.href = '/login';
+
+      if (isKakao) {
+        // 카카오 가입: 즉시 로그인 처리해서 /home 으로 진입
+        localStorage.removeItem('eum_kakao_pending');
+        var auth = {
+          member: member,
+          family: family,
+          invite_code: family.invite_code || null
+        };
+        localStorage.setItem('eum_auth', JSON.stringify(auth));
+        if (typeof AndroidBridge !== 'undefined' && AndroidBridge.registerFcmToken && member && member.id) {
+          try { AndroidBridge.registerFcmToken(member.id); } catch (e) { console.error('FCM bridge error:', e); }
+        }
+        var role = (member && member.role) || 'child';
+        document.cookie = 'eum_role=' + role + ';path=/;max-age=2592000';
+        window.location.href = '/home';
+      } else {
+        alert('가입이 완료되었어요! 로그인 페이지로 이동합니다.');
+        window.location.href = '/login';
+      }
     } catch (e) {
       alert('서버에 연결할 수 없어요');
     } finally {

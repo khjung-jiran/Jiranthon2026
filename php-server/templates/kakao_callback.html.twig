@@ -1,0 +1,56 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}이음 · 카카오 로그인{% endblock %}
+
+{% block content %}
+<!-- 화면: 카카오 로그인 콜백 / 진입점: 카카오 인가 후 리다이렉트 -->
+<main class="app login">
+
+  <div class="login__brand">
+    <h1 class="login__logo">이음</h1>
+    {% if error %}
+      <p class="login__tagline">{{ error }}</p>
+    {% elseif pending_json %}
+      <p class="login__tagline">카카오 계정으로<br>회원가입을 시작할게요…</p>
+    {% else %}
+      <p class="login__tagline">카카오 계정으로<br>로그인하고 있어요…</p>
+    {% endif %}
+  </div>
+
+  {% if error %}
+    <a class="btn btn--primary login__submit" href="/login">
+      <span class="btn__label">로그인으로 돌아가기</span>
+    </a>
+  {% endif %}
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+{% if not error %}
+<script>
+  (function() {
+    {% if pending_json %}
+    // 최초 로그인: 카카오 식별 정보를 임시 저장하고 회원가입 페이지로 이동한다.
+    var pending = {{ pending_json|raw }};
+    localStorage.setItem('eum_kakao_pending', JSON.stringify(pending));
+    setTimeout(function() { window.location.replace('/signup'); }, 200);
+    {% else %}
+    var auth = {{ auth_json|raw }};
+
+    // 소셜 로그인은 자동 로그인으로 취급해 localStorage 에 보관한다.
+    localStorage.setItem('eum_auth', JSON.stringify(auth));
+
+    // Android 네이티브에 FCM 토큰 등록 요청
+    if (typeof AndroidBridge !== 'undefined' && AndroidBridge.registerFcmToken && auth.member && auth.member.id) {
+      try { AndroidBridge.registerFcmToken(auth.member.id); } catch (e) { console.error('FCM bridge error:', e); }
+    }
+
+    var role = (auth.member && auth.member.role) || 'child';
+    document.cookie = 'eum_role=' + role + ';path=/;max-age=2592000';
+    setTimeout(function() { window.location.replace('/home'); }, 200);
+    {% endif %}
+  })();
+</script>
+{% endif %}
+{% endblock %}

@@ -28,19 +28,24 @@ final class MemberRepository extends Repository
         ?string $passwordHash,
         ?string $birthDate,
         ?string $profileImage,
+        ?string $provider = null,
+        ?string $providerId = null,
     ): string {
         $id = Uuid::v4();
 
         $this->transaction(function () use (
-            $id, $familyId, $name, $role, $subRole, $username, $passwordHash, $birthDate, $profileImage
+            $id, $familyId, $name, $role, $subRole, $username, $passwordHash,
+            $birthDate, $profileImage, $provider, $providerId
         ): void {
             $this->execute(
                 'INSERT INTO members
-                    (id, family_id, name, role, sub_role, username, password_hash, birth_date, profile_image, created_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    (id, family_id, name, role, sub_role, username, password_hash, birth_date, profile_image,
+                     provider, provider_id, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [
                     $id, $familyId, $name, $role->value, $subRole,
-                    $username, $passwordHash, $birthDate, $profileImage, $this->clock->now(),
+                    $username, $passwordHash, $birthDate, $profileImage,
+                    $provider, $providerId, $this->clock->now(),
                 ]
             );
 
@@ -63,6 +68,19 @@ final class MemberRepository extends Repository
     public function findByUsername(string $username): ?array
     {
         return $this->fetchOne('SELECT * FROM members WHERE username = ?', [$username]);
+    }
+
+    /**
+     * 소셜 계정(카카오 등) 식별자로 멤버를 찾는다.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function findByProvider(string $provider, string $providerId): ?array
+    {
+        return $this->fetchOne(
+            'SELECT * FROM members WHERE provider = ? AND provider_id = ?',
+            [$provider, $providerId]
+        );
     }
 
     public function usernameExists(string $username): bool

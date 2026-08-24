@@ -22,6 +22,9 @@ app/dist/
 # Firebase 서비스 계정 키 (FCM 푸시 전송용, 절대 커밋 금지)
 php-server/config/firebase-service-account.json
 
+# 카카오 로그인 REST API 키 (절대 커밋 금지)
+php-server/config/kakao.json
+
 # PHP composer 의존성 (composer install 로 복원)
 php-server/vendor/
 

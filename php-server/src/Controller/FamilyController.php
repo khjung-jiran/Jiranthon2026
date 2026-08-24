@@ -83,11 +83,21 @@ final class FamilyController
         $role = MemberRole::fromValue($input->optional('role'));
         $username = $input->optional('username');
         $password = $input->optional('password');
+        $provider = $input->optional('provider');
+        $providerId = $input->optional('provider_id');
 
         $this->requireFamily($familyId);
 
         if ($username !== null && $this->members->usernameExists($username)) {
             throw new ConflictException('이미 사용 중인 아이디입니다');
+        }
+
+        // 소셜 계정 식별자가 이미 다른 멤버에 연결되어 있으면 중복 가입 방지.
+        if ($provider !== null && $providerId !== null) {
+            $existing = $this->members->findByProvider($provider, $providerId);
+            if ($existing !== null) {
+                throw new ConflictException('이미 가입된 소셜 계정입니다');
+            }
         }
 
         $memberId = $this->members->create(
@@ -99,15 +109,18 @@ final class FamilyController
             $password === null ? null : $this->hasher->hash($password),
             $input->optional('birth_date'),
             $input->optional('profile_image'),
+            $provider,
+            $providerId,
         );
 
         $this->logger->info(\sprintf(
-            '멤버 생성: %s / 이름=%s / 아이디=%s / 역할=%s / 가족=%s',
+            '멤버 생성: %s / 이름=%s / 아이디=%s / 역할=%s / 가족=%s / 제공자=%s',
             $memberId,
             $name,
             $username ?? '-',
             $role->value,
             $familyId,
+            $provider ?? '-',
         ));
 
         // 자동 기본 질문 생성(seed) 비활성화 —
