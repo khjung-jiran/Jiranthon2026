@@ -59,18 +59,6 @@
         </div>
       </div>
 
-      <!-- 알림 -->
-      <div class="srow">
-        <span class="srow__icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-        </span>
-        <div class="srow__body">
-          <div class="srow__title">알림</div>
-          <div class="srow__sub">새 질문 · 이야기 완성 소식</div>
-        </div>
-        <span class="switch" id="notifySwitch" onclick="toggleSwitch('notifySwitch')"><span class="switch__knob"></span></span>
-      </div>
-
       <!-- 로그아웃 / 탈퇴 그룹 -->
       <div class="sgroup">
         <a class="srow srow--link" href="#" onclick="doLogout(); return false;">
@@ -274,6 +262,7 @@
   }
 
   function doLogout() {
+    if (!confirm('로그아웃 하시겠습니까?')) return;
     localStorage.removeItem('eum_auth');
     sessionStorage.removeItem('eum_auth');
     document.cookie = 'eum_role=;path=/;max-age=0';

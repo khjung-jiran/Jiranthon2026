@@ -345,13 +345,15 @@
   }
 
   async function showNotifications() {
+    if (!authData || !authData.member) return;
     var modal = document.getElementById('notifModal');
     modal.style.display = 'flex';
     var list = document.getElementById('notifList');
     list.innerHTML = '<div class="empty-state">알림을 불러오는 중…</div>';
 
     try {
-      var res = await fetch('/api/notifications');
+      var memberId = encodeURIComponent(authData.member.id);
+      var res = await fetch('/api/notifications?member_id=' + memberId);
       if (!res.ok) { list.innerHTML = '<div class="empty-state">알림을 불러올 수 없어요</div>'; return; }
       var notifications = await res.json();
       if (!notifications || notifications.length === 0) {
@@ -374,7 +376,7 @@
       });
 
       // 읽음 처리
-      fetch('/api/notifications/read-all', { method: 'POST' });
+      fetch('/api/notifications/read-all?member_id=' + memberId, { method: 'POST' });
       var badge = document.getElementById('bellBadge');
       if (badge) badge.style.display = 'none';
     } catch (e) {
@@ -387,8 +389,9 @@
   }
 
   async function loadUnreadCount() {
+    if (!authData || !authData.member) return;
     try {
-      var res = await fetch('/api/notifications/unread-count');
+      var res = await fetch('/api/notifications/unread-count?member_id=' + encodeURIComponent(authData.member.id));
       if (!res.ok) return;
       var data = await res.json();
       var count = data.count || data.unread_count || 0;
