@@ -105,8 +105,9 @@ final class StorybookService
             $chapters[] = $this->presentChapter($era, $items, $story);
         }
 
-        // 꼬리 질문 자동 생성 비활성화 — 질문 무한 증식 방지
-        // $this->generateFollowUpsIfNeeded($familyId, $grouped, $stored);
+        // 본문이 부족한 시기에 꼬리 질문 자동 생성
+        // — 시기당 MAX_FOLLOW_UP_ROUNDS(3)회, 본문 1500자 도달 시 중단
+        $this->generateFollowUpsIfNeeded($familyId, $grouped, $stored);
 
         // 새 스토리가 생성되었으면 가족 전원에게 푸시
         if ($newStoryTitles !== []) {

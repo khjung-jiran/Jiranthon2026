@@ -290,6 +290,7 @@ final class Container
             $this->storyQualityEvaluator(),
             $this->followUpQuestionGenerator(),
             $this->logger(),
+            $this->notificationService(),
         ));
     }
 

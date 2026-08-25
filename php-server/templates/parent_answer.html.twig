@@ -150,13 +150,14 @@
   async function loadLatestQuestion() {
     if (!authData || !authData.member) return;
     var memberId = authData.member.id;
-    var familyId = authData.member.family_id;
+    var familyId = (authData.family && authData.family.id) || authData.member.family_id;
     try {
       var res = await fetch('/api/questions?family_id=' + encodeURIComponent(familyId) + '&to_member_id=' + encodeURIComponent(memberId));
       if (!res.ok) return;
       var questions = await res.json();
-      if (questions && questions.length > 0) {
-        questionData = questions[0];
+      var pending = (questions || []).filter(function(q) { return q.status === 'pending'; });
+      if (pending.length > 0) {
+        questionData = pending[0];
         renderQuestion();
       } else {
         document.getElementById('qText').textContent = '도착한 질문이 없어요.';

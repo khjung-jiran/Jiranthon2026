@@ -1074,6 +1074,20 @@ button{font:inherit}
 .empty-state--muted{color:var(--c-muted)}
 .empty-state--grid{grid-column:1/-1}
 
+/* ---- 부모 홈 빈 질문 카드 ---- */
+.empty-card{
+  text-align:center;padding:48px 24px;
+  background:var(--c-card);border-radius:20px;
+  border:1px dashed var(--c-border);
+}
+.empty-card__icon{margin-bottom:14px;display:flex;justify-content:center}
+.empty-card__title{
+  font-size:17px;font-weight:600;color:var(--c-text-2);margin-bottom:6px;
+}
+.empty-card__desc{
+  font-size:13px;color:var(--c-text-3);line-height:1.6;
+}
+
 /* ---- flex 컨테이너 유틸 ---- */
 .stack{display:flex;flex-direction:column;gap:9px}
 .stack--sm{gap:12px}

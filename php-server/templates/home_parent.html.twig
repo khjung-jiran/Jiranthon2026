@@ -48,6 +48,17 @@
       <div class="deck-dots" id="questionDots"></div>
     </section>
 
+    <!-- 도착한 질문이 없을 때 -->
+    <section class="phome__body" id="emptySection" style="display:none;">
+      <div class="empty-card">
+        <div class="empty-card__icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#B8AFA0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="empty-card__title">도착한 질문이 없어요</div>
+        <div class="empty-card__desc">자녀가 질문을 보내면<br>여기에 카드로 도착해요</div>
+      </div>
+    </section>
+
   </div>
 
   <!-- 하단 탭바 (어머니/아버지 · 홈 활성) -->
@@ -117,15 +128,31 @@
       document.getElementById('homeDate').textContent =
         (now.getMonth()+1) + '월 ' + now.getDate() + '일 ' + days[now.getDay()];
 
-      if (family.id) {
-        document.getElementById('homeLink').style.display = 'flex';
-        document.getElementById('homeLinkText').textContent = '가족과 연결되어 있어요';
+      var familyId = family.id || member.family_id;
+      if (familyId) {
+        loadFamilyMembers(familyId, member.id, member.role);
       }
 
-      loadQuestions(member.id, member.family_id);
+      loadQuestions(member.id, familyId);
       loadUnreadCount();
     } catch (e) {}
   })();
+
+  async function loadFamilyMembers(familyId, myMemberId, myRole) {
+    try {
+      var res = await fetch('/api/families/' + encodeURIComponent(familyId) + '/members');
+      if (!res.ok) return;
+      var members = await res.json();
+      // 나 외에 다른 역할의 멤버가 있어야 "연결됨"
+      var connected = (members || []).some(function(m) {
+        return m.id !== myMemberId && m.role !== myRole;
+      });
+      if (connected) {
+        document.getElementById('homeLink').style.display = 'flex';
+        document.getElementById('homeLinkText').textContent = '가족과 연결되어 있어요';
+      }
+    } catch (e) {}
+  }
 
   var allQuestions = [];
   var currentCardIdx = 0;
@@ -158,9 +185,14 @@
           return 0;
         });
         allQuestions = pending;
+        document.getElementById('emptySection').style.display = 'none';
         renderDeck(pending);
+      } else {
+        document.getElementById('emptySection').style.display = '';
       }
-    } catch (e) {}
+    } catch (e) {
+      document.getElementById('emptySection').style.display = '';
+    }
   }
 
   function renderDeck(questions) {

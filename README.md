@@ -24,6 +24,7 @@
 5. **데이터 저장**: 서버에 Q&A 페어 저장
 6. **스토리북 생성**: 저장된 Q&A를 바탕으로 부모님의 스토리북 생성
 7. **가족 캘린더/앨범**: 사진과 함께 기록을 남기고, 부모/자녀 모두 음성 또는 텍스트로 댓글 작성
+8. **알림**: 도착한 질문/답변을 푸시로 받고, 앱 내 알림 탭에서 확인/삭제
 
 ## 폴더 구조
 
@@ -45,7 +46,7 @@ Jiranthon2026/
 │   │   └── css/                # 정적 스타일시트 (eium.css)
 │   ├── src/
 │   │   ├── Container.php       # DI 컨테이너
-│   │   ├── Controller/         # 16개 컨트롤러 (API + View)
+│   │   ├── Controller/         # 컨트롤러 (API + View)
 │   │   ├── Service/            # 비즈니스 로직 (Auth, FCM, Story, Speech ...)
 │   │   ├── Repository/         # 데이터 접근 계층 (PDO SQLite)
 │   │   ├── Presenter/          # API 응답 직렬화 계층
@@ -230,22 +231,18 @@ python tts/tts_runner.py "안녕하세요" output.mp3
 ## API 엔드포인트
 
 전체 라우트는 `php-server/src/routes/api.php` 에 정의되어 있습니다.
-상세 목록은 [php-server/README.md](php-server/README.md) 참고.
+아래는 UI에서 실제 사용하는 그룹입니다.
 
-주요 그룹:
-
-- **Family / Auth** — 가족 생성/참여, 멤버, 로그인, FCM 토큰, 카카오 OAuth
-- **Questions** — 질문 CRUD, AI 추천, 시드, 통계
-- **Responses** — 답변 생성/목록
+- **Family / Auth** — 가족 생성/참여, 멤버 관리, 로그인, 카카오 OAuth, 초대코드 조회
+- **Questions** — 질문 생성/조회/목록, AI 추천
+- **Responses** — 답변 생성/목록, 답변 통계
 - **Storybook** — 스토리북 조회/재생성
-- **Capsule** — 타임캡슐 생성/열람
-- **Calendar** — 일정 CRUD
-- **Album** — 사진 목록/삭제
-- **Notifications** — 알림 생성/조회/읽음/삭제
-- **Polls** — 투표 생성/참여
+- **Calendar** — 일정 생성/목록/삭제
+- **Album** — 사진 목록/삭제, 이미지 업로드
+- **Notifications** — 알림 목록/안읽음 수/읽음/삭제
 - **Settings** — 설정 조회/수정
 - **Voice** — STT 변환 / TTS 합성
-- **Uploads / Media** — 오디오/이미지 업로드
+- **Uploads** — 오디오/이미지 업로드
 
 ## 설정 파일 (커밋 금지)
 

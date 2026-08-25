@@ -25,6 +25,7 @@ final class FollowUpService
         private readonly StoryQualityEvaluator $evaluator,
         private readonly FollowUpQuestionGenerator $generator,
         private readonly Logger $logger,
+        private readonly NotificationService $notificationService,
     ) {
     }
 
@@ -76,6 +77,18 @@ final class FollowUpService
             $this->logger->info(
                 "꼬리 질문 생성: 가족={$familyId} / 시기={$era->value} / {$created}개 / 부모={$parentQuestionId}"
             );
+
+            // 부모에게 새 꼬리 질문 도착 알림
+            if ($created > 0) {
+                $this->notificationService->notify(
+                    memberId: $toMemberId,
+                    type: 'question',
+                    title: 'AI 이음이 새 질문을 추천해요',
+                    body: "{$created}개의 새 질문이 도착했어요. 답변해 보세요!",
+                    navTarget: '/parent-answer',
+                    familyId: $familyId,
+                );
+            }
         }
 
         return $total;

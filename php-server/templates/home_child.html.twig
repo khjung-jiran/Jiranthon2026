@@ -117,13 +117,13 @@
       if (name) {
         document.getElementById('greetName').textContent = '안녕하세요, ' + name + '님';
       }
-      if (family.id) {
-        document.getElementById('homeLink').style.display = 'flex';
-        document.getElementById('homeLinkText').textContent = '가족과 연결되어 있어요';
+      var familyId = family.id || member.family_id;
+      if (familyId) {
+        loadFamilyMembers(familyId, member.id, member.role);
       }
 
-      loadAiSuggestions(member.id, family.id);
-      loadAnsweredCount(family.id);
+      loadAiSuggestions(member.id, familyId);
+      loadAnsweredCount(familyId);
       loadUnreadCount();
     } catch (e) {}
 
@@ -132,6 +132,21 @@
     document.getElementById('homeDate').textContent =
       (now.getMonth()+1) + '월 ' + now.getDate() + '일 ' + days[now.getDay()];
   })();
+
+  async function loadFamilyMembers(familyId, myMemberId, myRole) {
+    try {
+      var res = await fetch('/api/families/' + encodeURIComponent(familyId) + '/members');
+      if (!res.ok) return;
+      var members = await res.json();
+      var connected = (members || []).some(function(m) {
+        return m.id !== myMemberId && m.role !== myRole;
+      });
+      if (connected) {
+        document.getElementById('homeLink').style.display = 'flex';
+        document.getElementById('homeLinkText').textContent = '가족과 연결되어 있어요';
+      }
+    } catch (e) {}
+  }
 
   async function loadAiSuggestions(memberId, familyId) {
     if (!memberId) return;

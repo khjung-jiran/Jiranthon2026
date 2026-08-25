@@ -244,6 +244,9 @@
       }
       var data = await res.json();
       authData.family = data.family;
+      if (authData.member && data.family) {
+        authData.member.family_id = data.family.id;
+      }
       var stored = localStorage.getItem('eum_auth') ? localStorage : sessionStorage;
       stored.setItem('eum_auth', JSON.stringify(authData));
 
