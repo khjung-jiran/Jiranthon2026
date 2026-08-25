@@ -38,6 +38,21 @@
     <span class="btn__label">질문 보내기</span>
   </button>
 
+  <!-- 질문 전송 중 오버레이 -->
+  <div id="sendingOverlay" class="sending-overlay" style="display:none;">
+    <div class="proc__orb">
+      <div class="proc__orb-glow"></div>
+      <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#E4643E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>
+    </div>
+    <h1 class="proc__title">질문을 보내고 있어요</h1>
+    <div class="proc__dots">
+      <span class="proc__dot"></span>
+      <span class="proc__dot"></span>
+      <span class="proc__dot"></span>
+    </div>
+    <div class="proc__line" id="sendingLine">잠시만 기다려 주세요…</div>
+  </div>
+
 </main>
 {% endblock %}
 
@@ -224,9 +239,10 @@
     var content = freeText || selectedQuestion;
     if (!content) { alert('질문을 선택하거나 직접 입력해 주세요'); return; }
 
-    var btn = document.getElementById('submitBtn');
-    btn.disabled = true;
-    btn.querySelector('.btn__label').textContent = '보내는 중…';
+    var subLabels = { mom: '어머니', dad: '아버지' };
+    var recipientName = subLabels[selectedRecipient.sub_role] || selectedRecipient.name;
+
+    showSendingOverlay(recipientName + '께 질문을 보내고 있어요…');
 
     try {
       var res = await fetch('/api/questions', {
@@ -242,21 +258,37 @@
       });
       if (!res.ok) {
         var err = await res.json().catch(function() { return {}; });
+        hideSendingOverlay();
         alert(err.detail || '질문 전송에 실패했어요');
         return;
       }
 
       if (typeof AndroidBridge !== 'undefined' && AndroidBridge.showNotification) {
-        AndroidBridge.showNotification('이음', (subLabels[selectedRecipient.sub_role] || selectedRecipient.name) + '께 질문을 보냈어요');
+        AndroidBridge.showNotification('이음', recipientName + '께 질문을 보냈어요');
       }
-      window.location.href = '/home';
+      setSendingLine(recipientName + '께 질문을 보냈어요!');
+      setTimeout(function() { window.location.href = '/home'; }, 700);
     } catch (e) {
+      hideSendingOverlay();
       alert('서버에 연결할 수 없어요');
-    } finally {
-      btn.disabled = false;
-      var subLabels2 = { mom: '어머니', dad: '아버지' };
-      btn.querySelector('.btn__label').textContent = (subLabels2[selectedRecipient.sub_role] || selectedRecipient.name) + '께 질문 보내기';
     }
+  }
+
+  function showSendingOverlay(line) {
+    var ov = document.getElementById('sendingOverlay');
+    if (!ov) return;
+    setSendingLine(line || '잠시만 기다려 주세요…');
+    ov.style.display = 'flex';
+  }
+
+  function hideSendingOverlay() {
+    var ov = document.getElementById('sendingOverlay');
+    if (ov) ov.style.display = 'none';
+  }
+
+  function setSendingLine(text) {
+    var el = document.getElementById('sendingLine');
+    if (el) el.textContent = text;
   }
 </script>
 {% endblock %}
