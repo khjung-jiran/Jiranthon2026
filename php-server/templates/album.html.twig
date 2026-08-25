@@ -137,11 +137,12 @@
       return;
     }
     var html = '';
-    photos.forEach(function(p) {
+    photos.forEach(function(p, i) {
       var label = p.label || '제목 없음';
       var who = p.who || '';
       var date = p.created_at ? p.created_at.substring(0, 10) : '';
-      html += '<div class="photo-tile" onclick="showPhoto(\'' + p.id + '\')">';
+      var heroClass = i === 0 ? ' photo-tile--hero' : '';
+      html += '<div class="photo-tile' + heroClass + '" onclick="showPhoto(\'' + p.id + '\')">';
       html += '<img src="' + p.url + '" onerror="this.style.background=\'rgba(0,0,0,0.05)\'" />';
       html += '<div class="photo-tile__caption">';
       html += '<div class="photo-tile__title">' + escapeHtml(label) + '</div>';
