@@ -93,6 +93,21 @@
     </button>
   </div>
 
+  <!-- 답변 전송 중 오버레이 -->
+  <div id="sendingOverlay" class="sending-overlay" style="display:none;">
+    <div class="proc__orb">
+      <div class="proc__orb-glow"></div>
+      <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#E4643E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>
+    </div>
+    <h1 class="proc__title">답변을 보내고 있어요</h1>
+    <div class="proc__dots">
+      <span class="proc__dot"></span>
+      <span class="proc__dot"></span>
+      <span class="proc__dot"></span>
+    </div>
+    <div class="proc__line" id="sendingLine">잠시만 기다려 주세요…</div>
+  </div>
+
 </main>
 {% endblock %}
 
@@ -350,8 +365,7 @@
     if (!authData || !authData.member) { alert('로그인 정보가 없어요'); return; }
     if (!questionData) { alert('질문 정보가 없어요'); return; }
 
-    var btn = document.querySelector('#textMode .btn--green');
-    if (btn) { btn.disabled = true; btn.querySelector('.btn__label').textContent = '보내는 중…'; }
+    showSendingOverlay('답변을 전송하고 있어요…');
 
     try {
       var respRes = await fetch('/api/responses', {
@@ -366,15 +380,15 @@
       });
       if (!respRes.ok) {
         var err = await respRes.json().catch(function() { return {}; });
+        hideSendingOverlay();
         alert(err.detail || '답변 전송에 실패했어요');
         return;
       }
-      alert('답변이 전송되었어요!');
-      window.location.href = '/home';
+      setSendingLine('답변이 전송되었어요!');
+      setTimeout(function() { window.location.href = '/home'; }, 700);
     } catch (e) {
+      hideSendingOverlay();
       alert('서버에 연결할 수 없어요');
-    } finally {
-      if (btn) { btn.disabled = false; btn.querySelector('.btn__label').textContent = '보내기'; }
     }
   }
 
@@ -383,8 +397,7 @@
     if (!authData || !authData.member) { alert('로그인 정보가 없어요'); return; }
     if (!questionData) { alert('질문 정보가 없어요'); return; }
 
-    var btn = document.querySelector('.btn--green');
-    if (btn) { btn.disabled = true; btn.querySelector('.btn__label').textContent = '보내는 중…'; }
+    showSendingOverlay('목소리를 안전하게 업로드하고 있어요…');
 
     try {
       // 1. 오디오 업로드
@@ -395,8 +408,10 @@
         method: 'POST',
         body: formData
       });
-      if (!uploadRes.ok) { alert('오디오 업로드에 실패했어요'); return; }
+      if (!uploadRes.ok) { hideSendingOverlay(); alert('오디오 업로드에 실패했어요'); return; }
       var uploadData = await uploadRes.json();
+
+      setSendingLine('답변을 정리해서 전송하고 있어요…');
 
       // 2. 답변 생성 (STT 텍스트가 있으면 함께 전송)
       var respRes = await fetch('/api/responses', {
@@ -414,17 +429,34 @@
 
       if (!respRes.ok) {
         var err = await respRes.json().catch(function() { return {}; });
+        hideSendingOverlay();
         alert(err.detail || '답변 전송에 실패했어요');
         return;
       }
 
-      alert('답변이 전송되었어요!');
-      window.location.href = '/home';
+      setSendingLine('답변이 전송되었어요!');
+      setTimeout(function() { window.location.href = '/home'; }, 700);
     } catch (e) {
+      hideSendingOverlay();
       alert('서버에 연결할 수 없어요');
-    } finally {
-      if (btn) { btn.disabled = false; btn.querySelector('.btn__label').textContent = '보내기'; }
     }
+  }
+
+  function showSendingOverlay(line) {
+    var ov = document.getElementById('sendingOverlay');
+    if (!ov) return;
+    setSendingLine(line || '잠시만 기다려 주세요…');
+    ov.style.display = 'flex';
+  }
+
+  function hideSendingOverlay() {
+    var ov = document.getElementById('sendingOverlay');
+    if (ov) ov.style.display = 'none';
+  }
+
+  function setSendingLine(text) {
+    var el = document.getElementById('sendingLine');
+    if (el) el.textContent = text;
   }
 </script>
 {% endblock %}

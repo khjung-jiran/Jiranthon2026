@@ -820,6 +820,14 @@ button{font:inherit}
 .privacy-pill__text{font-size:12px;font-weight:600;color:var(--c-green)}
 .proc__privacy{position:absolute;bottom:64px}
 
+/* ---- 답변 전송 중 풀스크린 오버레이 (proc 스타일 재사용) ---- */
+.sending-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:var(--c-bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:0 40px;text-align:center;animation:eiumFade .3s ease;
+}
+
 
 /* ==================== 22. 이야기 조각 (story-piece) ==================== */
 .piece{
