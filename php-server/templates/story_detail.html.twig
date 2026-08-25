@@ -309,7 +309,9 @@
     return parts;
   }
 
-  /** 지면에 들어가는 만큼 순서대로 채운다. */
+  /** 지면에 들어가는 만큼 순서대로 채운다.
+   *  단일 청크가 페이지보다 큰 경우(큰 글씨 등) 그 청크를 단독 페이지로 분리하여
+   *  다음 청크와 합쳐지지 않도록 한다. 해당 페이지는 스크롤로 확인한다. */
   function paginate(chunks) {
     var result = [];
     var buffer = [];
@@ -317,10 +319,23 @@
     chunks.forEach(function(chunk) {
       buffer.push(chunk);
       pageEl.innerHTML = buffer.join('');
-      if (!fits() && buffer.length > 1) {
-        buffer.pop();
-        result.push(buffer.join(''));
-        buffer = [chunk];
+      if (!fits()) {
+        if (buffer.length > 1) {
+          // 현재 청크 빼고 이전까지 한 페이지
+          buffer.pop();
+          result.push(buffer.join(''));
+          buffer = [chunk];
+          // 단일 청크도 페이지보다 크면 그대로 한 페이지로 (스크롤)
+          pageEl.innerHTML = buffer.join('');
+          if (!fits() && buffer.length === 1) {
+            result.push(buffer.join(''));
+            buffer = [];
+          }
+        } else {
+          // 단일 청크가 페이지보다 크면 그대로 한 페이지로 분리
+          result.push(buffer.join(''));
+          buffer = [];
+        }
       }
     });
     if (buffer.length > 0) result.push(buffer.join(''));
