@@ -51,27 +51,25 @@
   </div>
 
   <!-- 하단 탭바 (어머니/아버지 · 홈 활성) -->
-  <nav class="tabbar tabbar--parent">
+  <nav class="tabbar">
     <a class="tabbar__item" href="/story-child">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
       <span class="tabbar__label">이야기</span>
     </a>
     <a class="tabbar__item" href="/album">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
       <span class="tabbar__label">앨범</span>
     </a>
     <a class="tabbar__item tabbar__item--on" href="/home">
-      <span class="tabbar__home">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
-      </span>
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
       <span class="tabbar__label tabbar__label--on">홈</span>
     </a>
     <a class="tabbar__item" href="/calendar">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
       <span class="tabbar__label">캘린더</span>
     </a>
     <a class="tabbar__item" href="/settings">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
       <span class="tabbar__label">설정</span>
     </a>
   </nav>
@@ -96,6 +94,8 @@
 
 {% block scripts %}
 <script>
+  var authData = null;
+
   (function checkAuth() {
     var auth = localStorage.getItem('eum_auth') || sessionStorage.getItem('eum_auth');
     if (!auth) {
@@ -103,9 +103,9 @@
       return;
     }
     try {
-      var data = JSON.parse(auth);
-      var member = data.member || {};
-      var family = data.family || {};
+      authData = JSON.parse(auth);
+      var member = authData.member || {};
+      var family = authData.family || {};
       var name = member.name || '';
 
       if (name) {
@@ -356,13 +356,6 @@
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
   }
-
-  var authData = null;
-  (function cacheAuth() {
-    try {
-      authData = JSON.parse(localStorage.getItem('eum_auth') || sessionStorage.getItem('eum_auth') || 'null');
-    } catch (e) {}
-  })();
 
   async function showNotifications() {
     if (!authData || !authData.member) return;
