@@ -11,6 +11,15 @@
         <div class="cal__kicker">우리 가족의 날들</div>
         <h1 class="cal__title" id="calTitle"></h1>
       </div>
+      <div class="cal__nav">
+        <button type="button" class="cal__nav-btn" onclick="prevMonth()" aria-label="이전 달">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button type="button" class="cal__nav-btn cal__nav-btn--today" onclick="goToday()" aria-label="이번 달">이번 달</button>
+        <button type="button" class="cal__nav-btn" onclick="nextMonth()" aria-label="다음 달">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5C544A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
     </header>
 
     <div class="cal__grid-wrap">
@@ -21,7 +30,7 @@
 
     <section class="cal__events">
       <div class="cal__events-head">
-        <span class="sec-title">다가오는 일정</span>
+        <span class="sec-title" id="eventsTitle">다가오는 일정</span>
         <button type="button" class="cal__add" onclick="openAddModal()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C05430" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           일정 추가
@@ -102,6 +111,7 @@
   var authData = null;
   var calYear = 0, calMonth = 0;
   var entries = [];
+  var todayYear = 0, todayMonth = 0;
 
   (function init() {
     var auth = localStorage.getItem('eum_auth') || sessionStorage.getItem('eum_auth');
@@ -111,13 +121,42 @@
     var now = new Date();
     calYear = now.getFullYear();
     calMonth = now.getMonth();
+    todayYear = calYear;
+    todayMonth = calMonth;
 
     renderCalendar();
     loadEntries();
   })();
 
+  function prevMonth() {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+    loadEntries();
+  }
+
+  function nextMonth() {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+    loadEntries();
+  }
+
+  function goToday() {
+    var now = new Date();
+    calYear = now.getFullYear();
+    calMonth = now.getMonth();
+    renderCalendar();
+    loadEntries();
+  }
+
   function renderCalendar() {
+    var isCurrentMonth = todayYear === calYear && todayMonth === calMonth;
     document.getElementById('calTitle').textContent = calYear + '년 ' + (calMonth+1) + '월';
+    var eventsTitle = document.getElementById('eventsTitle');
+    if (eventsTitle) {
+      eventsTitle.textContent = isCurrentMonth ? '다가오는 일정' : (calMonth+1) + '월 일정';
+    }
 
     var firstDay = new Date(calYear, calMonth, 1).getDay();
     var daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
@@ -155,9 +194,10 @@
   async function loadEntries() {
     if (!authData || !authData.family) return;
     var familyId = authData.family.id;
+    var monthStr = calYear + '-' + String(calMonth+1).padStart(2,'0');
 
     try {
-      var res = await fetch('/api/calendar/entries?family_id=' + encodeURIComponent(familyId) + '&upcoming=true');
+      var res = await fetch('/api/calendar/entries?family_id=' + encodeURIComponent(familyId) + '&month=' + encodeURIComponent(monthStr));
       if (!res.ok) return;
       entries = await res.json();
       renderCalendar();
@@ -167,8 +207,11 @@
 
   function renderEntryList() {
     var list = document.getElementById('calList');
+    var isCurrentMonth = todayYear === calYear && todayMonth === calMonth;
+    var monthLabel = (calMonth+1) + '월';
+
     if (entries.length === 0) {
-      list.innerHTML = '<div class="empty-state">다가오는 일정이 없어요</div>';
+      list.innerHTML = '<div class="empty-state">' + monthLabel + ' 일정이 없어요</div>';
       return;
     }
 
@@ -178,6 +221,7 @@
 
     entries.forEach(function(e) {
       var entryDate = new Date(e.date);
+      entryDate.setHours(0,0,0,0);
       var diff = Math.ceil((entryDate - today) / (1000*60*60*24));
       var mo = entryDate.getMonth() + 1;
       var day = entryDate.getDate();
@@ -201,6 +245,8 @@
         html += '<span class="pill pill--dday">D-' + diff + '</span>';
       } else if (diff === 0) {
         html += '<span class="pill pill--dday">오늘</span>';
+      } else {
+        html += '<span class="pill pill--dday">D+' + Math.abs(diff) + '</span>';
       }
       if (isOwner) {
         html += '<button type="button" class="event__del-btn" data-entry-id="' + e.id + '" data-entry-title="' + escapeHtml(e.title) + '">';
