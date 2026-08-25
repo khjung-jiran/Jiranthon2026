@@ -19,12 +19,11 @@
     </a>
     <div class="detail__bar-right" id="barRight">
       <div class="detail__font-fab" id="fontCtl" role="group" aria-label="글자 크기">
-        <button type="button" class="detail__font-fab-btn" id="fontMinus" onclick="adjustFont(-1)" aria-label="글자 작게">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/></svg>
+        <button type="button" class="detail__font-fab-btn" id="fontSmall" onclick="setFontSmall()" aria-label="글자 작게" aria-pressed="false">
+          <span class="detail__font-fab-text">작게</span>
         </button>
-        <span class="detail__font-fab-label" id="fontLabel">15px</span>
-        <button type="button" class="detail__font-fab-btn" id="fontPlus" onclick="adjustFont(1)" aria-label="글자 크게">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        <button type="button" class="detail__font-fab-btn" id="fontLarge" onclick="setFontLarge()" aria-label="글자 크게" aria-pressed="false">
+          <span class="detail__font-fab-text">크게</span>
         </button>
       </div>
       <button type="button" class="detail__booklet detail__booklet--collapsed" id="bookletBtn" onclick="toggleBooklet()" aria-expanded="false">
@@ -66,13 +65,14 @@
   var pages = [];
   var currentPage = 0;
 
-  // 글자 크기 조정 — 본문(.detail__page) 폰트 사이즈를 단계별로 변경.
-  // 기본 15px, 12px~24px 범위. 변경 시 지면 분할을 다시 한다.
-  var FONT_BASE = 15;
-  var FONT_MIN = 12;
-  var FONT_MAX = 24;
-  var FONT_STEP = 1.5;
+  // 글자 크기 조정 — 작게/크게 두 단계.
+  // 작게 = 18px, 크게 = 26px. 한 번 클릭에 해당 크기로 바로 이동.
+  // 기본은 작게(18px)로 시작.
+  var FONT_BASE = 18;
+  var FONT_SMALL = 18;
+  var FONT_LARGE = 26;
   var fontScale = 1.0;
+  var fontMode = 'small';
   var lastBody = '';
   var lastExtra = '';
 
@@ -92,7 +92,7 @@
       loadResponse(params.get('id') || '');
     }
 
-    updateFontLabel();
+    updateFontButtons();
   })();
 
   function escapeHtml(s) {
@@ -245,29 +245,41 @@
     pageEl.style.fontSize = px + 'px';
   }
 
-  function adjustFont(delta) {
-    var newPx = FONT_BASE * fontScale + delta * FONT_STEP;
-    if (newPx < FONT_MIN) newPx = FONT_MIN;
-    if (newPx > FONT_MAX) newPx = FONT_MAX;
-    fontScale = newPx / FONT_BASE;
+  function setFontSmall() {
+    if (fontMode === 'small') return;
+    fontScale = FONT_SMALL / FONT_BASE;
+    fontMode = 'small';
     applyFontSize();
-    updateFontLabel();
+    updateFontButtons();
+    reRender();
+  }
 
-    // 폰트 크기가 바뀌면 지면 분할을 다시 한다.
-    // 현재 페이지 인덱스를 가능한 유지.
+  function setFontLarge() {
+    if (fontMode === 'large') return;
+    fontScale = FONT_LARGE / FONT_BASE;
+    fontMode = 'large';
+    applyFontSize();
+    updateFontButtons();
+    reRender();
+  }
+
+  function updateFontButtons() {
+    var small = document.getElementById('fontSmall');
+    var large = document.getElementById('fontLarge');
+    if (small) {
+      small.classList.toggle('detail__font-fab-btn--on', fontMode === 'small');
+      small.setAttribute('aria-pressed', fontMode === 'small' ? 'true' : 'false');
+    }
+    if (large) {
+      large.classList.toggle('detail__font-fab-btn--on', fontMode === 'large');
+      large.setAttribute('aria-pressed', fontMode === 'large' ? 'true' : 'false');
+    }
+  }
+
+  function reRender() {
     var prevPage = currentPage;
     render(lastBody, lastExtra);
     if (pages.length > prevPage) goPage(prevPage);
-  }
-
-  function updateFontLabel() {
-    var px = Math.round(FONT_BASE * fontScale);
-    var label = document.getElementById('fontLabel');
-    if (label) label.textContent = px + 'px';
-    var minus = document.getElementById('fontMinus');
-    var plus = document.getElementById('fontPlus');
-    if (minus) minus.disabled = (FONT_BASE * fontScale) <= FONT_MIN + 0.01;
-    if (plus) plus.disabled = (FONT_BASE * fontScale) >= FONT_MAX - 0.01;
   }
 
   function fits() {
