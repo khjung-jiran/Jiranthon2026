@@ -1083,6 +1083,9 @@ button{font:inherit}
 .notif-item__title{
   font-size:.95rem;font-weight:600;color:var(--c-ink);margin-bottom:4px;
 }
+.notif-item__meta{
+  font-size:.75rem;color:var(--c-text-3);opacity:.7;margin-bottom:6px;
+}
 .notif-item__body{
   font-size:.85rem;color:var(--c-text-3);line-height:1.5;
 }

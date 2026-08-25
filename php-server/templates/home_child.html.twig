@@ -372,10 +372,14 @@
         var title = document.createElement('div');
         title.className = 'notif-item__title';
         title.textContent = n.title || '알림';
+        var meta = document.createElement('div');
+        meta.className = 'notif-item__meta';
+        meta.textContent = formatNotifDate(n.created_at);
         var body = document.createElement('div');
         body.className = 'notif-item__body';
         body.textContent = n.body || n.message || '';
         text.appendChild(title);
+        text.appendChild(meta);
         text.appendChild(body);
 
         var delBtn = document.createElement('button');
@@ -400,6 +404,23 @@
     } catch (e) {
       list.innerHTML = '<div class="empty-state">알림을 불러올 수 없어요</div>';
     }
+  }
+
+  function formatNotifDate(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    var now = new Date();
+    var diff = now - d;
+    var min = Math.floor(diff / 60000);
+    var hour = Math.floor(diff / 3600000);
+    var day = Math.floor(diff / 86400000);
+    if (min < 1) return '방금 전';
+    if (min < 60) return min + '분 전';
+    if (hour < 24) return hour + '시간 전';
+    if (day < 7) return day + '일 전';
+    var months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+    return months[d.getMonth()] + ' ' + d.getDate() + '일';
   }
 
   async function deleteNotification(id, itemEl) {
