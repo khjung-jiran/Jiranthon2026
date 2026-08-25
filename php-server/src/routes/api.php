@@ -76,6 +76,7 @@ return static function (App $app, Container $c): void {
     $app->get('/api/notifications/unread-count', [$notifs, 'unreadCount']);
     $app->post('/api/notifications/{nid}/read', [$notifs, 'markRead']);
     $app->post('/api/notifications/read-all', [$notifs, 'markAllRead']);
+    $app->delete('/api/notifications/{nid}', [$notifs, 'destroy']);
 
     // ── Poll ──
     $app->post('/api/polls', [$polls, 'create']);

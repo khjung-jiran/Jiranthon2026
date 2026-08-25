@@ -958,6 +958,15 @@ button{font:inherit}
   border-radius:20px 20px 0 0;max-width:390px;max-height:70vh;
   padding:24px 20px 32px;
 }
+/* 알림 모달: head가 sticky로 body 최상단에 고정되도록 padding 구조 조정 */
+#notifModal .modal__body{
+  padding-top:0;
+}
+#notifModal .modal__head{
+  padding:20px 20px 12px;
+  margin:0 -20px 16px;
+  border-radius:20px 20px 0 0;
+}
 .modal__head{
   display:flex;justify-content:space-between;align-items:center;
   margin-bottom:16px;position:sticky;top:0;background:var(--c-bg);
@@ -1058,14 +1067,26 @@ button{font:inherit}
 
 /* ---- 알림 목록 아이템 ---- */
 .notif-item{
+  display:flex;align-items:flex-start;gap:10px;
   padding:14px 16px;border-radius:12px;background:#fff;
   border:1px solid rgba(0,0,0,.06);
 }
+.notif-item__text{flex:1;min-width:0;}
 .notif-item__title{
   font-size:.95rem;font-weight:600;color:var(--c-ink);margin-bottom:4px;
 }
 .notif-item__body{
   font-size:.85rem;color:var(--c-text-3);line-height:1.5;
+}
+.notif-item__del{
+  flex:0 0 auto;width:28px;height:28px;border:none;border-radius:50%;
+  background:transparent;color:var(--c-text-3,#8a8175);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:background .15s ease,color .15s ease;
+  margin-top:2px;
+}
+.notif-item__del:hover,.notif-item__del:active{
+  background:rgba(0,0,0,.06);color:var(--c-ink,#3a342d);
 }
 
 /* ---- 사진 그리드 아이템 (앨범) ---- */

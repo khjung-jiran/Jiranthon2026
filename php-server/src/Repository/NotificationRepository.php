@@ -87,4 +87,9 @@ final class NotificationRepository extends Repository
             [$memberId]
         );
     }
+
+    public function delete(string $id): void
+    {
+        $this->execute('DELETE FROM notifications WHERE id = ?', [$id]);
+    }
 }

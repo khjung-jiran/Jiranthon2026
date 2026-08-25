@@ -79,4 +79,17 @@ final class NotificationController
 
         return ApiResponse::ok($res, ['updated' => $updated]);
     }
+
+    public function destroy(Request $req, Response $res): Response
+    {
+        $id = Input::from($req)->route('nid');
+
+        if (!$this->notifications->has($id)) {
+            throw new NotFoundException('알림을 찾을 수 없습니다');
+        }
+
+        $this->notifications->delete($id);
+
+        return ApiResponse::ok($res);
+    }
 }
